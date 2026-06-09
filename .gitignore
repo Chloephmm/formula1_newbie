@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+*.whl
+
+# Virtual environments
+ml/.venv/
+ml/venv/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ML artifacts.
+# NOTE: trained models (*.pkl) and the raw data snapshot ARE committed on purpose —
+# the live Streamlit app loads them at runtime. Only regenerable artifacts are ignored.
+# (processed feature table is regenerable by scripts/build_features.py)
+ml/data/processed/
+ml/models/*.joblib
+
+# FastF1 cache (downloaded session data — can be large)
+ml/cache/
+cache/
+
+# Test cache
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+web/node_modules/
+.next/
+web/.next/
+out/
+web/out/
+web/.vercel/
+.vercel/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/settings.json
+.idea/

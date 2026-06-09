@@ -1,0 +1,123 @@
+[
+  {
+    "id": "mercedes",
+    "name": "Mercedes",
+    "color": "#27F4D2",
+    "points": 219.0,
+    "wins": 5,
+    "drivers": [
+      "ANT",
+      "RUS"
+    ]
+  },
+  {
+    "id": "ferrari",
+    "name": "Ferrari",
+    "color": "#E8002D",
+    "points": 147.0,
+    "wins": 0,
+    "drivers": [
+      "LEC",
+      "HAM"
+    ]
+  },
+  {
+    "id": "mclaren",
+    "name": "McLaren",
+    "color": "#FF8000",
+    "points": 106.0,
+    "wins": 0,
+    "drivers": [
+      "NOR",
+      "PIA"
+    ]
+  },
+  {
+    "id": "red_bull",
+    "name": "Red Bull",
+    "color": "#3671C6",
+    "points": 57.0,
+    "wins": 0,
+    "drivers": [
+      "VER",
+      "HAD"
+    ]
+  },
+  {
+    "id": "alpine",
+    "name": "Alpine F1 Team",
+    "color": "#0093CC",
+    "points": 35.0,
+    "wins": 0,
+    "drivers": [
+      "GAS",
+      "COL"
+    ]
+  },
+  {
+    "id": "rb",
+    "name": "RB F1 Team",
+    "color": "#6692FF",
+    "points": 21.0,
+    "wins": 0,
+    "drivers": [
+      "LAW",
+      "LIN"
+    ]
+  },
+  {
+    "id": "haas",
+    "name": "Haas F1 Team",
+    "color": "#B6BABD",
+    "points": 19.0,
+    "wins": 0,
+    "drivers": [
+      "BEA",
+      "OCO"
+    ]
+  },
+  {
+    "id": "williams",
+    "name": "Williams",
+    "color": "#64C4FF",
+    "points": 7.0,
+    "wins": 0,
+    "drivers": [
+      "SAI",
+      "ALB"
+    ]
+  },
+  {
+    "id": "audi",
+    "name": "Audi",
+    "color": "#888888",
+    "points": 2.0,
+    "wins": 0,
+    "drivers": [
+      "BOR",
+      "HUL"
+    ]
+  },
+  {
+    "id": "cadillac",
+    "name": "Cadillac F1 Team",
+    "color": "#888888",
+    "points": 0.0,
+    "wins": 0,
+    "drivers": [
+      "BOT",
+      "PER"
+    ]
+  },
+  {
+    "id": "aston_martin",
+    "name": "Aston Martin",
+    "color": "#229971",
+    "points": 0.0,
+    "wins": 0,
+    "drivers": [
+      "STR",
+      "ALO"
+    ]
+  }
+]

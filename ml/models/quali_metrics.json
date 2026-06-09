@@ -1,0 +1,7 @@
+{
+  "mean_grid_error": 3.43,
+  "pole_accuracy": 0.226,
+  "median_gap_mae": 0.6,
+  "train_races": 182,
+  "test_races": 53
+}

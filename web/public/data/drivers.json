@@ -1,0 +1,222 @@
+[
+  {
+    "id": "antonelli",
+    "name": "Andrea Kimi Antonelli",
+    "code": "ANT",
+    "team": "mercedes",
+    "nationality": "Italian",
+    "wins": 4,
+    "podiums": 5,
+    "points": 131.0
+  },
+  {
+    "id": "russell",
+    "name": "George Russell",
+    "code": "RUS",
+    "team": "mercedes",
+    "nationality": "British",
+    "wins": 1,
+    "podiums": 2,
+    "points": 88.0
+  },
+  {
+    "id": "leclerc",
+    "name": "Charles Leclerc",
+    "code": "LEC",
+    "team": "ferrari",
+    "nationality": "Monegasque",
+    "wins": 0,
+    "podiums": 2,
+    "points": 75.0
+  },
+  {
+    "id": "hamilton",
+    "name": "Lewis Hamilton",
+    "code": "HAM",
+    "team": "ferrari",
+    "nationality": "British",
+    "wins": 0,
+    "podiums": 2,
+    "points": 72.0
+  },
+  {
+    "id": "norris",
+    "name": "Lando Norris",
+    "code": "NOR",
+    "team": "mclaren",
+    "nationality": "British",
+    "wins": 0,
+    "podiums": 1,
+    "points": 58.0
+  },
+  {
+    "id": "piastri",
+    "name": "Oscar Piastri",
+    "code": "PIA",
+    "team": "mclaren",
+    "nationality": "Australian",
+    "wins": 0,
+    "podiums": 2,
+    "points": 48.0
+  },
+  {
+    "id": "max_verstappen",
+    "name": "Max Verstappen",
+    "code": "VER",
+    "team": "red_bull",
+    "nationality": "Dutch",
+    "wins": 0,
+    "podiums": 1,
+    "points": 43.0
+  },
+  {
+    "id": "gasly",
+    "name": "Pierre Gasly",
+    "code": "GAS",
+    "team": "alpine",
+    "nationality": "French",
+    "wins": 0,
+    "podiums": 0,
+    "points": 20.0
+  },
+  {
+    "id": "bearman",
+    "name": "Oliver Bearman",
+    "code": "BEA",
+    "team": "haas",
+    "nationality": "British",
+    "wins": 0,
+    "podiums": 0,
+    "points": 18.0
+  },
+  {
+    "id": "lawson",
+    "name": "Liam Lawson",
+    "code": "LAW",
+    "team": "rb",
+    "nationality": "New Zealander",
+    "wins": 0,
+    "podiums": 0,
+    "points": 16.0
+  },
+  {
+    "id": "colapinto",
+    "name": "Franco Colapinto",
+    "code": "COL",
+    "team": "alpine",
+    "nationality": "Argentine",
+    "wins": 0,
+    "podiums": 0,
+    "points": 15.0
+  },
+  {
+    "id": "hadjar",
+    "name": "Isack Hadjar",
+    "code": "HAD",
+    "team": "red_bull",
+    "nationality": "French",
+    "wins": 0,
+    "podiums": 0,
+    "points": 14.0
+  },
+  {
+    "id": "sainz",
+    "name": "Carlos Sainz",
+    "code": "SAI",
+    "team": "williams",
+    "nationality": "Spanish",
+    "wins": 0,
+    "podiums": 0,
+    "points": 6.0
+  },
+  {
+    "id": "arvid_lindblad",
+    "name": "Arvid Lindblad",
+    "code": "LIN",
+    "team": "rb",
+    "nationality": "British",
+    "wins": 0,
+    "podiums": 0,
+    "points": 5.0
+  },
+  {
+    "id": "bortoleto",
+    "name": "Gabriel Bortoleto",
+    "code": "BOR",
+    "team": "audi",
+    "nationality": "Brazilian",
+    "wins": 0,
+    "podiums": 0,
+    "points": 2.0
+  },
+  {
+    "id": "ocon",
+    "name": "Esteban Ocon",
+    "code": "OCO",
+    "team": "haas",
+    "nationality": "French",
+    "wins": 0,
+    "podiums": 0,
+    "points": 1.0
+  },
+  {
+    "id": "albon",
+    "name": "Alexander Albon",
+    "code": "ALB",
+    "team": "williams",
+    "nationality": "Thai",
+    "wins": 0,
+    "podiums": 0,
+    "points": 1.0
+  },
+  {
+    "id": "hulkenberg",
+    "name": "Nico H\u00fclkenberg",
+    "code": "HUL",
+    "team": "audi",
+    "nationality": "German",
+    "wins": 0,
+    "podiums": 0,
+    "points": 0.0
+  },
+  {
+    "id": "bottas",
+    "name": "Valtteri Bottas",
+    "code": "BOT",
+    "team": "cadillac",
+    "nationality": "Finnish",
+    "wins": 0,
+    "podiums": 0,
+    "points": 0.0
+  },
+  {
+    "id": "perez",
+    "name": "Sergio P\u00e9rez",
+    "code": "PER",
+    "team": "cadillac",
+    "nationality": "Mexican",
+    "wins": 0,
+    "podiums": 0,
+    "points": 0.0
+  },
+  {
+    "id": "stroll",
+    "name": "Lance Stroll",
+    "code": "STR",
+    "team": "aston_martin",
+    "nationality": "Canadian",
+    "wins": 0,
+    "podiums": 0,
+    "points": 0.0
+  },
+  {
+    "id": "alonso",
+    "name": "Fernando Alonso",
+    "code": "ALO",
+    "team": "aston_martin",
+    "nationality": "Spanish",
+    "wins": 0,
+    "podiums": 0,
+    "points": 0.0
+  }
+]

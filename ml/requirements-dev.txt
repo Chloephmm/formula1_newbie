@@ -1,0 +1,7 @@
+# Development-only dependencies (NOT needed to run the app/pipeline).
+# Install with:  pip install -r requirements-dev.txt
+# (run the project itself with requirements.txt)
+
+-r requirements.txt   # dev env also needs the runtime deps
+
+pytest                # unit tests in ml/tests/

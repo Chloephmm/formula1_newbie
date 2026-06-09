@@ -1,0 +1,93 @@
+{
+  "podium": {
+    "logLoss": 0.2288,
+    "rocAuc": 0.9346,
+    "top1Accuracy": 0.566,
+    "top3Accuracy": 0.6981,
+    "baseline": {
+      "rocAuc": 0.9346,
+      "top1Accuracy": 0.4717,
+      "top3Accuracy": 0.6792
+    },
+    "xgboost": {
+      "logLoss": 0.2261,
+      "rocAuc": 0.9369,
+      "top1Accuracy": 0.5283,
+      "top3Accuracy": 0.7107
+    },
+    "testRows": 1068,
+    "testPositives": 159
+  },
+  "calibration": [
+    {
+      "predicted": 0.0302,
+      "actual": 0.0093
+    },
+    {
+      "predicted": 0.0303,
+      "actual": 0.0
+    },
+    {
+      "predicted": 0.0305,
+      "actual": 0.0
+    },
+    {
+      "predicted": 0.031,
+      "actual": 0.0094
+    },
+    {
+      "predicted": 0.0325,
+      "actual": 0.0093
+    },
+    {
+      "predicted": 0.0375,
+      "actual": 0.0093
+    },
+    {
+      "predicted": 0.0555,
+      "actual": 0.0943
+    },
+    {
+      "predicted": 0.1398,
+      "actual": 0.1682
+    },
+    {
+      "predicted": 0.4349,
+      "actual": 0.4299
+    },
+    {
+      "predicted": 0.7887,
+      "actual": 0.757
+    }
+  ],
+  "featureImportances": [
+    {
+      "feature": "quali_time_gap_to_pole",
+      "importance": 0.1956
+    },
+    {
+      "feature": "recent_points",
+      "importance": 0.1886
+    },
+    {
+      "feature": "team_strength",
+      "importance": 0.1714
+    },
+    {
+      "feature": "track_history",
+      "importance": 0.161
+    },
+    {
+      "feature": "grid_position",
+      "importance": 0.1309
+    },
+    {
+      "feature": "recent_form",
+      "importance": 0.1254
+    },
+    {
+      "feature": "dnf_rate",
+      "importance": 0.0272
+    }
+  ]
+}
