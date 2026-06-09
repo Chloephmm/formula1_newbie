@@ -140,7 +140,7 @@ def resolve(as_of_iso: str):
 
 
 def fmt_short(iso: str) -> str:
-    return datetime.strptime(iso, "%Y-%m-%d").strftime("%a %d %b")
+    return datetime.strptime(iso, "%Y-%m-%d").strftime("%a %m/%d")
 
 
 # ============================ STYLES ============================
@@ -174,8 +174,10 @@ def inject_css():
       .block-container{{ max-width:1120px; padding-top:1.6rem; padding-bottom:5rem; }}
       html, body, [class*="css"], .stMarkdown, p, span, div {{ font-family:var(--sans); color:var(--ink); }}
       /* tighten Streamlit's default vertical spacing between stacked elements */
-      [data-testid="stVerticalBlock"]{{ gap:.55rem; }}
+      [data-testid="stVerticalBlock"]{{ gap:.2rem; }}
       [data-testid="stElementContainer"]{{ margin:0; }}
+      .lede{{ margin-bottom:0; }}
+      [data-testid="stDateInput"] label{{ margin-bottom:2px; }}
 
       /* header */
       .eyebrow{{display:flex;align-items:center;gap:11px;font-family:var(--mono);font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:#ffd7b0;}}
@@ -185,7 +187,9 @@ def inject_css():
       .lede{{font-size:17px;line-height:1.55;color:#d6d9d4;max-width:560px;}}
 
       /* date input -> styled like the prototype field */
-      [data-testid="stDateInput"]{{ width:max-content; }}
+      [data-testid="stDateInput"]{{ width:100%; }}
+      /* tighten the column gap between the date field and the RUN button */
+      [data-testid="stHorizontalBlock"]{{ gap:.5rem; }}
       [data-testid="stDateInput"] label p{{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}}
       [data-testid="stDateInput"] [data-baseweb="input"], [data-testid="stDateInput"] [data-baseweb="base-input"]{{
         background:var(--slate)!important;border:1px solid var(--line-strong)!important;border-radius:11px!important;}}
@@ -196,7 +200,7 @@ def inject_css():
       [data-baseweb="calendar"] [aria-selected="true"], [data-baseweb="calendar"] [aria-selected="true"] *{{color:#ffffff!important;}}
       [data-baseweb="calendar"] [aria-disabled="true"], [data-baseweb="calendar"] [aria-disabled="true"] *{{color:#b7bcc2!important;}}
       /* refresh / run button -> match the dark theme */
-      [data-testid="stButton"] button{{background:var(--slate);color:var(--ink);border:1px solid var(--line-strong);border-radius:11px;font-family:var(--mono);font-weight:800;letter-spacing:.08em;padding:.55rem 1.6rem;transition:all .2s ease;}}
+      [data-testid="stButton"] button{{background:var(--slate);color:var(--ink);border:1px solid var(--line-strong);border-radius:11px;font-family:var(--mono);font-weight:800;letter-spacing:.08em;padding:.55rem 1.6rem;transition:all .2s ease;white-space:nowrap;}}
       [data-testid="stButton"] button:hover{{border-color:var(--red);color:#fff;box-shadow:0 0 18px rgba(255,59,48,.25);}}
       [data-testid="stButton"] button:focus{{box-shadow:none!important;}}
 
@@ -210,7 +214,7 @@ def inject_css():
       .panel-head .hint{{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);}}
 
       /* race strip */
-      .race-strip{{display:flex;align-items:center;gap:16px;margin-top:14px;}}
+      .race-strip{{display:flex;align-items:center;gap:16px;margin-top:2px;}}
       .race-flag{{font-size:42px;line-height:1;}}
       .race-name h2{{font-size:32px;font-weight:800;letter-spacing:-.02em;margin:0;}}
       .race-meta{{display:flex;font-family:var(--mono);font-size:12.5px;color:var(--dim);margin-top:6px;}}
@@ -219,7 +223,7 @@ def inject_css():
       .race-meta b{{color:var(--ink);font-weight:600;}}
 
       /* mode badge */
-      .mode{{display:flex;align-items:center;gap:13px;padding:14px 20px;border-radius:13px;font-size:14.5px;margin-top:12px;border:1px solid;}}
+      .mode{{display:flex;align-items:center;gap:13px;padding:14px 20px;border-radius:13px;font-size:14.5px;margin-top:6px;border:1px solid;}}
       .mode.pre{{background:rgba(255,210,63,.10);border-color:rgba(255,210,63,.4);color:#ffe08a;}}
       .mode.real{{background:rgba(47,209,107,.10);border-color:rgba(47,209,107,.42);color:#9bf0bf;}}
       .mode .pulse{{width:11px;height:11px;border-radius:50%;}}
@@ -304,8 +308,8 @@ def race_strip_html(race) -> str:
         <h2>{race['name']}</h2>
         <div class="race-meta">
           <span>Round <b>{race['round']:02d}</b></span>
-          <span>Race <b>{fmt_short(race['race'])}</b></span>
           <span>Quali <b>{fmt_short(race['quali'])}</b></span>
+          <span>Race <b>{fmt_short(race['race'])}</b></span>
         </div>
       </div>
     </div>
@@ -455,21 +459,26 @@ inject_css()
 st.html(header_html())
 
 # Selectable range: today → the final 2026 race (no past races; we predict upcoming ones).
+# Date picker + RUN button sit side-by-side (bottom-aligned so RUN lines up with the field).
 _today = date.today()
-as_of = st.date_input(
-    "As-of date",
-    value=_today,
-    min_value=_today,
-    max_value=date(2026, 12, 6),   # 2026 season finale (Abu Dhabi)
-    format="YYYY-MM-DD",
-)
+_date_col, _btn_col, _ = st.columns([2, 1, 5], vertical_alignment="bottom")
+with _date_col:
+    as_of = st.date_input(
+        "As-of date",
+        value=_today,
+        min_value=_today,
+        max_value=date(2026, 12, 6),   # 2026 season finale (Abu Dhabi)
+        format="YYYY-MM-DD",
+    )
 as_of_iso = as_of.isoformat()
 
 # Refresh button — re-fetch the latest data so "after qualifying" predictions use the
 # real grid. Click it once qualifying (or the race) has run for the selected weekend.
-if st.button("**RUN**",
-             help="Fetch the latest results & qualifying from the F1 API, then re-predict. "
-                  "Use after a qualifying session to switch to real-grid mode."):
+with _btn_col:
+    _run = st.button("**RUN**",
+                     help="Fetch the latest results & qualifying from the F1 API, then re-predict. "
+                          "Use after a qualifying session to switch to real-grid mode.")
+if _run:
     with st.spinner("Fetching the latest F1 data…"):
         try:
             refresh_season_data(as_of.year)
