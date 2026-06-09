@@ -171,8 +171,11 @@ def inject_css():
         background-size:cover; background-position:center top; background-attachment:fixed;
       }}
       [data-testid="stHeader"], #MainMenu, footer {{ display:none; }}
-      .block-container{{ max-width:1120px; padding-top:2.2rem; padding-bottom:5rem; }}
+      .block-container{{ max-width:1120px; padding-top:1.6rem; padding-bottom:5rem; }}
       html, body, [class*="css"], .stMarkdown, p, span, div {{ font-family:var(--sans); color:var(--ink); }}
+      /* tighten Streamlit's default vertical spacing between stacked elements */
+      [data-testid="stVerticalBlock"]{{ gap:.55rem; }}
+      [data-testid="stElementContainer"]{{ margin:0; }}
 
       /* header */
       .eyebrow{{display:flex;align-items:center;gap:11px;font-family:var(--mono);font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:#ffd7b0;}}
@@ -199,7 +202,7 @@ def inject_css():
 
       /* cards */
       .card{{background:var(--card);backdrop-filter:blur(16px) saturate(1.1);border:1px solid var(--line);border-radius:18px;}}
-      .results{{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;margin-top:20px;}}
+      .results{{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;margin-top:12px;}}
       @media(max-width:820px){{.results{{grid-template-columns:1fr;}}}}
       .panel-head{{display:flex;align-items:center;gap:12px;padding:18px 24px;border-bottom:1px solid var(--line);}}
       .panel-head .ic{{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;}}
@@ -207,7 +210,7 @@ def inject_css():
       .panel-head .hint{{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);}}
 
       /* race strip */
-      .race-strip{{display:flex;align-items:center;gap:16px;margin-top:30px;}}
+      .race-strip{{display:flex;align-items:center;gap:16px;margin-top:14px;}}
       .race-flag{{font-size:42px;line-height:1;}}
       .race-name h2{{font-size:32px;font-weight:800;letter-spacing:-.02em;margin:0;}}
       .race-meta{{display:flex;font-family:var(--mono);font-size:12.5px;color:var(--dim);margin-top:6px;}}
@@ -216,7 +219,7 @@ def inject_css():
       .race-meta b{{color:var(--ink);font-weight:600;}}
 
       /* mode badge */
-      .mode{{display:flex;align-items:center;gap:13px;padding:14px 20px;border-radius:13px;font-size:14.5px;margin-top:22px;border:1px solid;}}
+      .mode{{display:flex;align-items:center;gap:13px;padding:14px 20px;border-radius:13px;font-size:14.5px;margin-top:12px;border:1px solid;}}
       .mode.pre{{background:rgba(255,210,63,.10);border-color:rgba(255,210,63,.4);color:#ffe08a;}}
       .mode.real{{background:rgba(47,209,107,.10);border-color:rgba(47,209,107,.42);color:#9bf0bf;}}
       .mode .pulse{{width:11px;height:11px;border-radius:50%;}}
@@ -263,13 +266,13 @@ def inject_css():
       .accstat .av{{font-family:var(--mono);font-size:24px;font-weight:700;}}
       .accstat .av .u{{font-size:13px;color:var(--dim);}}
       .accstat .ak{{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:5px;}}
-      .disclaimer{{display:flex;gap:14px;margin-top:26px;padding:18px 22px;border-radius:13px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.22);}}
+      .disclaimer{{display:flex;gap:14px;margin-top:14px;padding:18px 22px;border-radius:13px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.22);}}
       .disclaimer .wi{{color:var(--amber);font-size:18px;}}
       .disclaimer p{{font-size:13.5px;line-height:1.6;color:#d4c9b4;margin:0;}}
       .disclaimer b{{color:#ffd99a;}}
 
       /* compare expander (native st.expander) */
-      [data-testid="stExpander"]{{background:var(--card);border:1px solid var(--line)!important;border-radius:18px!important;margin-top:20px;}}
+      [data-testid="stExpander"]{{background:var(--card);border:1px solid var(--line)!important;border-radius:18px!important;margin-top:12px;}}
       [data-testid="stExpander"] summary p{{font-weight:700;font-size:15px;}}
       .cmp-grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px;}}
       .cmp-col h5{{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 0 12px;}}
