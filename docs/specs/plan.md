@@ -12,11 +12,11 @@ no live inference, no database. Data from **Jolpica** (Ergast successor) + optio
 **FastF1**. Model = LightGBM + logistic-regression baseline, wrapped in
 `CalibratedClassifierCV`.
 
-**Guardrails (this is a 1-week build, frontend is the risk):**
+**Guardrails:**
 - Build the Next.js components incrementally; keep them small and reviewable.
 - Keep the frontend simple — Tailwind + Recharts + static JSON. No SSR/API routes/auth.
 - Timebox: if the frontend runs long, cut polish, not the deadline.
-- v1 scope = **podium prediction only** (predicted winner = top of the podium). Defer
+- Scope = **podium prediction only** (predicted winner = top of the podium). Defer
   FastF1 telemetry + championship mode.
 
 **Monorepo:** `ml/` (Python, offline) and `web/` (Next.js). The ML side writes JSON into
@@ -260,31 +260,3 @@ updates on race change, and the Model page shows real metrics + calibration curv
 6. Final QA: typos, dead links, 404s, theme consistency.
 
 **Acceptance check:** Live Vercel URL works end-to-end; README links to it.
-
----
-
-## Suggested 1-week schedule
-
-| Day | Focus |
-|-----|-------|
-| 1 | Phase 0 scaffold ✅ + Phase 1 data layer (your strength — go fast) |
-| 2 | Finish data layer + Phase 2 features |
-| 3 | Finish features + Phase 3 train/calibrate |
-| 4 | Finish evaluate/export JSON + Phase 4 Next.js scaffold |
-| 5 | Pages: Home, History, Teams |
-| 6 | Pages: Predict + Model + polish |
-| 7 | Notebooks, README, Vercel deploy, final QA |
-
-## Definition of done
-- ML pipeline produces calibrated predictions + the 5 JSON files.
-- Next.js app renders all 5 pages from JSON; Predict chart is interactive.
-- Model page shows honest metrics + calibration curve + limitations.
-- Decoupled repo (`ml/` + `web/`) is clean and documented.
-- Live free deploy on Vercel, linked from README.
-
-## Scope discipline
-- Frontend simple and static — no SSR/API routes/auth/live inference.
-- If features run long, ship with `grid_position + quali_time_gap_to_pole + recent_form +
-  team_strength` first.
-- Defer FastF1 telemetry (`clean_air_race_pace` is v2), championship mode, and auto-refresh
-  Action to "future ideas."

@@ -2,18 +2,12 @@
 
 **Date:** 2026-06-01
 **Author:** Chloe Pham
-**Status:** Approved (design phase) — Next.js stack
 
 ## 1. Purpose
 
-A beginner-friendly website that makes Formula 1 fun and easy to learn — and doubles
-as a data-science portfolio piece. The site teaches F1 basics through clean content
-pages and showcases a real, decoupled ML pipeline that predicts each race's **podium
-(top 3)** with **calibrated** probabilities (the top pick = predicted winner). Target
-audience: F1 newcomers (for the content) and portfolio reviewers / hiring managers
-(for the data science + engineering).
+A beginner-friendly website that makes Formula 1 fun and easy. The site teaches F1 basics through clean content pages and showcases a real, decoupled ML pipeline that predicts each race's **podium (top 3)** with **calibrated** probabilities (the top pick = predicted winner).
 
-## 2. Goals & Non-Goals
+## 2. Goals
 
 **Goals**
 - Teach F1 history, teams, and drivers simply and at a high level.
@@ -22,14 +16,7 @@ audience: F1 newcomers (for the content) and portfolio reviewers / hiring manage
 - Predict, per race, each driver's **podium (top-3) probability**. The highest-ranked
   driver is the predicted winner — so the single podium model covers both.
 - A modern, minimal, aesthetic frontend that renders that JSON.
-- Free to build and host; achievable by a Python-strong newcomer in ~1 week.
 
-**Non-Goals**
-- No live model inference in the browser or on a server — predictions are precomputed
-  offline and shipped as static JSON.
-- No backend/API service, no database, no auth, no SSR data fetching.
-- No betting/gambling features or accuracy guarantees.
-- No FastF1 telemetry deep-dives in v1 (optional later).
 
 ## 3. Architecture
 
@@ -63,9 +50,6 @@ pure static renderer. This is the portfolio-friendly separation reviewers like.
 - **Hosting:** **Vercel** (free), auto-deploy from GitHub.
 - **Cost:** $0.
 
-> **macOS note:** LightGBM needs the OpenMP runtime (`libomp.dylib`). If `import lightgbm`
-> fails with a `libomp` error, run `bash ml/scripts/fix_libomp_macos.sh` (reuses an
-> existing libomp — e.g. from Anaconda — no Homebrew needed).
 
 **Guardrails (to fit 1 week):**
 1. Build frontend components incrementally — keep them small and reviewable.
@@ -77,7 +61,7 @@ pure static renderer. This is the portfolio-friendly separation reviewers like.
 
 ```
 formula1_newbie/
-├── ml/                       # Python pipeline (offline)
+├── ml/                       # Python pipeline
 │   ├── src/
 │   │   ├── data/             # jolpica.py, fastf1_loader.py, cache.py
 │   │   ├── features/         # build_features.py
@@ -111,29 +95,8 @@ Small, versioned files in `web/public/data/`:
 - `metrics.json` — `{ podium: {logLoss, rocAuc, top3Accuracy, top1Accuracy, baseline}, calibration: [...], featureImportances: [{feature, importance}] }`
   (`top1Accuracy` = did the #1 driver by podium-prob actually win — the "winner" view)
 
-The frontend types in `web/lib/types.ts` mirror these shapes exactly.
 
-## 7. Site Map
-
-```
-🏁 Home          Rotating welcome (5 variants) + 3-line "what is F1" + nav cards
-📜 History       Simple high-level timeline, hand-written (~6 milestones)
-🏎️ Teams         Cards from teams.json; select a team → its drivers + stats
-🔮 Predict       Pick a race → predicted podium (top-3 visual) + ranked podium-probability
-                 bar chart (Recharts) + plain-English explanation
-📊 Model (About) Pipeline, feature-importance bars, calibrated podium metrics,
-                 reliability curve, limitations
-```
-
-**Content sourcing (hybrid):** History hand-written; Teams/Drivers/Predict/Model are
-data-driven from the exported JSON.
-
-## 8. Homepage Welcome Variants
-
-5 welcome sentences in different tones; pick one at render time
-(`array[Math.floor(Math.random()*5)]`).
-
-## 9. ML Pipeline Detail
+## 7. ML Pipeline Detail
 
 - **Target (single binary classifier):** `podium` — `y = 1 if finished top 3 else 0`.
 - **Features (v1, Jolpica-only):** grid position, **`quali_time_gap_to_pole`** (driver's
@@ -160,7 +123,7 @@ data-driven from the exported JSON.
   once its qualifying exists; Limitations section on the Model page.
 - **Caching:** API responses cached to parquet so re-runs are fast.
 
-## 10. Visual / Aesthetic Direction
+## 8. Visual / Aesthetic Direction
 
 - **Light & minimal** — generous whitespace, clean sans-serif, restrained F1-red accent.
   Editorial, not "broadcast dashboard."
@@ -169,11 +132,11 @@ data-driven from the exported JSON.
 - **Component inspiration** (from a reference artifact, re-styled light/minimal): a
   podium visual for the top-3, horizontal feature-importance bars, metric cards, and a
   full predictions table with subtle gold/silver/bronze accents for P1–P3.
-- **Honesty note:** unlike the reference mockup, we do NOT show fake live "feature
+- **Honesty note:** unlike the reference mockup, I do NOT show fake live "feature
   weight" sliders or fabricated confidence numbers. Feature importances are the real,
   static output of the trained model; probabilities are calibrated.
 
-## 11. Success Criteria
+## 9. Success Criteria
 
 - A newcomer understands F1 basics in a few minutes from the content pages.
 - Predict page shows a ranked, calibrated podium-probability chart per chosen race.
@@ -181,18 +144,16 @@ data-driven from the exported JSON.
 - Decoupled repo (ml/ + web/) is clean and documented for a portfolio.
 - Deploys free on Vercel.
 
-## 12. Risks & Mitigations
+## 10. Risks & Mitigations
 
 - **Frontend is the schedule risk (Next.js, new to author):** scope components tightly;
   keep it static/simple; timebox.
-- **Time pressure (1 week):** v1 = podium prediction only; defer FastF1 telemetry and
-  championship mode.
 - **Sparse positives (~3 podiums per ~20 drivers):** per-driver probability framing;
   calibration + `scale_pos_weight` help.
 - **JSON/type drift between ml/ and web/:** single documented data contract (§6);
   TypeScript types mirror it.
 
-## 13. Out of Scope (future ideas)
+## 11. Out of Scope (future ideas)
 
 - Auto-refresh predictions via scheduled GitHub Action committing fresh JSON.
 - FastF1 telemetry analysis (tire strategy, lap times).
