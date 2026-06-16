@@ -201,7 +201,8 @@ def inject_css():
       [data-baseweb="calendar"] [aria-disabled="true"], [data-baseweb="calendar"] [aria-disabled="true"] *{{color:#b7bcc2!important;}}
       /* refresh / run button -> match the dark theme */
       [data-testid="stButton"] button{{background:var(--slate);color:var(--ink);border:1px solid var(--line-strong);border-radius:11px;font-family:var(--mono);font-weight:800;letter-spacing:.08em;padding:.55rem 1.6rem;transition:all .2s ease;white-space:nowrap;}}
-      [data-testid="stButton"] button:hover{{border-color:var(--red);color:#fff;box-shadow:0 0 18px rgba(255,59,48,.25);}}
+      [data-testid="stButton"] button:hover{{background:var(--ink)!important;border-color:var(--red)!important;color:#15151e!important;box-shadow:0 0 18px rgba(255,59,48,.25);}}
+      [data-testid="stButton"] button:hover *{{color:#15151e!important;}}
       [data-testid="stButton"] button:focus{{box-shadow:none!important;}}
 
       /* cards */
