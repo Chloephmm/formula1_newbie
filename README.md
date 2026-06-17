@@ -11,7 +11,9 @@ with **calibrated** probabilities.
 ## What it does
 
 - **Learn F1** — simple, high-level pages on F1 history, teams, and drivers.
-- **Predict** — pick a race and see calibrated ML win probabilities for each driver.
+- **Predict** — pick a race and see calibrated ML win probabilities for each driver. In the
+  Streamlit app, the **RUN** button re-fetches the latest data and **retrains both models on
+  every race before that Grand Prix** (leakage-safe) before predicting.
 - **See the data science** — a transparent, decoupled pipeline (ingest → features →
   train → calibrate → evaluate → export JSON) with honest metrics, a calibration curve,
   and limitations.

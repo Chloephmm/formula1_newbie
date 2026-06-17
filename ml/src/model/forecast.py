@@ -6,27 +6,46 @@ Returns a structured dict (no printing) so it can be reused by:
 
 Pipeline: date -> next race -> data before it -> Stage-1 quali model -> Stage-2 race
 model. MODE 1 (pre-qualifying) always; MODE 2 (real grid) when qualifying exists by then.
+
+Both models are trained live (expanding window, every race strictly before the target GP).
+Callers may pass pre-trained models via `models=` to skip the retrain — the Streamlit app
+uses this to cache the retrain across renders. With `models=None`, `forecast()` retrains
+internally via `retrain_live()`.
 """
 from __future__ import annotations
 
-from pathlib import Path
-
-import joblib
 import numpy as np
 import pandas as pd
 
 from src.data.jolpica import laptime_to_seconds
 from src.model.data import FEATURES, ML_DIR
 from src.model.quali import QUALI_FEATURES
+from src.model.retrain import retrain_live
 
 RAW = ML_DIR / "data" / "raw"
-MODELS = ML_DIR / "models"
 WINDOW = 5
 
 
 def _load(t):
     return pd.concat([pd.read_parquet(f) for f in sorted(RAW.glob(f"{t}_*.parquet"))],
                      ignore_index=True)
+
+
+def _load_schedule():
+    sched = _load("schedule")
+    sched["date"] = pd.to_datetime(sched["date"], errors="coerce")
+    return sched.dropna(subset=["date"]).sort_values("date")
+
+
+def next_race(asof):
+    """The next Grand Prix on/after `asof` as a schedule row, or None if none remain.
+
+    Shared by `forecast()` and the Streamlit app so both agree on the target race
+    (and the app can key the live-retrain cache on it) without duplicating the lookup.
+    """
+    asof = pd.Timestamp(asof).normalize()
+    upcoming = _load_schedule()[lambda s: s["date"] >= asof]
+    return None if upcoming.empty else upcoming.iloc[0]
 
 
 def _podium(model, X):
@@ -40,19 +59,20 @@ def _pod(row, prob):
             "teamId": row.team_id, "podiumProbability": round(float(prob), 4)}
 
 
-def forecast(asof) -> dict:
-    """Predict qualifying + podium for the next race on/after `asof` (date or 'YYYY-MM-DD')."""
+def forecast(asof, models=None) -> dict:
+    """Predict qualifying + podium for the next race on/after `asof` (date or 'YYYY-MM-DD').
+
+    `models`: optional ``{"podium": clf, "quali": reg}`` already trained for this race.
+    When omitted, both stages are retrained inline on every race before the target GP.
+    """
     asof = pd.Timestamp(asof).normalize()
 
-    sched = _load("schedule")
-    sched["date"] = pd.to_datetime(sched["date"], errors="coerce")
-    sched = sched.dropna(subset=["date"]).sort_values("date")
-    upcoming = sched[sched["date"] >= asof]
-    if upcoming.empty:
+    tgt = next_race(asof)
+    if tgt is None:
+        latest = _load_schedule()["date"].max().date()
         return {"error": f"No race on/after {asof.date()} in cached data "
-                         f"(latest: {sched['date'].max().date()}). Fetch newer data first."}
+                         f"(latest: {latest}). Fetch newer data first."}
 
-    tgt = upcoming.iloc[0]
     tseason, tround = int(tgt.season), int(tgt["round"])
     tcircuit, tdate = tgt.circuit_id, tgt["date"]
     quali_date = tdate - pd.Timedelta(days=1)
@@ -106,8 +126,9 @@ def forecast(asof) -> dict:
     X["track_history"] = X["track_history"].fillna(X["recent_form"])
     X["quali_track_hist"] = X["quali_track_hist"].fillna(X["recent_quali_gap"])
 
-    race_model = joblib.load(MODELS / "podium_model.pkl")["model"]
-    quali_model = joblib.load(MODELS / "quali_model.pkl")["model"]
+    if models is None:
+        models = retrain_live(tdate.date().isoformat(), tseason, tround)
+    race_model, quali_model = models["podium"], models["quali"]
 
     # MODE 1 — pre-qualifying (Stage 1 -> Stage 2)
     g = quali_model.predict(X[QUALI_FEATURES])

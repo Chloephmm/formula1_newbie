@@ -6,13 +6,20 @@ prediction modes (chosen by the user's **as-of date**), and the machine-learning
 Code: `streamlit_app/app.py` (UI) · `ml/src/model/forecast.py` (pipeline) ·
 `ml/src/model/quali.py` (Stage 1) · `ml/src/model/train.py` (Stage 2).
 
+For the data-science detail (algorithms, features, splits, hyperparameters,
+live retrain) see [`ml-models.md`](./ml-models.md). For a one-page visual:
+[`assets/prediction-flow.svg`](./assets/prediction-flow.svg).
+
+![Prediction flow](./assets/prediction-flow.svg)
+
 ---
 
 ## Full logic flow
 
 ```
 USER picks a date  (app.py: st.date_input)
-   │   [🔄 Run / refresh button → re-fetch season from Jolpica + clear cache + rerun]
+   │   [▶ RUN button → re-fetch season from Jolpica → RETRAIN both models on every race
+   │    before the target GP (leakage-safe) → clear cache + rerun]
    ▼
 resolve(date)  →  forecast(date)   (src/model/forecast.py)
    │
@@ -81,15 +88,17 @@ shows predicted grid vs actual grid with ▲/▼ movement, and the app shows the
 
 ## Machine-learning models
 
-| Role | File | Algorithm | Predicts | Calibrated | Train / eval |
+| Role | Code | Algorithm | Predicts | Calibrated | Trained on |
 |---|---|---|---|---|---|
-| **Stage 1 — Qualifying** | `models/quali_model.pkl` | **LightGBM regressor** | gap-to-pole (s) → grid | n/a | train ≤2022, test ≥2024 |
-| **Stage 2 — Podium (shipped)** | `models/podium_model.pkl` | **LightGBM classifier** | P(top-3) | **yes** (sigmoid, on 2023) | train ≤2022, calibrate 2023, test ≥2024 |
-| Baseline | (in artifact) | Logistic regression | P(top-3) | — | benchmark only |
-| Benchmark | (metrics.json only) | **XGBoost** (calibrated) | P(top-3) | yes | benchmark only |
+| **Stage 1 — Qualifying (live)** | `retrain.train_quali_live` | **LightGBM regressor** | gap-to-pole (s) → grid | n/a | every race before the target GP |
+| **Stage 2 — Podium (live)** | `retrain.train_podium_live` | **LightGBM classifier** | P(top-3) | **yes** (sigmoid, 5-fold CV) | every race before the target GP |
+| Held-out metrics — Stage 2 | `train.py` | LightGBM + Logistic baseline + XGBoost benchmark | P(top-3) | sigmoid (on 2023) | ≤2022 fit · 2023 calib · ≥2024 test |
+| Held-out metrics — Stage 1 | `quali.train_quali` | LightGBM regressor | gap-to-pole (s) | n/a | ≤2022 fit · ≥2024 test |
 
-Discipline (all): **no leakage** (features use only pre-race data, `shift(1)` in training),
-**split by season**, probabilities **calibrated**.
+Discipline: **no leakage** (features use only pre-race data, `shift(1)` in training),
+probabilities **calibrated**. The "held-out metrics" trainers exist only to populate
+the metrics page (`metrics.json`, `quali_metrics.json`) — they do not serve predictions.
+See [`ml-models.md`](./ml-models.md) for the full data-science reference.
 
 ### How the podium is produced (Stage 2)
 ```python
@@ -110,13 +119,34 @@ beat the logistic baseline → **LightGBM shipped** (stronger top-1 accuracy).
 ## Data flow / live update
 
 ```
-Jolpica API ──(🔄 Run: fetch refresh)──▶ ml/data/raw/*.parquet ──(read live)──▶ models ──▶ app
+Jolpica API ──(▶ RUN: fetch refresh)──▶ ml/data/raw/*.parquet ──▶ RETRAIN ──▶ app
 ```
 
 Predictions run **live** in the app from the **cached** parquet. The cache changes only on
-refresh. The 🔄 Run button does: re-fetch season (`refresh=True`) → `st.cache_data.clear()`
-→ `st.rerun()` → `forecast()` re-reads the new data → mode flips 🟡→🟢 if qualifying is now
-present and date > quali day.
+refresh. The ▶ RUN button does: re-fetch season (`refresh=True`) → **retrain both models on
+the new data** → `st.cache_data.clear()` → `st.rerun()` → `forecast(models=…)` re-predicts →
+mode flips 🟡→🟢 if qualifying is now present and date > quali day.
+
+### Live retrain
+On every prediction, `src/model/retrain.py` refits **both** stages on **every race strictly
+before the target GP** (expanding window, leakage-safe). The podium probabilities are
+calibrated with **5-fold CV sigmoid** (no held-out season, so recent races train the trees
+too). Features are built **in memory** (`build_feature_table` / `build_quali_features`),
+so it does not need the gitignored `data/processed/features.parquet`.
+
+- **Caching:** `app.py` keys an `st.cache_resource` on a raw-data fingerprint + target race,
+  so a RUN that fetched new data retrains **once** (~10–17s podium / ~20–35s both on Streamlit
+  Cloud); date changes and reruns are instant cache hits.
+- **First paint:** `web/public/data/next_race_prediction.json` (written by
+  `scripts/precompute_next_race.py`) is served instantly when its race matches today's
+  next-race. When it doesn't match (e.g. user picks a future race), `forecast()` retrains
+  inline — one-time spinner, then cached.
+- **Why:** backtests (`scripts/backtest_live.py`) show recency helps — podium hit rate up
+  (biggest on 2026), quali pole accuracy 22%→31%, gap MAE 0.67s→0.58s over 2024–26.
+- **Accuracy bar:** shows the live model's **walk-forward backtest** over 2024–26
+  (`live_metrics.json`, from `scripts/backtest_live.py --write`) — leakage-safe and
+  representative of the production regime. (The separate Next.js metrics page still
+  uses the held-out `metrics.json` / `quali_metrics.json`.)
 
 | Moment (predicting Race N) | Needs | Action |
 |---|---|---|
@@ -128,7 +158,8 @@ Notes:
 - The button only fetches what Jolpica has **published** (qualifying appears a few hours
   after the real session). Click after qualifying → real grid; click before → stays
   pre-qualifying (expected).
-- **Models are not retrained per race** — only the input data is refreshed. Retraining
-  (`train_model.py`, `build_quali_model.py`) is optional, e.g. end of season.
+- Models retrain on every prediction (cached aggressively). The offline trainers
+  (`train_model.py`, `build_quali_model.py`) still produce the held-out metrics for the
+  metrics page — they don't serve predictions.
 - macOS: LightGBM/XGBoost need `libomp` — run `bash ml/scripts/fix_libomp_macos.sh` if an
   import fails after recreating the venv.

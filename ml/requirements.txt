@@ -8,3 +8,4 @@ joblib
 altair
 fastf1
 pyarrow
+optuna       # offline only — scripts/tune_hyperparams.py (not needed by the Streamlit app)
