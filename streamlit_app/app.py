@@ -9,6 +9,7 @@
 #   streamlit run app.py
 # -------------------------------------------------------------------
 import base64
+import hashlib
 import json
 import sys
 from datetime import date, datetime
@@ -19,7 +20,8 @@ import streamlit as st
 # make the ml/ package importable (models + cached data live under ../ml)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ml"))
 from src.model.data import ML_DIR  # noqa: E402
-from src.model.forecast import forecast  # noqa: E402
+from src.model.forecast import forecast, next_race  # noqa: E402
+from src.model.retrain import retrain_live  # noqa: E402
 
 st.set_page_config(page_title="F1 Race Predictor", page_icon="🏁", layout="wide")
 
@@ -98,15 +100,75 @@ def refresh_season_data(season: int):
         cache.cached(f"{name}_{season}", lambda fn=fn, s=season: fn(s), refresh=True)
 
 
-@st.cache_data(show_spinner=False)
-def _run_forecast(as_of_iso: str):
-    """Cache the (expensive) ML forecast by date — pure data, no global mutation."""
+def data_version() -> str:
+    """Fingerprint of the cached raw parquet so the live-model cache invalidates on RUN."""
+    raw = ML_DIR / "data" / "raw"
+    parts = [f"{p.name}:{int(p.stat().st_mtime)}:{p.stat().st_size}"
+             for p in sorted(raw.glob("*.parquet"))]
+    return hashlib.md5("|".join(parts).encode()).hexdigest()[:12]
+
+
+@st.cache_resource(show_spinner=False)
+def _live_models(version: str, season: int, rnd: int, target_iso: str):
+    """Retrain both models for the target race; cached per data snapshot + race.
+
+    `version` (the raw-data fingerprint) is part of the key so a RUN that fetched new data
+    triggers exactly one retrain; date changes / reruns on the same data are cache hits.
+    """
+    return retrain_live(target_iso, season, rnd)
+
+
+_SNAPSHOT_PATH = ML_DIR.parent / "web" / "public" / "data" / "next_race_prediction.json"
+
+
+def _load_snapshot(as_of_iso: str):
+    """Return the precomputed forecast snapshot if it matches the current next-race.
+
+    Written by ``ml/scripts/precompute_next_race.py`` so first paint can show the live
+    model's prediction without paying the retrain cost. When the user's date resolves
+    to a different race (or no snapshot exists), the caller retrains inline instead.
+    """
+    if not _SNAPSHOT_PATH.exists():
+        return None
+    try:
+        snap = json.loads(_SNAPSHOT_PATH.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    tgt = next_race(as_of_iso)
+    if tgt is None:
+        return None
+    snap_race = snap.get("race", {})
+    if (int(snap_race.get("season", -1)) == int(tgt.season)
+            and int(snap_race.get("round", -1)) == int(tgt["round"])):
+        return snap["forecast"]
+    return None
+
+
+@st.cache_data(show_spinner="Training the model on the latest data…")
+def _run_forecast(as_of_iso: str, version: str = ""):
+    """Cache the ML forecast by date (+ data version after RUN).
+
+    Priority:
+      1. ``version`` set (after RUN) -> retrain on freshly fetched data and forecast.
+      2. Precomputed snapshot whose race matches the current next-race -> use it instantly.
+      3. Retrain inline (forecast() handles it) -- one-time spinner, then cached.
+    """
+    if version:
+        tgt = next_race(as_of_iso)
+        if tgt is None:
+            return {"error": "No upcoming race in cached data. Fetch newer data first."}
+        models = _live_models(version, int(tgt.season), int(tgt["round"]),
+                              tgt["date"].date().isoformat())
+        return forecast(as_of_iso, models=models)
+    snap = _load_snapshot(as_of_iso)
+    if snap is not None:
+        return snap
     return forecast(as_of_iso)
 
 
-def resolve(as_of_iso: str):
+def resolve(as_of_iso: str, version: str = ""):
     """Run the live ML forecast for the next race as of the date -> (race, is_real)."""
-    res = _run_forecast(as_of_iso)
+    res = _run_forecast(as_of_iso, version)
     if res.get("error"):
         return None, False
 
@@ -204,6 +266,9 @@ def inject_css():
       [data-testid="stButton"] button:hover{{background:var(--ink)!important;border-color:var(--red)!important;color:#15151e!important;box-shadow:0 0 18px rgba(255,59,48,.25);}}
       [data-testid="stButton"] button:hover *{{color:#15151e!important;}}
       [data-testid="stButton"] button:focus{{box-shadow:none!important;}}
+      /* help tooltip (RUN button) -> dark box + light text so it's readable */
+      [data-testid="stTooltipContent"]{{background:var(--slate)!important;border:1px solid var(--line-strong)!important;border-radius:10px!important;}}
+      [data-testid="stTooltipContent"], [data-testid="stTooltipContent"] *{{color:var(--ink)!important;}}
 
       /* cards */
       .card{{background:var(--card);backdrop-filter:blur(16px) saturate(1.1);border:1px solid var(--line);border-radius:18px;}}
@@ -425,19 +490,24 @@ def compare_html(race) -> str:
     </div>"""
 
 
+_ACC_WINDOW = "2024-2026"   # headline window for the live-model backtest
+
+
 def accuracy_html() -> str:
-    """Real model metrics, read from the saved evaluation files (with fallbacks)."""
-    grid_err, podium_hit, gap_mae, train_races = "±3.4", "70", "0.60", "182"
+    """Live-model accuracy from the walk-forward backtest (ml/models/live_metrics.json).
+
+    These are the production regime's own numbers — for each race the model is trained on
+    every prior race, then scored — so they describe exactly what the app does. Falls back
+    to neutral defaults if the backtest file is missing.
+    """
+    grid_err, podium_hit, gap_mae, n_races = "±3.5", "70", "0.58", "54"
     try:
-        qm = json.loads((ML_DIR / "models" / "quali_metrics.json").read_text())
-        grid_err = f"±{qm['mean_grid_error']:.1f}"
-        gap_mae = f"{qm['median_gap_mae']:.2f}"
-        train_races = str(qm["train_races"])
-    except Exception:
-        pass
-    try:
-        rm = json.loads((ML_DIR.parent / "web" / "public" / "data" / "metrics.json").read_text())
-        podium_hit = str(round(rm["podium"]["top3Accuracy"] * 100))
+        lm = json.loads((ML_DIR / "models" / "live_metrics.json").read_text())
+        q, p = lm["quali"][_ACC_WINDOW], lm["podium"][_ACC_WINDOW]
+        grid_err = f"±{q['c_grid_err']:.1f}"
+        gap_mae = f"{q['c_gap_mae']:.2f}"
+        podium_hit = str(round(p["c_podium"] * 100))
+        n_races = str(q["races"])
     except Exception:
         pass
     return f"""
@@ -445,13 +515,13 @@ def accuracy_html() -> str:
   <div class="accstat"><div class="av">{grid_err}<span class="u"> pos</span></div><div class="ak">Mean grid error (pre-quali)</div></div>
   <div class="accstat"><div class="av">{podium_hit}<span class="u">%</span></div><div class="ak">Podium hit rate</div></div>
   <div class="accstat"><div class="av">{gap_mae}<span class="u">s</span></div><div class="ak">Median gap MAE</div></div>
-  <div class="accstat"><div class="av">{train_races}</div><div class="ak">Races in training set</div></div>
+  <div class="accstat"><div class="av">{n_races}</div><div class="ak">Backtested races (’24–’26)</div></div>
 </div>"""
 
 DISCLAIMER_HTML = """
 <div class="disclaimer"><span class="wi">⚠</span>
   <p>Probabilities are <b>calibrated estimates, not certainties</b> — F1 has crashes, safety cars and rain.
-  The pre-qualifying predicted grid is on average <b>~3.4 positions off</b> per driver.
+  The pre-qualifying predicted grid is on average <b>~3.5 positions off</b> per driver.
   Treat the podium bars as odds, not outcomes.</p></div>"""
 
 
@@ -477,13 +547,20 @@ as_of_iso = as_of.isoformat()
 # real grid. Click it once qualifying (or the race) has run for the selected weekend.
 with _btn_col:
     _run = st.button("**RUN**",
-                     help="Fetch the latest results & qualifying from the F1 API, then re-predict. "
-                          "Use after a qualifying session to switch to real-grid mode.")
+                     help="Fetch the latest results & qualifying from the F1 API, retrain on "
+                          "every race before this Grand Prix, then re-predict. Use after a "
+                          "qualifying session to switch to real-grid mode.")
 if _run:
-    with st.spinner("Fetching the latest F1 data…"):
+    with st.spinner("Fetching the latest F1 data & retraining the model…"):
         try:
             refresh_season_data(as_of.year)
             st.cache_data.clear()
+            ver = data_version()
+            tgt = next_race(as_of_iso)
+            if tgt is not None:  # warm the retrain cache here so it runs under the spinner
+                _live_models(ver, int(tgt.season), int(tgt["round"]),
+                             tgt["date"].date().isoformat())
+            st.session_state["live_version"] = ver
             st.session_state["refreshed_at"] = datetime.now().strftime("%H:%M:%S")
         except Exception as exc:  # noqa: BLE001
             st.error(f"Refresh failed: {exc}")
@@ -493,7 +570,8 @@ if _run:
 if "refreshed_at" in st.session_state:
     st.caption(f"Data last refreshed at {st.session_state['refreshed_at']}")
 
-race, is_real = resolve(as_of_iso)
+_live_version = st.session_state.get("live_version", "")
+race, is_real = resolve(as_of_iso, _live_version)
 if race is None:
     st.warning("No race data available for this date yet. Pick a 2026 in-season date, or "
                "re-fetch the data (ml: `python scripts/fetch_data.py --seasons 2026 --refresh`).")
@@ -515,4 +593,9 @@ else:
     st.caption("Compare: pre-qualifying vs real grid — unlocks after qualifying.")
 
 st.html(accuracy_html())
+st.caption("📈 The model is retrained on every race before this Grand Prix. The figures above "
+           "are its 2024–26 walk-forward backtest (each race scored on a model trained only on "
+           "earlier races — leakage-safe)."
+           + (f"  ·  Data last retrained at {st.session_state['refreshed_at']}."
+              if _live_version and "refreshed_at" in st.session_state else ""))
 st.html(DISCLAIMER_HTML)

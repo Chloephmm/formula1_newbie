@@ -1,0 +1,51 @@
+name: Refresh accuracy bar
+
+# The ONLY scheduled job: every Monday, regenerate the live-model accuracy backtest
+# (ml/models/live_metrics.json — the bottom bar) so it reflects the weekend's race.
+#
+# Everything else (fetching data, rolling the next-race snapshot, real-grid predictions)
+# is handled at runtime by the app's RUN button — not on a schedule.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Monday 06:00 UTC
+  workflow_dispatch:        # manual run from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-accuracy-bar
+  cancel-in-progress: false
+
+jobs:
+  accuracy-bar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install OpenMP runtime (LightGBM needs libgomp)
+        run: sudo apt-get update && sudo apt-get install -y libgomp1
+
+      - name: Install Python deps
+        run: pip install -r ml/requirements.txt
+
+      - name: Refresh accuracy bar (fetch latest, backtest, no snapshot)
+        run: python ml/scripts/refresh_for_next_race.py --no-snapshot --backtest
+
+      - name: Commit & push if the bar changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ml/models/live_metrics.json
+          if git diff --cached --quiet; then
+            echo "Accuracy bar unchanged."
+          else
+            git commit -m "chore: refresh accuracy bar [skip ci]"
+            git push
+          fi

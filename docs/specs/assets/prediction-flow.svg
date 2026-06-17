@@ -1,0 +1,176 @@
+<svg viewBox="0 0 960 1180" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">F1 Podium Prediction — end-to-end flow</title>
+  <desc id="d">One-page diagram: the live data split timeline, the two prediction steps (quali tipster then podium tipster), Mode 1 vs Mode 2 after the RUN button, and a small scorecard explaining quali pole accuracy and quali gap MAE with frozen-vs-live backtest numbers.</desc>
+
+  <style>
+    .h1 { font-size: 22px; font-weight: 700; fill: #111; }
+    .h2 { font-size: 15px; font-weight: 600; fill: #111; }
+    .lbl { font-size: 13px; fill: #111; }
+    .sub { font-size: 12px; fill: #555; }
+    .tiny { font-size: 11px; fill: #555; }
+    .num { font-size: 13px; font-weight: 600; fill: #111; }
+    .box { fill: #fff; stroke: #d0d0d0; stroke-width: 1; }
+    .boxAcc { fill: #fff; stroke: #1f6feb; stroke-width: 1.5; }
+    .chip { fill: #f4f4f4; stroke: #d0d0d0; stroke-width: 1; }
+    .chipOld { fill: #f4f4f4; stroke: #888; stroke-width: 1; stroke-dasharray: 4 3; }
+    .chipNew { fill: #eaf2ff; stroke: #1f6feb; stroke-width: 1.5; }
+    .accent { fill: #1f6feb; }
+    .accentText { fill: #1f6feb; font-weight: 600; }
+    .rule { stroke: #d0d0d0; stroke-width: 1; }
+    .arrow { stroke: #555; stroke-width: 1.4; fill: none; }
+    .arrowAcc { stroke: #1f6feb; stroke-width: 1.6; fill: none; }
+  </style>
+
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+    <marker id="ahAcc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f6feb"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="48" class="h1">F1 Podium Prediction — live model</text>
+  <text x="40" y="70" class="sub">One page: what the model studies, how it predicts, and how we grade it.</text>
+  <line x1="40" y1="86" x2="920" y2="86" class="rule"/>
+
+  <text x="40" y="118" class="h2">1 · What the model studies (the “split”)</text>
+  <text x="40" y="138" class="sub">Every prediction trains on every race strictly before the target Grand Prix.</text>
+
+  <g transform="translate(60,170)">
+    <line x1="0" y1="40" x2="820" y2="40" class="rule"/>
+    <g class="tiny" fill="#555">
+      <g><line x1="0"   y1="36" x2="0"   y2="44" class="rule"/><text x="0"   y="60" text-anchor="middle">2014</text></g>
+      <g><line x1="68"  y1="36" x2="68"  y2="44" class="rule"/><text x="68"  y="60" text-anchor="middle">2015</text></g>
+      <g><line x1="137" y1="36" x2="137" y2="44" class="rule"/><text x="137" y="60" text-anchor="middle">2016</text></g>
+      <g><line x1="205" y1="36" x2="205" y2="44" class="rule"/><text x="205" y="60" text-anchor="middle">2017</text></g>
+      <g><line x1="273" y1="36" x2="273" y2="44" class="rule"/><text x="273" y="60" text-anchor="middle">2018</text></g>
+      <g><line x1="342" y1="36" x2="342" y2="44" class="rule"/><text x="342" y="60" text-anchor="middle">2019</text></g>
+      <g><line x1="410" y1="36" x2="410" y2="44" class="rule"/><text x="410" y="60" text-anchor="middle">2020</text></g>
+      <g><line x1="478" y1="36" x2="478" y2="44" class="rule"/><text x="478" y="60" text-anchor="middle">2021</text></g>
+      <g><line x1="547" y1="36" x2="547" y2="44" class="rule"/><text x="547" y="60" text-anchor="middle">2022</text></g>
+      <g><line x1="615" y1="36" x2="615" y2="44" class="rule"/><text x="615" y="60" text-anchor="middle">2023</text></g>
+      <g><line x1="683" y1="36" x2="683" y2="44" class="rule"/><text x="683" y="60" text-anchor="middle">2024</text></g>
+      <g><line x1="752" y1="36" x2="752" y2="44" class="rule"/><text x="752" y="60" text-anchor="middle">2025</text></g>
+      <g><line x1="820" y1="36" x2="820" y2="44" class="rule"/><text x="820" y="60" text-anchor="middle">2026</text></g>
+    </g>
+
+    <rect x="-4" y="6" width="551" height="22" rx="4" class="chipOld"/>
+    <text x="270" y="22" text-anchor="middle" class="lbl">Frozen baseline · seasons ≤ 2022  (for honest held-out metrics)</text>
+
+    <rect x="-4" y="80" width="788" height="22" rx="4" class="chipNew"/>
+    <text x="390" y="96" text-anchor="middle" class="accentText" font-size="13">Live model · every race before the next GP →</text>
+
+    <line x1="788" y1="0" x2="788" y2="110" stroke="#1f6feb" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <text x="788" y="118" text-anchor="middle" class="accentText" font-size="11">Next GP cutoff</text>
+  </g>
+
+  <line x1="40" y1="320" x2="920" y2="320" class="rule"/>
+
+  <text x="40" y="350" class="h2">2 · How it predicts (two steps)</text>
+  <text x="40" y="370" class="sub">A “qualifying tipster” first, then a “podium tipster.” On RUN-after-quali, the real grid replaces the guess.</text>
+
+  <g transform="translate(60,395)">
+    <rect width="260" height="120" rx="10" class="box"/>
+    <text x="16" y="28" class="h2">Step 1 · Quali tipster</text>
+    <text x="16" y="50" class="sub">Predicts each driver’s lap-time gap-to-pole</text>
+    <text x="16" y="68" class="sub">→ ranks them → predicted starting grid</text>
+    <text x="16" y="96" class="tiny">inputs: recent quali form · team pace ·</text>
+    <text x="16" y="110" class="tiny">history at this circuit</text>
+  </g>
+
+  <path d="M320,455 L420,455" class="arrow" marker-end="url(#ah)"/>
+  <text x="370" y="448" text-anchor="middle" class="tiny">predicted grid</text>
+
+  <g transform="translate(420,395)">
+    <rect width="280" height="120" rx="10" class="boxAcc"/>
+    <text x="16" y="28" class="h2">Step 2 · Podium tipster</text>
+    <text x="16" y="50" class="sub">Calibrated chance each driver finishes top 3</text>
+    <text x="16" y="68" class="sub">→ normalized → ranked → 🥇🥈🥉</text>
+    <text x="16" y="96" class="tiny">inputs: grid + gap · recent form · team strength ·</text>
+    <text x="16" y="110" class="tiny">track history · DNF rate</text>
+  </g>
+
+  <g>
+    <path d="M170,540 L170,580 L500,580 L500,540" class="arrowAcc" marker-end="url(#ahAcc)"/>
+    <rect x="730" y="395" width="180" height="120" rx="10" class="box"/>
+    <text x="820" y="425" text-anchor="middle" class="h2">🔄 RUN button</text>
+    <text x="820" y="448" text-anchor="middle" class="sub">After qualifying:</text>
+    <text x="820" y="466" text-anchor="middle" class="sub">fetch real grid from</text>
+    <text x="820" y="484" text-anchor="middle" class="sub">Jolpica · retrain ·</text>
+    <text x="820" y="502" text-anchor="middle" class="accentText">re-predict podium</text>
+    <path d="M730,455 L700,455" class="arrowAcc" marker-end="url(#ahAcc)"/>
+  </g>
+
+  <g transform="translate(60,605)">
+    <rect x="0" y="0" width="400" height="44" rx="8" class="chip"/>
+    <text x="14" y="20" class="lbl"><tspan font-weight="700">Mode 1 · before quali</tspan> — two-step with predicted grid</text>
+    <text x="14" y="36" class="sub">Used the moment you pick a date earlier than quali day.</text>
+
+    <rect x="420" y="0" width="420" height="44" rx="8" class="chipNew"/>
+    <text x="434" y="20" class="lbl"><tspan font-weight="700" fill="#1f6feb">Mode 2 · after quali (RUN)</tspan> — real grid into Step 2</text>
+    <text x="434" y="36" class="sub">Click RUN once qualifying has run · podium uses the actual grid.</text>
+  </g>
+
+  <line x1="40" y1="695" x2="920" y2="695" class="rule"/>
+
+  <text x="40" y="725" class="h2">3 · How we grade it (the quali metrics)</text>
+
+  <g transform="translate(60,745)">
+    <rect width="400" height="160" rx="10" class="box"/>
+    <text x="16" y="30" class="h2">🏁 Quali pole accuracy</text>
+    <text x="16" y="52" class="sub">“Did we name the right pole-sitter?”</text>
+    <text x="16" y="74" class="tiny">Share of races where predicted P1 = actual P1.  Higher is better.</text>
+
+    <text x="16" y="100" class="lbl">2024–2026 · 54 races</text>
+    <rect x="16"  y="110" width="100" height="14" rx="3" class="chipOld"/>
+    <rect x="16"  y="110" width="74"  height="14" rx="3" fill="#888" opacity="0.45"/>
+    <text x="124" y="121" class="num">Frozen 22.2%</text>
+
+    <rect x="16"  y="132" width="100" height="14" rx="3" class="chipNew"/>
+    <rect x="16"  y="132" width="100" height="14" rx="3" fill="#1f6feb" opacity="0.18"/>
+    <text x="124" y="143" class="num accentText">Live 31.5%</text>
+
+    <text x="240" y="100" class="lbl">2026 only · 6 races</text>
+    <text x="240" y="121" class="num">Frozen 0.0%</text>
+    <text x="240" y="143" class="num accentText">Live 16.7%</text>
+  </g>
+
+  <g transform="translate(500,745)">
+    <rect width="400" height="160" rx="10" class="box"/>
+    <text x="16" y="30" class="h2">⏱️ Quali gap MAE</text>
+    <text x="16" y="52" class="sub">“On average, how many seconds off are our lap-time guesses?”</text>
+    <text x="16" y="74" class="tiny">MAE = mean absolute error in seconds.  Lower is better.</text>
+
+    <text x="16" y="100" class="lbl">2024–2026 · 54 races</text>
+    <rect x="16"  y="110" width="100" height="14" rx="3" class="chipOld"/>
+    <rect x="16"  y="110" width="100" height="14" rx="3" fill="#888" opacity="0.45"/>
+    <text x="124" y="121" class="num">Frozen 0.669s</text>
+
+    <rect x="16"  y="132" width="100" height="14" rx="3" class="chipNew"/>
+    <rect x="16"  y="132" width="87"  height="14" rx="3" fill="#1f6feb" opacity="0.18"/>
+    <text x="124" y="143" class="num accentText">Live 0.584s</text>
+
+    <text x="240" y="100" class="lbl">2026 only · 6 races</text>
+    <text x="240" y="121" class="num">Frozen 0.623s</text>
+    <text x="240" y="143" class="num accentText">Live 0.470s</text>
+  </g>
+
+  <line x1="40" y1="935" x2="920" y2="935" class="rule"/>
+
+  <g transform="translate(60,960)">
+    <text x="0" y="20" class="h2">Bottom line</text>
+    <text x="0" y="44" class="sub">Better lap-time predictions feed Step 2 → better podium picks.</text>
+    <text x="0" y="62" class="sub">Podium hit rate 2024–26: Frozen 69.8% → Live 70.4% · 2026 only: 55.6% → 61.1%.</text>
+
+    <g transform="translate(0,90)">
+      <rect x="0"   y="0" width="28" height="14" rx="3" class="chipOld"/>
+      <text x="36"  y="11" class="tiny">Frozen baseline · trains on seasons ≤ 2022 (for held-out metrics)</text>
+
+      <rect x="430" y="0" width="28" height="14" rx="3" class="chipNew"/>
+      <text x="466" y="11" class="tiny">Live model · trains on every race before the next GP (production)</text>
+    </g>
+  </g>
+
+  <text x="40" y="1150" class="tiny">Numbers from the committed backtest script (ml/scripts/backtest_live.py) — leakage-safe, reproducible.</text>
+</svg>

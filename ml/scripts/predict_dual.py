@@ -5,6 +5,8 @@ Usage:
     python scripts/predict_dual.py 2026-06-12   # any as-of date (backtest)
 
 The actual logic lives in src/model/forecast.py (shared with the Streamlit app).
+Each invocation retrains both stages on every race before the target GP, so first
+run takes ~10–15s; subsequent runs in the same process reuse the trained models.
 """
 from __future__ import annotations
 
