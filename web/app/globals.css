@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/* ---- F1 Guidebook — Canva-matched theme ---- */
+:root {
+  --bg: #000000;
+  --fg: #ffffff;
+  --muted: #b5b5bd;
+  --accent: #f0453c;   /* coral red — active nav, scripts, accents */
+  --red: #e8002d;      /* strong red — badges, banners */
+  --yellow: #fbe34d;   /* history highlights */
+  --border: #2a2a2a;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-red: var(--red);
+  --color-yellow: var(--yellow);
+  --color-border: var(--border);
+
+  --font-display: var(--font-horizon); /* Horizon */
+  --font-pixel: var(--font-mokoto);    /* Mokoto Glitch */
+  --font-mono: var(--font-jet);        /* JetBrains Mono */
+  --font-script: var(--font-holiday);  /* Holiday */
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-jet), ui-monospace, monospace;
+}
+
+/* The font-display / font-pixel / font-script / font-mono utilities are generated
+   from the @theme block above (Horizon / Mokoto Glitch / Holiday / JetBrains Mono). */
+
+/* Pixel/glitch section titles */
+.glitch {
+  position: relative;
+  display: inline-block;
+  text-shadow: 0.04em 0 rgba(240, 69, 60, 0.5), -0.04em 0 rgba(60, 180, 240, 0.4);
+}
+
+/* Animated dashed racing road line */
+@keyframes road-dash {
+  to { background-position: -64px 0; }
+}
+.road-line {
+  height: 10px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #ffffff 0 28px,
+    transparent 28px 56px
+  );
+  background-size: 56px 100%;
+  animation: road-dash 1.2s linear infinite;
+  opacity: 0.9;
+}
+
+/* START HERE glow pulse */
+@keyframes soft-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(255,255,255,0.35)); }
+  50% { transform: scale(1.04); filter: drop-shadow(0 0 26px rgba(255,255,255,0.6)); }
+}
+.pulse { animation: soft-pulse 2.4s ease-in-out infinite; }
