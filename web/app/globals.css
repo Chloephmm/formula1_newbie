@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ---- F1 Guidebook — Canva-matched theme ---- */
+/* ---- F1 Guidebook matched theme ---- */
 :root {
   --bg: #000000;
   --fg: #ffffff;
@@ -24,6 +24,7 @@
   --font-pixel: var(--font-mokoto);    /* Mokoto Glitch */
   --font-mono: var(--font-jet);        /* JetBrains Mono */
   --font-script: var(--font-holiday);  /* Holiday */
+  --font-nav: var(--font-cooper);      /* Cooper Hewitt */
 }
 
 body {

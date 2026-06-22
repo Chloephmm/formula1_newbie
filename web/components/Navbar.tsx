@@ -24,22 +24,22 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-border/60 bg-bg/85 backdrop-blur">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
         {/* Mobile brand */}
-        <Link href="/" className="font-display text-xl md:hidden">
+        <Link href="/" className="font-nav text-base font-bold md:hidden">
           F1
         </Link>
 
-        {/* Desktop nav — centered, Horizon font, red ellipse on active */}
-        <ul className="hidden w-full items-center justify-center gap-8 md:flex">
+        {/* Desktop nav — centered, Cooper Hewitt, red ellipse on active */}
+        <ul className="hidden w-full items-center justify-center gap-12 md:flex">
           {links.map((l) => {
             const active = isActive(l.href);
             return (
               <li key={l.href} className="relative">
                 {active && (
-                  <span className="absolute left-1/2 top-1/2 -z-10 h-[2.6em] w-[calc(100%+2.2rem)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent" />
+                  <span className="absolute left-1/2 top-1/2 -z-10 h-[2.2em] w-[calc(100%+3.5rem)] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-accent" />
                 )}
                 <Link
                   href={l.href}
-                  className="font-display text-lg tracking-wide underline-offset-4 transition-opacity hover:opacity-80"
+                  className="font-nav text-sm font-semibold tracking-wide underline-offset-4 transition-opacity hover:opacity-80"
                 >
                   {l.label}
                 </Link>
@@ -51,7 +51,7 @@ export default function Navbar() {
               href={STREAMLIT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-display text-lg tracking-wide underline-offset-4 hover:text-accent"
+              className="font-nav text-sm font-semibold tracking-wide underline-offset-4 hover:text-accent"
             >
               PREDICT ↗
             </a>
@@ -77,7 +77,7 @@ export default function Navbar() {
               <Link
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className={`block py-2 font-display text-lg ${
+                className={`block py-2 font-nav text-sm font-semibold ${
                   isActive(l.href) ? "text-accent" : ""
                 }`}
               >
@@ -90,7 +90,7 @@ export default function Navbar() {
               href={STREAMLIT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="block py-2 font-display text-lg hover:text-accent"
+              className="block py-2 font-nav text-sm font-semibold hover:text-accent"
             >
               PREDICT ↗
             </a>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  html,body{margin:0;background:#0a0a0c;font-family:'IBM Plex Mono',monospace;}
+  #frame{width:1200px;height:1600px;box-sizing:border-box;background:#0a0a0c;overflow:hidden;position:relative;}
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="frame"></div>
+<script type="text/babel">
+const C = { bg:'#0a0a0c', panel:'#15151a', line:'#2a2a31', dim:'#7a7a84', val:'#f0f0f2' };
+const d = (no,name,flag,races,wins,podiums,poles,fl,cls)=>({no,name,flag,races,wins,podiums,poles,fl,cls});
+
+const TEAMS = {
+  haas:{name:'HAAS',flag:'🇺🇸',accent:'#E6002B',base:'KANNAPOLIS, USA',chief:'AYAO KOMATSU',chassis:'VF-26',pu:'FERRARI',
+    season:['8TH','79','0','0','0','0'],
+    drivers:[d('31','ESTEBAN OCON','🇫🇷','180','1','4','0','1','15TH'),d('87','OLIVER BEARMAN','🇬🇧','27','0','0','0','0','13TH')]},
+  alpine:{name:'ALPINE',flag:'🇫🇷',accent:'#2099F4',base:'ENSTONE, UK',chief:'FLAVIO BRIATORE',chassis:'A526',pu:'MERCEDES',
+    season:['10TH','22','0','0','0','0'],
+    drivers:[d('10','PIERRE GASLY','🇫🇷','177','1','5','0','3','18TH'),d('43','FRANCO COLAPINTO','🇦🇷','26','0','0','0','0','20TH')]},
+  astonmartin:{name:'ASTON MARTIN',flag:'🇬🇧',accent:'#00A19C',base:'SILVERSTONE, UK',chief:'ADRIAN NEWEY',chassis:'AMR26',pu:'HONDA',
+    season:['7TH','89','0','0','0','0'],
+    drivers:[d('14','FERNANDO ALONSO','🇪🇸','427','32','106','22','26','10TH'),d('18','LANCE STROLL','🇨🇦','190','0','3','1','0','16TH')]},
+  audi:{name:'AUDI',flag:'🇩🇪',accent:'#F50537',base:'HINWIL, SWITZERLAND',chief:'JONATHAN WHEATLEY',chassis:'R26',pu:'AUDI',
+    seasonNote:' (AS KICK SAUBER)',season:['9TH','74','0','1','0','0'],
+    drivers:[d('27','NICO HÜLKENBERG','🇩🇪','250','0','1','1','2','11TH'),d('5','GABRIEL BORTOLETO','🇧🇷','24','0','0','0','0','19TH')]},
+  cadillac:{name:'CADILLAC',flag:'🇺🇸',accent:'#C9A24B',base:'SILVERSTONE, UK',chief:'GRAEME LOWDON',chassis:'MAC-26',pu:'FERRARI',
+    season:['-','-','-','-','-','-'],
+    drivers:[d('11','SERGIO PÉREZ','🇲🇽','281','6','39','3','12','-'),d('77','VALTTERI BOTTAS','🇫🇮','246','10','67','20','19','-')]},
+  mclaren:{name:'MCLAREN',flag:'🇬🇧',accent:'#FF8000',base:'WOKING, UK',chief:'ANDREA STELLA',chassis:'MCL40',pu:'MERCEDES',
+    season:['1ST','833','14','34','13','12'],
+    drivers:[d('1','LANDO NORRIS','🇬🇧','152','11','44','16','18','1ST'),d('81','OSCAR PIASTRI','🇦🇺','70','9','26','6','9','3RD')]},
+  mercedes:{name:'MERCEDES',flag:'🇩🇪',accent:'#00D7B6',base:'BRACKLEY, UK',chief:'TOTO WOLFF',chassis:'W17',pu:'MERCEDES',
+    season:['2ND','469','2','12','2','6'],
+    drivers:[d('63','GEORGE RUSSELL','🇬🇧','152','5','24','7','11','4TH'),d('12','KIMI ANTONELLI','🇮🇹','24','0','3','0','3','7TH')]},
+  racingbulls:{name:'RACING BULLS',flag:'🇮🇹',accent:'#4C6FFF',base:'FAENZA, ITALY',chief:'ALAN PERMANE',chassis:'VCARB 03',pu:'RED BULL FORD',
+    season:['6TH','92','0','1','0','0'],
+    drivers:[d('30','LIAM LAWSON','🇳🇿','35','0','0','0','0','14TH'),d('41','ARVID LINDBLAD','🇬🇧','0','0','0','0','0','-')]},
+  redbull:{name:'RED BULL',flag:'🇦🇹',accent:'#F5C518',base:'MILTON KEYNES, UK',chief:'LAURENT MEKIES',chassis:'RB22',pu:'RED BULL FORD',
+    season:['3RD','451','8','15','8','3'],
+    drivers:[d('3','MAX VERSTAPPEN','🇳🇱','233','71','127','48','36','2ND'),d('6','ISACK HADJAR','🇫🇷','23','0','1','0','0','12TH')]},
+  williams:{name:'WILLIAMS',flag:'🇬🇧',accent:'#00A3E0',base:'GROVE, UK',chief:'JAMES VOWLES',chassis:'FW48',pu:'MERCEDES',
+    season:['5TH','137','0','2','0','1'],
+    drivers:[d('55','CARLOS SAINZ','🇪🇸','229','4','29','6','4','9TH'),d('23','ALEXANDER ALBON','🇹🇭','128','0','2','0','1','8TH')]},
+};
+
+const A = ()=>window.__accent;
+function Ph({label,w,h,style}){return <div style={{width:w,height:h,boxSizing:'border-box',border:`1.5px dashed ${A()}66`,borderRadius:2,
+  background:'repeating-linear-gradient(45deg,#161620,#161620 11px,#101016 11px,#101016 22px)',display:'flex',alignItems:'center',justifyContent:'center',
+  textAlign:'center',color:'#777783',fontSize:13,letterSpacing:'0.14em',textTransform:'uppercase',lineHeight:1.4,padding:8,...style}}>{label}</div>;}
+function Tab({children}){return <div style={{display:'inline-block',background:A(),color:'#0a0a0c',fontSize:14,fontWeight:700,letterSpacing:'0.16em',
+  padding:'7px 16px',textTransform:'uppercase',whiteSpace:'nowrap'}}>{children}</div>;}
+function Stat({label,value,accent,size}){return <div><div style={{fontSize:12,letterSpacing:'0.13em',color:C.dim,textTransform:'uppercase'}}>{label}</div>
+  <div style={{fontSize:size||28,fontWeight:800,color:accent?A():C.val,lineHeight:1.15,marginTop:3}}>{value}</div></div>;}
+
+const SROWS=[['RACES','races'],['WINS','wins'],['PODIUMS','podiums'],['POLES','poles'],['FASTEST LAPS','fl'],['2025 CLASSIFICATION','cls']];
+const SEASON_LBL=[['CLASSIFICATION',true],['POINTS',true],['WINS',false],['PODIUMS',false],['POLES',false],['FASTEST LAPS',false]];
+
+function Hero({t}){
+  const wm = Math.max(72,Math.min(150, Math.floor(1040/(0.62*t.name.length))));
+  return <div style={{padding:'30px 48px 6px'}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+      <div style={{display:'flex',alignItems:'center',gap:16}}>
+        <Ph label="SHIELD" w={50} h={60}/>
+        <div><div style={{color:C.val,fontWeight:700,fontSize:19,letterSpacing:'0.1em'}}>{t.flag} {t.name}</div>
+          <div style={{color:C.dim,fontSize:12.5,letterSpacing:'0.14em',marginTop:3}}>FORMULA 1 · 2025 SEASON</div></div>
+      </div><Ph label="FIA" w={58} h={42}/>
+    </div>
+    <div style={{position:'relative',height:300,marginTop:6}}>
+      <div style={{position:'absolute',top:18,left:0,right:0,textAlign:'center',fontWeight:800,fontSize:wm,letterSpacing:'0.02em',
+        color:'transparent',WebkitTextStroke:`2.5px ${A()}`,opacity:0.92,lineHeight:1,whiteSpace:'nowrap',overflow:'hidden'}}>{t.name}</div>
+      <Ph label="◳ CAR IMAGE · SIDE PROFILE (full-bleed)" w="82%" h={150} style={{position:'absolute',top:108,left:'9%'}}/>
+    </div>
+    <div style={{display:'flex',justifyContent:'center',gap:130,marginTop:14}}>
+      {t.drivers.map(dr=><div key={dr.no} style={{textAlign:'center'}}>
+        <Ph label="◳ PORTRAIT" w={150} h={150}/>
+        <div style={{marginTop:8}}><span style={{color:A(),fontWeight:800,fontSize:20}}>{dr.no}</span>
+          <span style={{color:C.val,fontWeight:700,fontSize:15,marginLeft:8,letterSpacing:'0.06em'}}>{dr.name}</span></div>
+      </div>)}
+    </div>
+    <div style={{display:'flex',flexDirection:'column',gap:20,marginTop:26}}>
+      <div><Tab>Team Information</Tab>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:1,background:C.line,border:`1px solid ${C.line}`,marginTop:12}}>
+          {[['BASE',t.base],['TEAM CHIEF',t.chief],['CHASSIS',t.chassis],['POWER UNIT',t.pu]].map(([l,v])=>
+            <div key={l} style={{background:C.panel,padding:'14px 18px'}}><Stat label={l} value={v} size={18}/></div>)}
+        </div></div>
+      <div><Tab>2025 Statistics{t.seasonNote||''}</Tab>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:1,background:C.line,border:`1px solid ${C.line}`,marginTop:12}}>
+          {SEASON_LBL.map(([l,acc],i)=><div key={l} style={{background:C.panel,padding:'14px 12px'}}>
+            <Stat label={l} value={t.season[i]} accent={acc} size={24}/></div>)}
+        </div></div>
+    </div>
+    <div style={{fontSize:11.5,color:C.dim,letterSpacing:'0.18em',marginTop:16}}>SECTION 1 · HERO</div>
+  </div>;
+}
+
+function FeatureRow({dr,flip}){
+  const photo=<Ph label="◳ DRIVER PHOTO" w={250} h={250} style={{flexShrink:0}}/>;
+  const body=<div style={{flex:1}}>
+    <div style={{display:'flex',alignItems:'baseline',gap:16,marginBottom:18}}>
+      <span style={{color:A(),fontWeight:800,fontSize:46}}>{dr.no}</span>
+      <span style={{color:C.val,fontWeight:700,fontSize:25,letterSpacing:'0.03em'}}>{dr.flag} {dr.name}</span></div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'22px 28px'}}>
+      {SROWS.map(([l,k])=><div key={l} style={{borderTop:`1px solid ${C.line}`,paddingTop:12}}>
+        <Stat label={l} value={dr[k]} accent={k==='cls'} size={32}/></div>)}
+    </div></div>;
+  return <div style={{display:'flex',gap:40,alignItems:'center',flexDirection:flip?'row-reverse':'row'}}>{photo}{body}</div>;
+}
+
+function TeamWireframe({t}){
+  return <div style={{width:1200}}>
+    <Hero t={t}/>
+    <div style={{height:3,background:A(),opacity:0.75,margin:'14px 0 0'}}></div>
+    <div style={{padding:'30px 48px 40px',display:'flex',flexDirection:'column',gap:26}}>
+      <Tab>Drivers</Tab>
+      <FeatureRow dr={t.drivers[0]}/>
+      <div style={{height:1,background:C.line}}></div>
+      <FeatureRow dr={t.drivers[1]} flip/>
+      <div style={{fontSize:11.5,color:C.dim,letterSpacing:'0.18em'}}>SECTION 2 · DRIVERS — OPTION C · STACKED ROWS</div>
+    </div>
+  </div>;
+}
+
+let root=ReactDOM.createRoot(document.getElementById('frame'));
+window.show=function(key){ const t=TEAMS[key]; window.__accent=t.accent; root.render(<TeamWireframe t={t}/>); };
+window.TEAM_KEYS=Object.keys(TEAMS);
+window.show('haas');
+</script>
+</body></html>

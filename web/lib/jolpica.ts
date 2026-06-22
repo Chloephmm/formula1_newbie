@@ -1,21 +1,49 @@
-// Live F1 data from Jolpica (Ergast successor) with ISR + graceful static fallback.
+// Live F1 data from Jolpica with ISR + graceful static fallback.
 import { teams, drivers, races, getTeam } from "./data";
 import type {
   ConstructorStanding,
   DriverStanding,
   ScheduleRace,
   ErgastResponse,
+  SeasonDriverStat,
+  DriverCareer,
 } from "./types";
 
 const BASE = "https://api.jolpi.ca/ergast/f1";
 const REVALIDATE_SECONDS = 3600;
+const HOUR = 3600;
+const DAY = 86400;
 
-async function jget(path: string): Promise<ErgastResponse> {
+async function jget(
+  path: string,
+  revalidate = REVALIDATE_SECONDS
+): Promise<ErgastResponse> {
   const res = await fetch(`${BASE}/${path}`, {
-    next: { revalidate: REVALIDATE_SECONDS },
+    next: { revalidate },
   });
   if (!res.ok) throw new Error(`Jolpica ${path} -> ${res.status}`);
   return (await res.json()) as ErgastResponse;
+}
+
+/**
+ * Seconds until career data should refresh — just after the next race finishes,
+ * since whole-career stats only change on race day. Off-season (no upcoming
+ * race) falls back to ~7 days. Clamped to [1h, 30d].
+ */
+export async function getCareerRevalidate(season = "current"): Promise<number> {
+  try {
+    const { data } = await getSchedule(season);
+    const now = Date.now();
+    const next = data
+      .map((r) => new Date(`${r.date}T${r.time ?? "14:00:00Z"}`).getTime() + 4 * HOUR * 1000)
+      .filter((end) => end > now)
+      .sort((a, b) => a - b)[0];
+    if (!next) return 7 * DAY;
+    const secs = Math.round((next - now) / 1000);
+    return Math.min(Math.max(secs, HOUR), 30 * DAY);
+  } catch {
+    return DAY;
+  }
 }
 
 export async function getConstructorStandings(
@@ -94,6 +122,86 @@ export async function getDriverStandings(
           };
         }),
     };
+  }
+}
+
+/**
+ * Aggregates real per-driver season stats (races, wins, podiums, fastest laps
+ * from race results; poles from qualifying) for the given season, keyed by the
+ * driver's 3-letter code. A few cached, season-wide calls shared by every team page.
+ */
+export async function getSeasonStats(
+  season = "current"
+): Promise<{ data: Record<string, SeasonDriverStat>; live: boolean }> {
+  try {
+    const stats: Record<string, SeasonDriverStat> = {};
+    const slot = (code: string) =>
+      (stats[code] ??= { races: 0, wins: 0, podiums: 0, poles: 0, fastestLaps: 0 });
+
+    // Race results across every round (paginated) -> races / wins / podiums / fastest laps.
+    const limit = 100;
+    let offset = 0;
+    let total = Infinity;
+    while (offset < total) {
+      const json = await jget(`${season}/results/?limit=${limit}&offset=${offset}`);
+      total = Number(json.MRData.total ?? 0);
+      const racesPage = json.MRData.RaceTable?.Races ?? [];
+      if (!racesPage.length) break;
+      for (const r of racesPage) {
+        for (const res of r.Results ?? []) {
+          const code = res.Driver.code;
+          if (!code) continue;
+          const s = slot(code);
+          s.races += 1;
+          const pos = Number(res.position);
+          if (pos === 1) s.wins += 1;
+          if (pos <= 3) s.podiums += 1;
+          if (res.FastestLap?.rank === "1") s.fastestLaps += 1;
+        }
+      }
+      offset += limit;
+    }
+
+    // Poles = qualifying P1 per round.
+    const q = await jget(`${season}/qualifying/1/?limit=100`);
+    for (const r of q.MRData.RaceTable?.Races ?? []) {
+      const code = r.QualifyingResults?.[0]?.Driver.code;
+      if (code) slot(code).poles += 1;
+    }
+
+    if (!Object.keys(stats).length) throw new Error("empty");
+    return { live: true, data: stats };
+  } catch {
+    return { live: false, data: {} };
+  }
+}
+
+/**
+ * Whole-career totals for a driver (by Ergast driverId). Each value is the
+ * `total` count of a filtered results/qualifying query, fetched in parallel.
+ * Podiums = finishes P1 + P2 + P3.
+ */
+export async function getDriverCareer(
+  driverId: string,
+  revalidate?: number
+): Promise<{ data: DriverCareer | null; live: boolean }> {
+  try {
+    const totalOf = async (path: string) =>
+      Number((await jget(path, revalidate)).MRData.total ?? 0);
+    const [races, p1, p2, p3, poles, fastestLaps] = await Promise.all([
+      totalOf(`drivers/${driverId}/results/?limit=1`),
+      totalOf(`drivers/${driverId}/results/1/?limit=1`),
+      totalOf(`drivers/${driverId}/results/2/?limit=1`),
+      totalOf(`drivers/${driverId}/results/3/?limit=1`),
+      totalOf(`drivers/${driverId}/qualifying/1/?limit=1`),
+      totalOf(`drivers/${driverId}/fastest/1/results/?limit=1`),
+    ]);
+    return {
+      live: true,
+      data: { races, wins: p1, podiums: p1 + p2 + p3, poles, fastestLaps },
+    };
+  } catch {
+    return { live: false, data: null };
   }
 }
 

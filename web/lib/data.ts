@@ -20,3 +20,10 @@ export function getDriversForTeam(teamId: string): Driver[] {
 export function teamColor(teamId: string): string {
   return getTeam(teamId)?.color ?? "#888888";
 }
+
+// Short display name (matches the Canva labels): drops the "F1 Team" suffix and
+// spells out Racing Bulls.
+export function shortTeamName(t: Team): string {
+  if (t.id === "rb") return "Racing Bulls";
+  return t.name.replace(/\s*F1 Team$/i, "");
+}

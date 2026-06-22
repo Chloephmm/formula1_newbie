@@ -86,6 +86,17 @@ export interface ErgastDriverStanding {
   Driver: ErgastDriver;
   Constructors: ErgastConstructor[];
 }
+export interface ErgastResult {
+  position: string;
+  grid?: string;
+  Driver: ErgastDriver;
+  Constructor: ErgastConstructor;
+  FastestLap?: { rank?: string };
+}
+export interface ErgastQualifying {
+  position: string;
+  Driver: ErgastDriver;
+}
 export interface ErgastRace {
   season: string;
   round: string;
@@ -93,9 +104,12 @@ export interface ErgastRace {
   date: string;
   time?: string;
   Circuit: { circuitName: string; Location?: { locality?: string; country?: string } };
+  Results?: ErgastResult[];
+  QualifyingResults?: ErgastQualifying[];
 }
 export interface ErgastResponse {
   MRData: {
+    total?: string;
     StandingsTable?: {
       StandingsLists?: Array<{
         ConstructorStandings?: ErgastConstructorStanding[];
@@ -104,4 +118,22 @@ export interface ErgastResponse {
     };
     RaceTable?: { Races?: ErgastRace[] };
   };
+}
+
+// Aggregated per-driver season stats (keyed by 3-letter code).
+export interface SeasonDriverStat {
+  races: number;
+  wins: number;
+  podiums: number;
+  poles: number;
+  fastestLaps: number;
+}
+
+// Whole-career totals for a single driver.
+export interface DriverCareer {
+  races: number;
+  wins: number;
+  podiums: number;
+  poles: number;
+  fastestLaps: number;
 }

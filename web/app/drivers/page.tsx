@@ -12,8 +12,8 @@ export default async function DriversPage() {
 
   return (
     <section className="mx-auto max-w-6xl px-5 py-16">
-      <Reveal direction="up">
-        <GlitchTitle className="mb-3 text-center">The Grid</GlitchTitle>
+      <Reveal direction="up" className="text-center">
+        <GlitchTitle className="mb-3">The Grid</GlitchTitle>
       </Reveal>
       <div className="mb-10 flex justify-center">
         <LiveBadge live={live} />
@@ -23,21 +23,47 @@ export default async function DriversPage() {
         {standings.map((d, i) => {
           const color = getTeam(d.constructorId)?.color ?? "#888888";
           return (
-            <Reveal key={d.driverId} direction={i % 2 === 0 ? "left" : "right"} delay={(i % 3) * 0.04}>
+            <Reveal key={d.driverId} direction={i % 2 === 0 ? "left" : "right"} delay={(i % 3) * 0.04} className="h-full">
               <article
-                className="flex items-center gap-4 rounded-xl border border-border p-5"
-                style={{ background: `linear-gradient(135deg, ${color}22, transparent)` }}
+                className="group relative flex h-full min-h-[140px] gap-3 overflow-hidden rounded-xl border border-border py-3 pl-5 pr-4 transition duration-200 hover:-translate-y-1 hover:border-white/25 hover:shadow-[0_14px_36px_-20px_var(--tc)]"
+                style={{ background: `linear-gradient(135deg, ${color}22, transparent)`, "--tc": color } as React.CSSProperties}
               >
-                <span className="font-display text-4xl text-muted">{d.position}</span>
-                <span className="h-12 w-1.5 rounded" style={{ backgroundColor: color }} />
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-display text-base uppercase leading-tight">
-                    {d.givenName} {d.familyName}
-                  </h3>
-                  <p className="truncate text-xs text-muted">{d.constructorName}</p>
-                  <div className="mt-2 flex gap-4 text-sm">
-                    <span><span className="font-display text-lg">{d.points}</span> <span className="text-muted">pts</span></span>
-                    <span><span className="font-display text-lg">{d.wins}</span> <span className="text-muted">wins</span></span>
+                {/* team accent strip */}
+                <span className="absolute inset-y-0 left-0 w-1.5" style={{ backgroundColor: color }} />
+
+                {/* fixed-width number column → every name starts at the same x */}
+                <span className="w-16 shrink-0 text-center font-display text-3xl leading-none tabular-nums text-white/85">
+                  {d.position}
+                </span>
+
+                {/* right column — name, team, and stats all share this left edge */}
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div>
+                    <h3 className="line-clamp-2 font-display text-[15px] uppercase leading-tight">
+                      {d.givenName} {d.familyName}
+                    </h3>
+                    <p className="mt-0.5 truncate text-[11px] uppercase tracking-wider text-muted">
+                      {d.constructorName}
+                    </p>
+                  </div>
+
+                  <div className="mt-auto">
+                    <div className="mb-2 border-t border-border/70" />
+                    <div className="flex items-end gap-6 rounded-md bg-white/[0.04] px-2.5 py-1.5">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-muted">Points</div>
+                        <div className="font-display text-xl leading-none">{d.points}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-muted">Wins</div>
+                        <div
+                          className="font-display text-xl leading-none"
+                          style={d.wins > 0 ? { color } : undefined}
+                        >
+                          {d.wins}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </article>

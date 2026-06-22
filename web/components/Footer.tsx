@@ -16,7 +16,6 @@ export default function Footer() {
           >
             Jolpica
           </a>
-          . Not affiliated with Formula 1.
         </p>
       </div>
     </footer>

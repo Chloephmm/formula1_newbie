@@ -10,7 +10,7 @@ export default function GlitchTitle({
 }) {
   return (
     <h2
-      className={`glitch font-pixel text-4xl uppercase leading-none sm:text-5xl ${className}`}
+      className={`glitch font-pixel text-2xl uppercase leading-none sm:text-3xl ${className}`}
     >
       {children}
     </h2>
