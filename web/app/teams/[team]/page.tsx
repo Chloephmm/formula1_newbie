@@ -266,8 +266,8 @@ export default async function TeamDetailPage({
       {/* Section 2 · Drivers — stacked feature rows */}
       <div className="mt-10">
         <div className="h-[3px] opacity-75" style={{ backgroundColor: color }} />
-        <div className="mt-6 flex justify-center">
-          <Tab color={color}>The Grid</Tab>
+        <div className="mt-6">
+          <Tab color={color}>Drivers</Tab>
         </div>
         <div className="mt-6 flex flex-col gap-8">
           {drivers.map((d, i) => {

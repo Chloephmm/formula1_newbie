@@ -21,6 +21,7 @@ export default function Reveal({
   once = true,
   distance,
   duration = 0.6,
+  scaleFrom,
 }: {
   children: ReactNode;
   direction?: Direction;
@@ -30,6 +31,8 @@ export default function Reveal({
   /** Override the slide distance (px) — e.g. a long left→right car entrance. */
   distance?: number;
   duration?: number;
+  /** Zoom-in entrance: start at this scale and grow to 1 (e.g. 0.5 = "coming toward you"). */
+  scaleFrom?: number;
 }) {
   const start =
     distance == null
@@ -43,11 +46,12 @@ export default function Reveal({
             : { y: -distance };
 
   const variants: Variants = {
-    hidden: { opacity: 0, ...start },
+    hidden: { opacity: 0, ...start, ...(scaleFrom != null ? { scale: scaleFrom } : {}) },
     visible: {
       opacity: 1,
       x: 0,
       y: 0,
+      ...(scaleFrom != null ? { scale: 1 } : {}),
       transition: { duration, delay, ease: [0.22, 1, 0.36, 1] },
     },
   };

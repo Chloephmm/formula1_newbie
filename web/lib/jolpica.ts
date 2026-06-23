@@ -16,13 +16,19 @@ const DAY = 86400;
 
 async function jget(
   path: string,
-  revalidate = REVALIDATE_SECONDS
+  revalidate = REVALIDATE_SECONDS,
+  tries = 3
 ): Promise<ErgastResponse> {
-  const res = await fetch(`${BASE}/${path}`, {
-    next: { revalidate },
-  });
-  if (!res.ok) throw new Error(`Jolpica ${path} -> ${res.status}`);
-  return (await res.json()) as ErgastResponse;
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`${BASE}/${path}`, { next: { revalidate } });
+    if (res.ok) return (await res.json()) as ErgastResponse;
+    // Retry transient rate-limit (429) / server errors with backoff.
+    if ((res.status === 429 || res.status >= 500) && attempt < tries - 1) {
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      continue;
+    }
+    throw new Error(`Jolpica ${path} -> ${res.status}`);
+  }
 }
 
 /**
@@ -188,14 +194,13 @@ export async function getDriverCareer(
   try {
     const totalOf = async (path: string) =>
       Number((await jget(path, revalidate)).MRData.total ?? 0);
-    const [races, p1, p2, p3, poles, fastestLaps] = await Promise.all([
-      totalOf(`drivers/${driverId}/results/?limit=1`),
-      totalOf(`drivers/${driverId}/results/1/?limit=1`),
-      totalOf(`drivers/${driverId}/results/2/?limit=1`),
-      totalOf(`drivers/${driverId}/results/3/?limit=1`),
-      totalOf(`drivers/${driverId}/qualifying/1/?limit=1`),
-      totalOf(`drivers/${driverId}/fastest/1/results/?limit=1`),
-    ]);
+    // Serial (not Promise.all) to avoid bursting Jolpica's rate limit.
+    const races = await totalOf(`drivers/${driverId}/results/?limit=1`);
+    const p1 = await totalOf(`drivers/${driverId}/results/1/?limit=1`);
+    const p2 = await totalOf(`drivers/${driverId}/results/2/?limit=1`);
+    const p3 = await totalOf(`drivers/${driverId}/results/3/?limit=1`);
+    const poles = await totalOf(`drivers/${driverId}/qualifying/1/?limit=1`);
+    const fastestLaps = await totalOf(`drivers/${driverId}/fastest/1/results/?limit=1`);
     return {
       live: true,
       data: { races, wins: p1, podiums: p1 + p2 + p3, poles, fastestLaps },
