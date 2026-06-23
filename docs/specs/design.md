@@ -3,6 +3,12 @@
 **Date:** 2026-06-01
 **Author:** Chloe Pham
 
+> **As-built note (updated 2026-06-22):** this is the original design/intent. The frontend
+> shipped as a **dark, cinematic, motion-led** site powered by **live Jolpica data** (not the
+> light/minimal Recharts plan in §8/§6 below). For the current state see
+> [`frontend.md`](./frontend.md); predictions now live in a separate Streamlit app
+> ([`prediction-logic.md`](./prediction-logic.md)).
+
 ## 1. Purpose
 
 A beginner-friendly website that makes Formula 1 fun and easy. The site teaches F1 basics through clean content pages and showcases a real, decoupled ML pipeline that predicts each race's **podium (top 3)** with **calibrated** probabilities (the top pick = predicted winner).
