@@ -58,6 +58,3 @@ Thumbs.db
 # Editors
 .vscode/settings.json
 .idea/
-
-# local editor/agent config
-.claude/
