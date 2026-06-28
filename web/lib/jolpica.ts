@@ -14,12 +14,23 @@ const REVALIDATE_SECONDS = 3600;
 const HOUR = 3600;
 const DAY = 86400;
 
+// Politeness gate: ensure a minimum spacing between Jolpica requests so the
+// sync script (and any runtime caller) never bursts past the rate limit.
+const MIN_INTERVAL_MS = 500;
+let gateChain: Promise<void> = Promise.resolve();
+function throttle(): Promise<void> {
+  const wait = gateChain.then(() => new Promise<void>((r) => setTimeout(r, MIN_INTERVAL_MS)));
+  gateChain = wait;
+  return gateChain;
+}
+
 async function jget(
   path: string,
   revalidate = REVALIDATE_SECONDS,
-  tries = 3
+  tries = 5
 ): Promise<ErgastResponse> {
   for (let attempt = 0; ; attempt++) {
+    await throttle();
     const res = await fetch(`${BASE}/${path}`, { next: { revalidate } });
     if (res.ok) return (await res.json()) as ErgastResponse;
     // Retry transient rate-limit (429) / server errors with backoff.

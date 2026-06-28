@@ -1,0 +1,46 @@
+name: Sync F1 stats
+
+on:
+  schedule:
+    # Mondays 06:00 UTC, race season only (March–December).
+    - cron: "0 6 * 3-12 1"
+  workflow_dispatch: {} # manual, available year-round
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-stats
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install deps
+        working-directory: web
+        run: npm ci
+
+      - name: Refresh stats
+        working-directory: web
+        run: npm run sync-stats
+
+      - name: Commit if changed
+        run: |
+          git config user.name "f1-stats-bot"
+          git config user.email "actions@github.com"
+          git add web/public/data/stats.json
+          if git diff --cached --quiet; then
+            echo "No stats changes — nothing to commit."
+          else
+            git commit -m "chore: refresh F1 stats"
+            git push
+          fi

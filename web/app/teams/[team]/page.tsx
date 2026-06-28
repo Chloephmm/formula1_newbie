@@ -5,16 +5,8 @@ import { teams, getTeam, getDriversForTeam, shortTeamName } from "@/lib/data";
 import { TEAM_META, teamLogo, LOGO_CFG } from "@/lib/teamMeta";
 import { teamCar, driverPhoto, driverPhotoCutout, driverNumber, driverChampionships } from "@/lib/assets";
 import { flagSrc } from "@/lib/flags";
-import {
-  getConstructorStandings,
-  getDriverStandings,
-  getSeasonStats,
-  getDriverCareer,
-  getCareerRevalidate,
-} from "@/lib/jolpica";
+import { getConstructorStandings, getDriverStandings, seasonStat, career } from "@/lib/stats";
 import type { DriverCareer } from "@/lib/types";
-
-export const revalidate = 3600;
 
 export function generateStaticParams() {
   return teams.map((t) => ({ team: t.id }));
@@ -94,30 +86,25 @@ export default async function TeamDetailPage({
   const car = teamCar(team);
   const drivers = getDriversForTeam(team);
 
-  // Live data with static fallback
-  const [{ data: constructors }, { data: driverStandings }, { data: seasonStats, live: statsLive }] =
-    await Promise.all([getConstructorStandings(), getDriverStandings(), getSeasonStats()]);
+  // Static stats (web/public/data/stats.json), with teams.json fallback.
+  const constructors = getConstructorStandings();
+  const driverStandings = getDriverStandings();
   const live = constructors.find((c) => c.constructorId === team);
   const position = live?.position ?? constructors.findIndex((c) => c.constructorId === team) + 1;
   const teamPoints = live?.points ?? t.points;
   const teamWins = live?.wins ?? t.wins;
 
   // Per-driver season stats keyed by 3-letter code; team totals = sum of its drivers.
-  const stat = (code: string) => seasonStats[code];
   const teamSum = (k: "podiums" | "poles" | "fastestLaps") =>
-    drivers.reduce((s, d) => s + (stat(d.code)?.[k] ?? 0), 0);
-  const teamPodiums = statsLive ? teamSum("podiums") : drivers.reduce((s, d) => s + d.podiums, 0);
-  const teamPoles: string | number = statsLive ? teamSum("poles") : "—";
-  const teamFastestLaps: string | number = statsLive ? teamSum("fastestLaps") : "—";
+    drivers.reduce((s, d) => s + (seasonStat(d.code)?.[k] ?? 0), 0);
+  const teamPodiums = teamSum("podiums");
+  const teamPoles = teamSum("poles");
+  const teamFastestLaps = teamSum("fastestLaps");
 
-  // Whole-career driver totals (Section 2), keyed by our driver id. Ergast
-  // driverId comes from the live standings. Career stats only change on race
-  // day, so they're cached until just after the next Grand Prix.
-  const careerRevalidate = await getCareerRevalidate();
+  // Whole-career driver totals (Section 2), keyed by our driver id.
   const careers: Record<string, DriverCareer | null> = {};
   for (const d of drivers) {
-    const ds = driverStandings.find((s) => s.code === d.code);
-    careers[d.id] = (await getDriverCareer(ds?.driverId ?? d.id, careerRevalidate)).data;
+    careers[d.id] = career(d.code);
   }
 
   // Hero wordmark: scale font to keep any team name on a single line.

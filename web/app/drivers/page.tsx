@@ -1,14 +1,21 @@
 import Reveal from "@/components/Reveal";
 import GlitchTitle from "@/components/GlitchTitle";
-import LiveBadge from "@/components/LiveBadge";
-import { getDriverStandings } from "@/lib/jolpica";
+import { getDriverStandings, statsUpdatedAt } from "@/lib/stats";
 import { getTeam } from "@/lib/data";
 
-export const revalidate = 3600;
 export const metadata = { title: "Drivers — F1 Guidebook" };
 
-export default async function DriversPage() {
-  const { data: standings, live } = await getDriverStandings();
+function formatUpdated(iso: string) {
+  return new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+export default function DriversPage() {
+  const standings = getDriverStandings();
 
   return (
     <section className="mx-auto max-w-6xl px-5 py-16">
@@ -16,7 +23,10 @@ export default async function DriversPage() {
         <GlitchTitle className="mb-3">The Grid</GlitchTitle>
       </Reveal>
       <div className="mb-10 flex justify-center">
-        <LiveBadge live={live} />
+        <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted">
+          <span className="h-2 w-2 rounded-full bg-muted" aria-hidden />
+          Last updated {formatUpdated(statsUpdatedAt())}
+        </span>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
