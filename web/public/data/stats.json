@@ -1,33 +1,33 @@
 {
-  "updatedAt": "2026-06-27T22:40:00.137Z",
+  "updatedAt": "2026-06-28T20:04:21.320Z",
   "season": "2026",
   "constructors": [
     {
       "position": 1,
       "constructorId": "mercedes",
       "name": "Mercedes",
-      "points": 262,
-      "wins": 6
+      "points": 302,
+      "wins": 7
     },
     {
       "position": 2,
       "constructorId": "ferrari",
       "name": "Ferrari",
-      "points": 190,
+      "points": 204,
       "wins": 1
     },
     {
       "position": 3,
       "constructorId": "mclaren",
       "name": "McLaren",
-      "points": 141,
+      "points": 159,
       "wins": 0
     },
     {
       "position": 4,
       "constructorId": "red_bull",
       "name": "Red Bull",
-      "points": 89,
+      "points": 115,
       "wins": 0
     },
     {
@@ -41,7 +41,7 @@
       "position": 6,
       "constructorId": "rb",
       "name": "RB F1 Team",
-      "points": 41,
+      "points": 44,
       "wins": 0
     },
     {
@@ -88,46 +88,46 @@
       "givenName": "Andrea Kimi",
       "familyName": "Antonelli",
       "nationality": "Italian",
-      "points": 156,
+      "points": 171,
       "wins": 5,
       "constructorId": "mercedes",
       "constructorName": "Mercedes"
     },
     {
       "position": 2,
-      "driverId": "hamilton",
-      "code": "HAM",
-      "givenName": "Lewis",
-      "familyName": "Hamilton",
-      "nationality": "British",
-      "points": 115,
-      "wins": 1,
-      "constructorId": "ferrari",
-      "constructorName": "Ferrari"
-    },
-    {
-      "position": 3,
       "driverId": "russell",
       "code": "RUS",
       "givenName": "George",
       "familyName": "Russell",
       "nationality": "British",
-      "points": 106,
-      "wins": 1,
+      "points": 131,
+      "wins": 2,
       "constructorId": "mercedes",
       "constructorName": "Mercedes"
     },
     {
-      "position": 4,
-      "driverId": "leclerc",
-      "code": "LEC",
-      "givenName": "Charles",
-      "familyName": "Leclerc",
-      "nationality": "Monegasque",
-      "points": 75,
-      "wins": 0,
+      "position": 3,
+      "driverId": "hamilton",
+      "code": "HAM",
+      "givenName": "Lewis",
+      "familyName": "Hamilton",
+      "nationality": "British",
+      "points": 125,
+      "wins": 1,
       "constructorId": "ferrari",
       "constructorName": "Ferrari"
+    },
+    {
+      "position": 4,
+      "driverId": "piastri",
+      "code": "PIA",
+      "givenName": "Oscar",
+      "familyName": "Piastri",
+      "nationality": "Australian",
+      "points": 80,
+      "wins": 0,
+      "constructorId": "mclaren",
+      "constructorName": "McLaren"
     },
     {
       "position": 5,
@@ -136,22 +136,22 @@
       "givenName": "Lando",
       "familyName": "Norris",
       "nationality": "British",
-      "points": 73,
+      "points": 79,
       "wins": 0,
       "constructorId": "mclaren",
       "constructorName": "McLaren"
     },
     {
       "position": 6,
-      "driverId": "piastri",
-      "code": "PIA",
-      "givenName": "Oscar",
-      "familyName": "Piastri",
-      "nationality": "Australian",
-      "points": 68,
+      "driverId": "leclerc",
+      "code": "LEC",
+      "givenName": "Charles",
+      "familyName": "Leclerc",
+      "nationality": "Monegasque",
+      "points": 79,
       "wins": 0,
-      "constructorId": "mclaren",
-      "constructorName": "McLaren"
+      "constructorId": "ferrari",
+      "constructorName": "Ferrari"
     },
     {
       "position": 7,
@@ -160,13 +160,25 @@
       "givenName": "Max",
       "familyName": "Verstappen",
       "nationality": "Dutch",
-      "points": 55,
+      "points": 73,
       "wins": 0,
       "constructorId": "red_bull",
       "constructorName": "Red Bull"
     },
     {
       "position": 8,
+      "driverId": "hadjar",
+      "code": "HAD",
+      "givenName": "Isack",
+      "familyName": "Hadjar",
+      "nationality": "French",
+      "points": 42,
+      "wins": 0,
+      "constructorId": "red_bull",
+      "constructorName": "Red Bull"
+    },
+    {
+      "position": 9,
       "driverId": "gasly",
       "code": "GAS",
       "givenName": "Pierre",
@@ -178,25 +190,13 @@
       "constructorName": "Alpine F1 Team"
     },
     {
-      "position": 9,
-      "driverId": "hadjar",
-      "code": "HAD",
-      "givenName": "Isack",
-      "familyName": "Hadjar",
-      "nationality": "French",
-      "points": 34,
-      "wins": 0,
-      "constructorId": "red_bull",
-      "constructorName": "Red Bull"
-    },
-    {
       "position": 10,
       "driverId": "lawson",
       "code": "LAW",
       "givenName": "Liam",
       "familyName": "Lawson",
       "nationality": "New Zealander",
-      "points": 28,
+      "points": 30,
       "wins": 0,
       "constructorId": "rb",
       "constructorName": "RB F1 Team"
@@ -232,7 +232,7 @@
       "givenName": "Arvid",
       "familyName": "Lindblad",
       "nationality": "British",
-      "points": 13,
+      "points": 14,
       "wins": 0,
       "constructorId": "rb",
       "constructorName": "RB F1 Team"
@@ -348,154 +348,154 @@
   ],
   "seasonStats": {
     "RUS": {
-      "races": 7,
-      "wins": 1,
-      "podiums": 3,
+      "races": 8,
+      "wins": 2,
+      "podiums": 4,
       "poles": 4,
       "fastestLaps": 0
     },
     "ANT": {
-      "races": 7,
+      "races": 8,
       "wins": 5,
-      "podiums": 6,
+      "podiums": 7,
       "poles": 4,
-      "fastestLaps": 4
+      "fastestLaps": 5
     },
     "LEC": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 2,
       "poles": 0,
       "fastestLaps": 0
     },
     "HAM": {
-      "races": 7,
+      "races": 8,
       "wins": 1,
       "podiums": 4,
       "poles": 0,
       "fastestLaps": 1
     },
     "NOR": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 2,
       "poles": 0,
       "fastestLaps": 1
     },
     "VER": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
-      "podiums": 1,
+      "podiums": 2,
       "poles": 0,
       "fastestLaps": 1
     },
     "BEA": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "LIN": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "BOR": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "GAS": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 1,
       "poles": 0,
       "fastestLaps": 0
     },
     "OCO": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "ALB": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "LAW": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "COL": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "SAI": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "PER": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "STR": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "ALO": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "BOT": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "HAD": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "PIA": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 2,
       "poles": 0,
       "fastestLaps": 0
     },
     "HUL": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
@@ -504,154 +504,154 @@
   },
   "career": {
     "ANT": {
-      "races": 31,
+      "races": 32,
       "wins": 5,
-      "podiums": 9,
+      "podiums": 10,
       "poles": 6,
-      "fastestLaps": 7
+      "fastestLaps": 8
+    },
+    "RUS": {
+      "races": 160,
+      "wins": 7,
+      "podiums": 28,
+      "poles": 16,
+      "fastestLaps": 11
     },
     "HAM": {
-      "races": 387,
+      "races": 388,
       "wins": 106,
       "podiums": 206,
       "poles": 118,
       "fastestLaps": 69
     },
-    "RUS": {
-      "races": 159,
-      "wins": 6,
-      "podiums": 27,
-      "poles": 16,
-      "fastestLaps": 11
-    },
-    "LEC": {
-      "races": 180,
-      "wins": 8,
-      "podiums": 52,
-      "poles": 34,
-      "fastestLaps": 11
-    },
-    "NOR": {
-      "races": 159,
-      "wins": 11,
-      "podiums": 46,
-      "poles": 29,
-      "fastestLaps": 19
-    },
     "PIA": {
-      "races": 77,
+      "races": 78,
       "wins": 9,
       "podiums": 28,
       "poles": 14,
       "fastestLaps": 9
     },
+    "NOR": {
+      "races": 160,
+      "wins": 11,
+      "podiums": 46,
+      "poles": 29,
+      "fastestLaps": 19
+    },
+    "LEC": {
+      "races": 181,
+      "wins": 8,
+      "podiums": 52,
+      "poles": 34,
+      "fastestLaps": 11
+    },
     "VER": {
-      "races": 240,
+      "races": 241,
       "wins": 71,
-      "podiums": 128,
+      "podiums": 129,
       "poles": 64,
       "fastestLaps": 37
     },
-    "GAS": {
-      "races": 185,
-      "wins": 1,
-      "podiums": 6,
-      "poles": 0,
-      "fastestLaps": 3
-    },
     "HAD": {
-      "races": 31,
+      "races": 32,
       "wins": 0,
       "podiums": 1,
       "poles": 2,
       "fastestLaps": 0
     },
+    "GAS": {
+      "races": 186,
+      "wins": 1,
+      "podiums": 6,
+      "poles": 0,
+      "fastestLaps": 3
+    },
     "LAW": {
-      "races": 42,
+      "races": 43,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "BEA": {
-      "races": 34,
+      "races": 35,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "COL": {
-      "races": 34,
+      "races": 35,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "LIN": {
-      "races": 7,
+      "races": 8,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "SAI": {
-      "races": 239,
+      "races": 240,
       "wins": 4,
       "podiums": 29,
       "poles": 11,
       "fastestLaps": 4
     },
     "ALB": {
-      "races": 136,
+      "races": 137,
       "wins": 0,
       "podiums": 2,
       "poles": 1,
       "fastestLaps": 1
     },
     "OCO": {
-      "races": 187,
+      "races": 188,
       "wins": 1,
       "podiums": 4,
       "poles": 0,
       "fastestLaps": 1
     },
     "BOR": {
-      "races": 31,
+      "races": 32,
       "wins": 0,
       "podiums": 0,
       "poles": 0,
       "fastestLaps": 0
     },
     "ALO": {
-      "races": 435,
+      "races": 436,
       "wins": 32,
       "podiums": 106,
       "poles": 23,
       "fastestLaps": 25
     },
     "HUL": {
-      "races": 261,
+      "races": 262,
       "wins": 0,
       "podiums": 1,
       "poles": 1,
       "fastestLaps": 2
     },
     "BOT": {
-      "races": 254,
+      "races": 255,
       "wins": 10,
       "podiums": 67,
       "poles": 19,
       "fastestLaps": 19
     },
     "PER": {
-      "races": 290,
+      "races": 291,
       "wins": 6,
       "podiums": 39,
       "poles": 4,
       "fastestLaps": 12
     },
     "STR": {
-      "races": 198,
+      "races": 199,
       "wins": 0,
       "podiums": 3,
       "poles": 1,
