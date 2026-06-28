@@ -1,10 +1,12 @@
-name: Refresh accuracy bar
+name: Weekly refresh (data + accuracy bar)
 
-# The ONLY scheduled job: every Monday, regenerate the live-model accuracy backtest
-# (ml/models/live_metrics.json — the bottom bar) so it reflects the weekend's race.
+# Every Monday: fetch the weekend's results/qualifying from Jolpica, then commit
+#   • ml/data/raw/*            — the refreshed race + qualifying data
+#   • ml/models/live_metrics.json — the recomputed accuracy bar
+# so the deployed app is current without anyone clicking RUN.
 #
-# Everything else (fetching data, rolling the next-race snapshot, real-grid predictions)
-# is handled at runtime by the app's RUN button — not on a schedule.
+# The next-race snapshot and real-grid (Mode 2) predictions are still handled at
+# runtime by the app's RUN button — not on a schedule.
 
 on:
   schedule:
@@ -15,16 +17,16 @@ permissions:
   contents: write
 
 concurrency:
-  group: refresh-accuracy-bar
+  group: weekly-refresh
   cancel-in-progress: false
 
 jobs:
-  accuracy-bar:
+  refresh:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -35,17 +37,17 @@ jobs:
       - name: Install Python deps
         run: pip install -r ml/requirements.txt
 
-      - name: Refresh accuracy bar (fetch latest, backtest, no snapshot)
-        run: python ml/scripts/refresh_for_next_race.py --no-snapshot --backtest
+      - name: Fetch latest data + roll snapshot + recompute accuracy bar
+        run: python ml/scripts/refresh_for_next_race.py --backtest
 
-      - name: Commit & push if the bar changed
+      - name: Commit & push if anything changed
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ml/models/live_metrics.json
+          git add ml/data/raw web/public/data/next_race_prediction.json ml/models/live_metrics.json
           if git diff --cached --quiet; then
-            echo "Accuracy bar unchanged."
+            echo "Nothing changed."
           else
-            git commit -m "chore: refresh accuracy bar [skip ci]"
+            git commit -m "chore: weekly data + accuracy bar refresh [skip ci]"
             git push
           fi
