@@ -1,6 +1,6 @@
 {
-  "asof": "2026-07-06",
-  "generatedAt": "2026-07-06",
+  "asof": "2026-07-13",
+  "generatedAt": "2026-07-13",
   "race": {
     "name": "Belgian Grand Prix",
     "season": 2026,
@@ -11,7 +11,7 @@
   },
   "forecast": {
     "error": null,
-    "asof": "2026-07-06",
+    "asof": "2026-07-13",
     "race": {
       "name": "Belgian Grand Prix",
       "season": 2026,
