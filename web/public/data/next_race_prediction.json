@@ -1,6 +1,6 @@
 {
-  "asof": "2026-08-03",
-  "generatedAt": "2026-08-03",
+  "asof": "2026-08-10",
+  "generatedAt": "2026-08-10",
   "race": {
     "name": "Dutch Grand Prix",
     "season": 2026,
@@ -11,7 +11,7 @@
   },
   "forecast": {
     "error": null,
-    "asof": "2026-08-03",
+    "asof": "2026-08-10",
     "race": {
       "name": "Dutch Grand Prix",
       "season": 2026,
@@ -35,23 +35,23 @@
         "driverName": "George Russell",
         "team": "Mercedes",
         "teamId": "mercedes",
-        "gap": 0.046
+        "gap": 0.05
       },
       {
         "position": 3,
-        "code": "LEC",
-        "driverName": "Charles Leclerc",
-        "team": "Ferrari",
-        "teamId": "ferrari",
-        "gap": 0.166
-      },
-      {
-        "position": 4,
         "code": "NOR",
         "driverName": "Lando Norris",
         "team": "McLaren",
         "teamId": "mclaren",
-        "gap": 0.174
+        "gap": 0.163
+      },
+      {
+        "position": 4,
+        "code": "LEC",
+        "driverName": "Charles Leclerc",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "gap": 0.188
       },
       {
         "position": 5,
@@ -59,7 +59,7 @@
         "driverName": "Lewis Hamilton",
         "team": "Ferrari",
         "teamId": "ferrari",
-        "gap": 0.179
+        "gap": 0.189
       },
       {
         "position": 6,
@@ -67,7 +67,7 @@
         "driverName": "Oscar Piastri",
         "team": "McLaren",
         "teamId": "mclaren",
-        "gap": 0.286
+        "gap": 0.285
       },
       {
         "position": 7,
@@ -75,7 +75,7 @@
         "driverName": "Isack Hadjar",
         "team": "Red Bull",
         "teamId": "red_bull",
-        "gap": 0.495
+        "gap": 0.477
       },
       {
         "position": 8,
@@ -83,7 +83,7 @@
         "driverName": "Max Verstappen",
         "team": "Red Bull",
         "teamId": "red_bull",
-        "gap": 0.516
+        "gap": 0.478
       },
       {
         "position": 9,
@@ -91,7 +91,7 @@
         "driverName": "Arvid Lindblad",
         "team": "RB F1 Team",
         "teamId": "rb",
-        "gap": 1.024
+        "gap": 1.034
       },
       {
         "position": 10,
@@ -99,7 +99,7 @@
         "driverName": "Liam Lawson",
         "team": "RB F1 Team",
         "teamId": "rb",
-        "gap": 1.209
+        "gap": 1.185
       },
       {
         "position": 11,
@@ -107,15 +107,15 @@
         "driverName": "Gabriel Bortoleto",
         "team": "Audi",
         "teamId": "audi",
-        "gap": 1.432
+        "gap": 1.396
       },
       {
         "position": 12,
-        "code": "SAI",
-        "driverName": "Carlos Sainz",
+        "code": "ALB",
+        "driverName": "Alexander Albon",
         "team": "Williams",
         "teamId": "williams",
-        "gap": 1.552
+        "gap": 1.466
       },
       {
         "position": 13,
@@ -123,39 +123,39 @@
         "driverName": "Franco Colapinto",
         "team": "Alpine F1 Team",
         "teamId": "alpine",
-        "gap": 1.664
+        "gap": 1.667
       },
       {
         "position": 14,
-        "code": "ALB",
-        "driverName": "Alexander Albon",
-        "team": "Williams",
-        "teamId": "williams",
-        "gap": 1.688
-      },
-      {
-        "position": 15,
         "code": "GAS",
         "driverName": "Pierre Gasly",
         "team": "Alpine F1 Team",
         "teamId": "alpine",
-        "gap": 1.718
+        "gap": 1.674
+      },
+      {
+        "position": 15,
+        "code": "SAI",
+        "driverName": "Carlos Sainz",
+        "team": "Williams",
+        "teamId": "williams",
+        "gap": 1.694
       },
       {
         "position": 16,
-        "code": "BEA",
-        "driverName": "Oliver Bearman",
-        "team": "Haas F1 Team",
-        "teamId": "haas",
-        "gap": 1.751
-      },
-      {
-        "position": 17,
         "code": "HUL",
         "driverName": "Nico H\u00fclkenberg",
         "team": "Audi",
         "teamId": "audi",
-        "gap": 1.8
+        "gap": 1.829
+      },
+      {
+        "position": 17,
+        "code": "BEA",
+        "driverName": "Oliver Bearman",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "gap": 1.877
       },
       {
         "position": 18,
@@ -163,23 +163,23 @@
         "driverName": "Sergio P\u00e9rez",
         "team": "Cadillac F1 Team",
         "teamId": "cadillac",
-        "gap": 2.539
+        "gap": 2.504
       },
       {
         "position": 19,
-        "code": "OCO",
-        "driverName": "Esteban Ocon",
-        "team": "Haas F1 Team",
-        "teamId": "haas",
-        "gap": 3.136
-      },
-      {
-        "position": 20,
         "code": "ALO",
         "driverName": "Fernando Alonso",
         "team": "Aston Martin",
         "teamId": "aston_martin",
-        "gap": 3.244
+        "gap": 3.22
+      },
+      {
+        "position": 20,
+        "code": "OCO",
+        "driverName": "Esteban Ocon",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "gap": 3.354
       },
       {
         "position": 21,
@@ -187,7 +187,7 @@
         "driverName": "Valtteri Bottas",
         "team": "Cadillac F1 Team",
         "teamId": "cadillac",
-        "gap": 3.451
+        "gap": 3.632
       },
       {
         "position": 22,
@@ -195,7 +195,7 @@
         "driverName": "Lance Stroll",
         "team": "Aston Martin",
         "teamId": "aston_martin",
-        "gap": 3.626
+        "gap": 3.685
       }
     ],
     "preQualifyingPodium": [
@@ -204,140 +204,126 @@
         "driverName": "Andrea Kimi Antonelli",
         "team": "Mercedes",
         "teamId": "mercedes",
-        "podiumProbability": 0.559
-      },
-      {
-        "code": "LEC",
-        "driverName": "Charles Leclerc",
-        "team": "Ferrari",
-        "teamId": "ferrari",
-        "podiumProbability": 0.5209
+        "podiumProbability": 0.5498
       },
       {
         "code": "RUS",
         "driverName": "George Russell",
         "team": "Mercedes",
         "teamId": "mercedes",
-        "podiumProbability": 0.4986
-      },
-      {
-        "code": "HAM",
-        "driverName": "Lewis Hamilton",
-        "team": "Ferrari",
-        "teamId": "ferrari",
-        "podiumProbability": 0.3854
+        "podiumProbability": 0.5078
       },
       {
         "code": "NOR",
         "driverName": "Lando Norris",
         "team": "McLaren",
         "teamId": "mclaren",
-        "podiumProbability": 0.3588
+        "podiumProbability": 0.448
+      },
+      {
+        "code": "LEC",
+        "driverName": "Charles Leclerc",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "podiumProbability": 0.4125
+      },
+      {
+        "code": "HAM",
+        "driverName": "Lewis Hamilton",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "podiumProbability": 0.3591
       },
       {
         "code": "VER",
         "driverName": "Max Verstappen",
         "team": "Red Bull",
         "teamId": "red_bull",
-        "podiumProbability": 0.2215
+        "podiumProbability": 0.2677
       },
       {
         "code": "HAD",
         "driverName": "Isack Hadjar",
         "team": "Red Bull",
         "teamId": "red_bull",
-        "podiumProbability": 0.1977
+        "podiumProbability": 0.1923
       },
       {
         "code": "PIA",
         "driverName": "Oscar Piastri",
         "team": "McLaren",
         "teamId": "mclaren",
-        "podiumProbability": 0.1369
+        "podiumProbability": 0.136
       },
       {
         "code": "LIN",
         "driverName": "Arvid Lindblad",
         "team": "RB F1 Team",
         "teamId": "rb",
-        "podiumProbability": 0.0476
+        "podiumProbability": 0.0478
       },
       {
         "code": "LAW",
         "driverName": "Liam Lawson",
         "team": "RB F1 Team",
         "teamId": "rb",
-        "podiumProbability": 0.0233
-      },
-      {
-        "code": "COL",
-        "driverName": "Franco Colapinto",
-        "team": "Alpine F1 Team",
-        "teamId": "alpine",
-        "podiumProbability": 0.0085
+        "podiumProbability": 0.0227
       },
       {
         "code": "GAS",
         "driverName": "Pierre Gasly",
         "team": "Alpine F1 Team",
         "teamId": "alpine",
-        "podiumProbability": 0.0083
+        "podiumProbability": 0.0118
       },
       {
         "code": "BOR",
         "driverName": "Gabriel Bortoleto",
         "team": "Audi",
         "teamId": "audi",
-        "podiumProbability": 0.0064
+        "podiumProbability": 0.0109
+      },
+      {
+        "code": "COL",
+        "driverName": "Franco Colapinto",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "podiumProbability": 0.0087
       },
       {
         "code": "ALO",
         "driverName": "Fernando Alonso",
         "team": "Aston Martin",
         "teamId": "aston_martin",
-        "podiumProbability": 0.0055
-      },
-      {
-        "code": "SAI",
-        "driverName": "Carlos Sainz",
-        "team": "Williams",
-        "teamId": "williams",
-        "podiumProbability": 0.0038
+        "podiumProbability": 0.0051
       },
       {
         "code": "STR",
         "driverName": "Lance Stroll",
         "team": "Aston Martin",
         "teamId": "aston_martin",
-        "podiumProbability": 0.0035
-      },
-      {
-        "code": "HUL",
-        "driverName": "Nico H\u00fclkenberg",
-        "team": "Audi",
-        "teamId": "audi",
-        "podiumProbability": 0.0035
+        "podiumProbability": 0.0034
       },
       {
         "code": "ALB",
         "driverName": "Alexander Albon",
         "team": "Williams",
         "teamId": "williams",
-        "podiumProbability": 0.0026
+        "podiumProbability": 0.0031
       },
       {
-        "code": "OCO",
-        "driverName": "Esteban Ocon",
-        "team": "Haas F1 Team",
-        "teamId": "haas",
-        "podiumProbability": 0.0024
+        "code": "SAI",
+        "driverName": "Carlos Sainz",
+        "team": "Williams",
+        "teamId": "williams",
+        "podiumProbability": 0.0031
       },
       {
-        "code": "BEA",
-        "driverName": "Oliver Bearman",
-        "team": "Haas F1 Team",
-        "teamId": "haas",
-        "podiumProbability": 0.0021
+        "code": "HUL",
+        "driverName": "Nico H\u00fclkenberg",
+        "team": "Audi",
+        "teamId": "audi",
+        "podiumProbability": 0.003
       },
       {
         "code": "PER",
@@ -347,11 +333,25 @@
         "podiumProbability": 0.002
       },
       {
+        "code": "OCO",
+        "driverName": "Esteban Ocon",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "podiumProbability": 0.0018
+      },
+      {
         "code": "BOT",
         "driverName": "Valtteri Bottas",
         "team": "Cadillac F1 Team",
         "teamId": "cadillac",
         "podiumProbability": 0.0017
+      },
+      {
+        "code": "BEA",
+        "driverName": "Oliver Bearman",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "podiumProbability": 0.0016
       }
     ],
     "hasRealGrid": false,
