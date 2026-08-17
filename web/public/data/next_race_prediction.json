@@ -1,6 +1,6 @@
 {
-  "asof": "2026-08-10",
-  "generatedAt": "2026-08-10",
+  "asof": "2026-08-17",
+  "generatedAt": "2026-08-17",
   "race": {
     "name": "Dutch Grand Prix",
     "season": 2026,
@@ -11,7 +11,7 @@
   },
   "forecast": {
     "error": null,
-    "asof": "2026-08-10",
+    "asof": "2026-08-17",
     "race": {
       "name": "Dutch Grand Prix",
       "season": 2026,
