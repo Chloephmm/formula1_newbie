@@ -1,6 +1,6 @@
 {
-  "asof": "2026-08-24",
-  "generatedAt": "2026-08-24",
+  "asof": "2026-08-31",
+  "generatedAt": "2026-08-31",
   "race": {
     "name": "Italian Grand Prix",
     "season": 2026,
@@ -11,7 +11,7 @@
   },
   "forecast": {
     "error": null,
-    "asof": "2026-08-24",
+    "asof": "2026-08-31",
     "race": {
       "name": "Italian Grand Prix",
       "season": 2026,
