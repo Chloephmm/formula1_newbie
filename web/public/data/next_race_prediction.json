@@ -1,6 +1,6 @@
 {
-  "asof": "2026-10-12",
-  "generatedAt": "2026-10-12",
+  "asof": "2026-10-19",
+  "generatedAt": "2026-10-19",
   "race": {
     "name": "United States Grand Prix",
     "season": 2026,
@@ -11,7 +11,7 @@
   },
   "forecast": {
     "error": null,
-    "asof": "2026-10-12",
+    "asof": "2026-10-19",
     "race": {
       "name": "United States Grand Prix",
       "season": 2026,
