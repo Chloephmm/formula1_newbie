@@ -195,3 +195,80 @@ def test_unavailable_final_freeze_with_null_selection_is_sticky():
         decide_action(_event(), status, datetime(2026, 10, 24, 14, tzinfo=UTC))
         == "freeze"
     )
+
+
+def test_final_attempt_never_resumes_ordinary_polling_after_schedule_postponement():
+    from src.pipeline.state import (
+        decide_action,
+        mark_final_check_attempted,
+        reconcile_schedule,
+    )
+
+    attempted = mark_final_check_attempted(
+        {}, datetime(2026, 10, 24, 15, 15, tzinfo=UTC)
+    )
+    postponed = _event(
+        race_start_at="2026-10-24T20:00:00Z", schedule_hash="schedule-b"
+    )
+    status = reconcile_schedule(
+        {**attempted, "schedule_hash": "schedule-a"}, postponed
+    )
+
+    assert (
+        decide_action(postponed, status, datetime(2026, 10, 24, 16, 30, tzinfo=UTC))
+        == "wait"
+    )
+
+
+def test_repeated_freeze_preserves_original_outcome_and_invalid_schedule_cannot_reopen_it():
+    from src.pipeline.state import decide_action, freeze_status
+
+    frozen = freeze_status(
+        {},
+        datetime(2026, 10, 24, 15, tzinfo=UTC),
+        reason="actual_unavailable",
+        selection={"podium": ["A", "B", "C"]},
+    )
+    repeated = freeze_status(
+        frozen,
+        datetime(2026, 10, 24, 16, tzinfo=UTC),
+        reason="replacement_attempt",
+        selection=None,
+    )
+
+    assert repeated == frozen
+    assert decide_action(
+        _event(race_start_at="invalid"),
+        repeated,
+        datetime(2026, 10, 24, 16, tzinfo=UTC),
+    ) == "freeze"
+    assert decide_action(
+        _event(race_start_at="invalid"),
+        {"frozen_prediction_id": None},
+        datetime(2026, 10, 24, 16, tzinfo=UTC),
+    ) == "freeze"
+
+
+def test_invalid_existing_policy_timestamps_fail_closed_before_check_actions():
+    from src.pipeline.state import action_decision, decide_action
+
+    ordinary = action_decision(
+        _event(), {"final_check_attempted_at": "bad"}, _at(17)
+    )
+    final_window = action_decision(
+        _event(),
+        {"last_qualifying_check_started_at": "bad"},
+        datetime(2026, 10, 24, 15, 15, tzinfo=UTC),
+    )
+
+    assert (
+        decide_action(_event(), {"final_check_attempted_at": "bad"}, _at(17))
+        == "unavailable"
+    )
+    assert ordinary.reason == "invalid_timestamp"
+    assert decide_action(
+        _event(),
+        {"last_qualifying_check_started_at": "bad"},
+        datetime(2026, 10, 24, 15, 15, tzinfo=UTC),
+    ) == "unavailable"
+    assert final_window.reason == "invalid_timestamp"

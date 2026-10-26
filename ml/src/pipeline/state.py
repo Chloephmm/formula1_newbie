@@ -77,6 +77,7 @@ def _is_frozen(status: Mapping[str, Any]) -> bool:
         status.get("frozen_at")
         or status.get("freeze_marker")
         or status.get("final_state") in {"frozen", "unavailable"}
+        or "frozen_prediction_id" in status
     )
 
 
@@ -121,23 +122,26 @@ def action_decision(
 
     try:
         evaluated_at = _utc_timestamp(now, "now")
+        if _is_frozen(status):
+            return ActionDecision(ACTION_FREEZE, "already_frozen")
         windows = _policy_windows(event)
-        if _is_frozen(status) or evaluated_at >= windows["cutoff_at"]:
+        if evaluated_at >= windows["cutoff_at"]:
             return ActionDecision(ACTION_FREEZE, "cutoff_reached")
         if windows["first_check_at"] >= windows["cutoff_at"]:
             return ActionDecision(ACTION_WAIT, "wait_exceeds_cutoff")
         if evaluated_at < windows["first_check_at"]:
             return ActionDecision(ACTION_WAIT, "before_first_check")
+        final_attempt = _status_timestamp(status, "final_check_attempted_at")
+        last_started = _status_timestamp(status, "last_qualifying_check_started_at")
+        if final_attempt is not None:
+            return ActionDecision(ACTION_WAIT, "final_check_already_attempted")
         if evaluated_at >= windows["latest_generation_start_at"]:
             return ActionDecision(ACTION_WAIT, "insufficient_publication_window")
         if evaluated_at >= windows["final_check_at"]:
-            if _status_timestamp(status, "final_check_attempted_at") is not None:
-                return ActionDecision(ACTION_WAIT, "final_check_already_attempted")
             return ActionDecision(ACTION_FINAL_CHECK, "final_check_due")
         if status.get("actual_publication_confirmed") is True:
             return ActionDecision(ACTION_WAIT, "actual_publication_confirmed")
 
-        last_started = _status_timestamp(status, "last_qualifying_check_started_at")
         if last_started is None or evaluated_at >= last_started + timedelta(hours=1):
             return ActionDecision(ACTION_CHECK_QUALIFYING, "ordinary_check_due")
         return ActionDecision(ACTION_WAIT, "ordinary_check_not_due")
@@ -271,6 +275,8 @@ def freeze_status(
     """Create an explicit terminal marker, including an unavailable null selection."""
 
     result = copy.deepcopy(dict(status))
+    if _is_frozen(result):
+        return result
     result["frozen_at"] = _format_timestamp(frozen_at)
     result["freeze_reason"] = reason
     result["final_state"] = "frozen"
