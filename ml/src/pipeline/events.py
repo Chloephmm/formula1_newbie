@@ -14,9 +14,9 @@ Roster semantics are intentionally small and explicit:
     One of ``provisional``, ``confirmed``, ``confirmed_substitute``, ``withdrawn``,
     or ``excluded``. Withdrawn/excluded records must be neither expected nor eligible.
 ``exception``
-    Optional evidence-backed metadata for a ``confirmed_substitute`` or a
-    ``no_qualifying_lap``. The latter can explicitly allow a later validator to use a
-    model position; this module does not implement that validator.
+    Optional evidence-backed metadata for a ``confirmed_substitute``, ``withdrawn``,
+    ``excluded``, or ``no_qualifying_lap``. The latter can explicitly allow a later
+    validator to use a model position; this module does not implement that validator.
 """
 from __future__ import annotations
 
@@ -35,7 +35,9 @@ UTC = timezone.utc
 PARTICIPATION_STATES = frozenset(
     {"provisional", "confirmed", "confirmed_substitute", "withdrawn", "excluded"}
 )
-EXCEPTION_KINDS = frozenset({"confirmed_substitute", "no_qualifying_lap"})
+EXCEPTION_KINDS = frozenset(
+    {"confirmed_substitute", "withdrawn", "excluded", "no_qualifying_lap"}
+)
 SCHEDULE_OVERRIDE_FIELDS = frozenset(
     {"qualifying_start_at", "qualifying_end_observed_at", "race_start_at"}
 )
@@ -131,7 +133,7 @@ def event_windows(event: Mapping[str, Any]) -> dict[str, Any]:
     qualifying_start = parse_utc(event["qualifying_start_at"])
     race_start = parse_utc(event["race_start_at"])
     observed = event.get("qualifying_end_observed_at")
-    if observed:
+    if observed is not None:
         qualifying_end = parse_utc(observed)
         estimated = False
     else:
@@ -205,7 +207,7 @@ def _validate_exception(value: Any) -> dict[str, Any] | None:
     reason = _required_text(value, "reason", "missing_entry_evidence")
     source_url = _evidence_url(value.get("source_url"), "missing_entry_evidence")
     observed_at = _format_utc(value.get("observed_at"))
-    allow_model_position = value.get("allow_model_position")
+    allow_model_position = value.get("allow_model_position", False)
     if not isinstance(allow_model_position, bool):
         raise EventContractError(
             "invalid_roster", "exception allow_model_position must be boolean"
@@ -222,6 +224,12 @@ def _validate_exception(value: Any) -> dict[str, Any] | None:
     if kind == "no_qualifying_lap" and not allow_model_position:
         raise EventContractError(
             "invalid_roster", "no-lap exception must explicitly allow model position"
+        )
+    if kind in {"withdrawn", "excluded"} and (
+        replaces_driver_id or allow_model_position
+    ):
+        raise EventContractError(
+            "invalid_roster", f"{kind} exception cannot replace a driver or model position"
         )
     return {
         "kind": kind,
@@ -259,6 +267,10 @@ def _validate_provenance(value: Any) -> dict[str, Any]:
         "source_url": source_url,
         "observed_at": observed_at,
     }
+    if source == "event_override":
+        result["reason"] = _required_text(
+            value, "reason", "missing_entry_evidence"
+        )
     if season is not None:
         result["season"] = season
     if round_number is not None:
@@ -299,13 +311,27 @@ def validate_roster_record(record: Mapping[str, Any]) -> dict[str, Any]:
             f"{participation} participation contradicts expected/eligible flags",
         )
     exception = _validate_exception(record.get("exception"))
+    provenance = _validate_provenance(record.get("provenance"))
+    override_provenance = None
+    if record.get("override_provenance") is not None:
+        override_provenance = _validate_provenance(record["override_provenance"])
     if participation == "confirmed_substitute" and (
         not exception or exception["kind"] != "confirmed_substitute"
     ):
         raise EventContractError(
             "invalid_roster", "confirmed_substitute requires its matching exception"
         )
-    provenance = _validate_provenance(record.get("provenance"))
+    if participation in {"withdrawn", "excluded"} and not (
+        (exception and exception["kind"] == participation)
+        or (
+            override_provenance
+            and override_provenance["source"] == "event_override"
+        )
+    ):
+        raise EventContractError(
+            "missing_entry_evidence",
+            f"{participation} status requires event-specific evidence",
+        )
     normalized = {
         "driver_id": driver_id,
         "code": code,
@@ -319,10 +345,8 @@ def validate_roster_record(record: Mapping[str, Any]) -> dict[str, Any]:
         "exception": exception,
         "provenance": provenance,
     }
-    if record.get("override_provenance") is not None:
-        normalized["override_provenance"] = _validate_provenance(
-            record["override_provenance"]
-        )
+    if override_provenance is not None:
+        normalized["override_provenance"] = override_provenance
     return normalized
 
 
@@ -567,6 +591,7 @@ def apply_event_override(
     roster_by_id = {record["driver_id"]: record for record in result.get("roster", [])}
     override_provenance = {
         "source": "event_override",
+        "reason": evidence["reason"],
         "source_url": evidence["source_url"],
         "observed_at": evidence["observed_at"],
     }

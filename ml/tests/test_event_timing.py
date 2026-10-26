@@ -108,6 +108,24 @@ def test_event_windows_supports_saturday_race_without_weekday_guesses():
     )
 
 
+def test_event_windows_supports_friday_qualifying_before_saturday_race():
+    from src.pipeline.events import event_windows
+
+    windows = event_windows(
+        _schedule(
+            qualifying_start_at="2026-10-23T15:00:00Z",
+            race_start_at="2026-10-24T17:00:00Z",
+        )
+    )
+
+    assert windows["first_check_at"] == datetime(
+        2026, 10, 23, 21, 30, tzinfo=timezone.utc
+    )
+    assert windows["cutoff_at"] == datetime(
+        2026, 10, 24, 15, 0, tzinfo=timezone.utc
+    )
+
+
 def test_observed_qualifying_end_replaces_estimate():
     from src.pipeline.events import event_windows
 
@@ -122,6 +140,17 @@ def test_observed_qualifying_end_replaces_estimate():
     assert windows["first_check_at"] == datetime(
         2026, 10, 23, 21, 47, tzinfo=timezone.utc
     )
+
+
+@pytest.mark.parametrize("invalid_observed_end", ["", False, 0])
+def test_supplied_falsey_observed_end_is_invalid(invalid_observed_end):
+    from src.pipeline.events import EventContractError, event_windows
+
+    with pytest.raises(EventContractError) as exc_info:
+        event_windows(
+            _schedule(qualifying_end_observed_at=invalid_observed_end)
+        )
+    assert exc_info.value.code == "invalid_timestamp"
 
 
 @pytest.mark.parametrize(
@@ -251,6 +280,69 @@ def test_roster_requires_entry_evidence_instead_of_guessing():
     with pytest.raises(EventContractError) as exc_info:
         build_event_metadata(_schedule(), [unsupported], _roster_source())
     assert exc_info.value.code == "missing_entry_evidence"
+
+
+@pytest.mark.parametrize("participation", ["withdrawn", "excluded"])
+def test_previous_race_provenance_cannot_remove_an_entrant(participation):
+    from src.pipeline.events import EventContractError, validate_roster_record
+
+    record = _roster_record(
+        participation=participation,
+        expected=False,
+        eligible=False,
+    )
+
+    with pytest.raises(EventContractError) as exc_info:
+        validate_roster_record(record)
+    assert exc_info.value.code == "missing_entry_evidence"
+
+
+def test_status_specific_exception_can_remove_an_entrant():
+    from src.pipeline.events import validate_roster_record
+
+    record = _roster_record(
+        participation="withdrawn",
+        expected=False,
+        eligible=False,
+        exception={
+            "kind": "withdrawn",
+            "reason": "Official withdrawal notice",
+            "source_url": "https://example.test/official-entry-list",
+            "observed_at": "2026-10-22T15:00:00Z",
+        },
+    )
+
+    assert validate_roster_record(record)["participation"] == "withdrawn"
+
+
+def test_exact_override_can_withdraw_entrant_and_preserves_baseline_provenance():
+    from src.pipeline.events import apply_event_override, build_event_metadata
+
+    event = build_event_metadata(_schedule(), [_roster_record()], _roster_source())
+    override = {
+        "reason": "Official withdrawal before qualifying",
+        "source_url": "https://example.test/official-entry-list",
+        "observed_at": "2026-10-22T15:00:00Z",
+        "participants": {
+            "driver_one": {
+                "participation": "withdrawn",
+                "expected": False,
+                "eligible": False,
+            }
+        },
+    }
+
+    updated = apply_event_override(event, {"2026-20": override})
+    entrant = updated["roster"][0]
+
+    assert entrant["provenance"]["source"] == "previous_completed_race"
+    assert entrant["provenance"]["round"] == 19
+    assert entrant["override_provenance"] == {
+        "source": "event_override",
+        "reason": "Official withdrawal before qualifying",
+        "source_url": "https://example.test/official-entry-list",
+        "observed_at": "2026-10-22T15:00:00Z",
+    }
 
 
 def test_exact_event_override_preserves_provenance_and_participant_exception():
