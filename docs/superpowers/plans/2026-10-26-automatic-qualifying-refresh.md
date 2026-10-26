@@ -366,9 +366,9 @@ def test_five_hour_wait_uses_qualifying_timestamp_not_race_minus_one_day():
 
 **Files:** create ml/src/pipeline/state.py and ml/tests/test_pipeline_state.py.
 
-- [ ] Add behavioral tests for before-first-check, hourly retry, pause-after-success, final check, short window, exact cutoff, overrun and schedule change.
-- [ ] Run: python -m pytest ml/tests/test_pipeline_state.py -v; verify failing behavior before implementing the controller policy.
-- [ ] Implement a pure decide_action(event, status, now) function returning one of wait, check_qualifying, final_check, freeze or unavailable. Keep schedule_refresh_due separate from qualifying polling.
+- [x] Add behavioral tests for before-first-check, hourly retry, pause-after-success, final check, short window, exact cutoff, overrun and schedule change.
+- [x] Run: python -m pytest ml/tests/test_pipeline_state.py -v; verify failing behavior before implementing the controller policy.
+- [x] Implement a pure decide_action(event, status, now) function returning one of wait, check_qualifying, final_check, freeze or unavailable. Keep schedule_refresh_due separate from qualifying polling.
 
 Core policy after schedule validation and initial preparation:
 ~~~python
@@ -395,9 +395,9 @@ def decide_action(event: dict, status: dict, now) -> str:
     return "check_qualifying"
 ~~~
 
-- [ ] Persist status only when a check/schedule/state transition occurs; idle ticks produce no commits. Status records check start/completion, last successful check, next check, validation reason, last error, current prediction ID, final attempt and freeze selection.
-- [ ] Test exact boundaries using synthetic times, including a check started before cutoff whose generation completes after cutoff. A successful earlier actual forecast still receives one final check.
-- [ ] Re-run tests. Commit: feat: schedule qualifying checks and enforce publication windows.
+- [x] Persist status only when a check/schedule/state transition occurs; idle ticks produce no commits. Status records check start/completion, last successful check, next check, validation reason, last error, current prediction ID, final attempt and freeze selection.
+- [x] Test exact boundaries using synthetic times, including a check started before cutoff whose generation completes after cutoff. A successful earlier actual forecast still receives one final check.
+- [x] Re-run tests. Commit: feat: schedule qualifying checks and enforce publication windows.
 
 ### Task 3 — Fetch and validate one qualifying event
 

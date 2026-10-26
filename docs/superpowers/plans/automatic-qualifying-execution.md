@@ -17,8 +17,8 @@ No remote push, merge, or deployment is authorized by this record.
 | Task | Implementation | Spec review | Quality review |
 |---|---|---|---|
 | 1 Event timing and roster | 0d7378b + 7744f47 + 997c4e3; 39 focused / 44 full passed, 2 skipped | Passed after regression fixes | Passed after roster-coherence fixes |
-| 2 State and deadline policy | In progress | Pending | Pending |
-| 3 Qualifying validation | Pending | Pending | Pending |
+| 2 State and deadline policy | 35bd7ee + e745866 + 7c0bf93; 17 focused / 61 full passed, 2 skipped | Passed after terminal-state regression fixes | Passed; minor status issues also fixed |
+| 3 Qualifying validation | In progress | Pending | Pending |
 | 4 Forecast/training modes | Pending | Pending | Pending |
 | 5 Artifact contracts | Pending | Pending | Pending |
 | 6 Publication and freeze | Pending | Pending | Pending |
