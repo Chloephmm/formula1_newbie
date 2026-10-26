@@ -1,6 +1,6 @@
 # Automatic qualifying execution record
 
-Branch: `feat/automatic-qualifying-refresh`.
+Branch: `feature1` (tracking `origin/feature1`, as explicitly requested).
 Worktree: `.worktrees/automatic-qualifying-refresh`.
 No remote push, merge, or deployment is authorized by this record.
 
@@ -16,8 +16,8 @@ No remote push, merge, or deployment is authorized by this record.
 
 | Task | Implementation | Spec review | Quality review |
 |---|---|---|---|
-| 1 Event timing and roster | Pending | Pending | Pending |
-| 2 State and deadline policy | Pending | Pending | Pending |
+| 1 Event timing and roster | 0d7378b + 7744f47 + 997c4e3; 39 focused / 44 full passed, 2 skipped | Passed after regression fixes | Passed after roster-coherence fixes |
+| 2 State and deadline policy | In progress | Pending | Pending |
 | 3 Qualifying validation | Pending | Pending | Pending |
 | 4 Forecast/training modes | Pending | Pending | Pending |
 | 5 Artifact contracts | Pending | Pending | Pending |

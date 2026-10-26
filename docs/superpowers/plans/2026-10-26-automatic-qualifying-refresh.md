@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.11, pandas/PyArrow, existing LightGBM and scikit-learn models, requests, pytest, GitHub Actions, Streamlit fragments, Git-backed JSON/Parquet.
 
-**Status:** Implementation authorized using fresh subagents with spec and quality reviews after each task. Work branch: feat/automatic-qualifying-refresh. Based on repository commit 5c0ad5bcbc2e104d6e3d886d34261e1575ef77e0; not pushed or deployed.
+**Status:** Implementation authorized using fresh subagents with spec and quality reviews after each task. Work branch: feature1 (tracking origin/feature1, explicitly requested). Based on repository commit 5c0ad5bcbc2e104d6e3d886d34261e1575ef77e0; not pushed or deployed.
 
 **Execution clarification (2026-10-26):** The user accepts strict forecast eligibility with possible display lag: a forecast must be verified available before the two-hour cutoff; the feed/browser may display that already-eligible version later. Candidate verification, not mutable-feed propagation, is the eligibility event. Persist verifiable confirmation evidence; an uncertain or post-cutoff confirmation is ineligible. Feed publication and immutable freeze selection must consistently enforce that rule. The saved ML-based initial remains the fallback when actual qualifying is unavailable. Execution uses the stated GitHub-only, start-plus-90-minute estimated-end and Monday-safety defaults; the estimate remains explicitly labeled.
 
@@ -33,15 +33,15 @@
 - Update an already-open page by reading saved outputs.
 - Keep previous valid output on errors, and never substitute another race's prediction.
 
-### Questions raised; draft defaults pending the user's answer
+### Execution defaults and explicit clarifications
 
-| Decision | Default used in this proposal |
+| Decision | Default used for execution |
 |---|---|
 | Meaning of “Monday unchanged” | Preserve both schedules and existing work. Permit small changes to common publication code, staged artifact paths, and writer coordination. Do not split out the backtest or remove any Monday work. |
 | No observed qualifying finish time | Estimate end as qualifying start + 90 minutes. Set end_time_estimated=true and keep source/provenance. An observed or documented override takes precedence. |
 | Scheduling infrastructure | GitHub Actions only. Late/missed runs retain the existing prediction and report their status. No promise of an exact execution minute. |
 
-These are proposed assumptions, not recorded user approvals. If Monday files and scripts must be byte-for-byte unchanged, Task 7 must be redesigned before execution: the legacy publisher does not archive new records or honor the new publication deadline.
+After requesting explanation, the user requested execution of this plan. These defaults were explicitly announced for execution; the separate cutoff/display-lag clarification above was expressly accepted. No finish timestamp is inferred from ML qualifying performance. If Monday files and scripts must instead be byte-for-byte unchanged, Task 7 needs redesign: the legacy publisher does not archive new records or honor the new eligibility deadline.
 
 ### Additional design choices
 
@@ -287,13 +287,13 @@ The current multiply-by-3 normalization can in principle exceed 1. Tests must ex
 3. Read the latest remote branch and latest event state after acquiring the writer lock.
 4. Recheck schedule hash, source version, mode, event identity, freeze state and UTC deadline.
 5. Atomically commit related files and advance the branch only by fast-forward. Never force-push.
-6. Confirm the committed candidate is retrievable through the saved-output read path.
-7. Promote a confirmed version in the feed; preserve the previous version as a fallback.
-8. Persist publication acknowledgement and eligibility time separately from model generation time.
+6. Confirm the immutable committed candidate is retrievable through the saved-output read path before cutoff, checking exact content and identity. Record the verified timestamp and immutable commit/checksum evidence.
+7. Persist that confirmation receipt and promote the eligible version in the feed; preserve the previous version as a fallback. As explicitly approved by the user, delivery of this already-eligible version may lag the cutoff.
+8. Persist confirmation/eligibility time separately from model generation and feed-delivery times. A receipt must never claim a verification that did not occur; unknown outcomes without evidence are ineligible.
 
 Use a publication budget, stop candidate promotion before the hard deadline, and bound network calls by the remaining time. Recheck eligibility after every blocking operation. A push timeout is an unknown outcome: reconcile the remote ref and receipt before retrying. Do not treat a local file write or successful model fit as successful publication.
 
-The feed exposes confirmed versions only. An uncertain/unconfirmed candidate must not replace the version read by the app or selected by the evaluator. If publication confirmation would occur after cutoff, retain the last confirmed version and exclude the candidate. On GitHub, multi-request confirmation and public CDN propagation are not a transaction with a server-side deadline: the safe fallback is to close publication early and refuse ambiguous versions, not to promise exact-time visibility.
+The feed exposes confirmed versions only. An uncertain/unconfirmed candidate must not replace the version read by the app or selected by the evaluator. If candidate availability verification occurs at or after cutoff, retain the last confirmed version and exclude the candidate. On GitHub, multi-request confirmation and public CDN propagation are not a transaction with a server-side deadline. The user approved strict pre-cutoff candidate eligibility with potentially delayed feed/browser display. Keep an early-close budget and refuse ambiguous verification evidence. A late feed push may expose only a version that already has valid pre-cutoff verification; a late candidate upload or verification never qualifies.
 
 Use one revisioned feed containing event identity, schedule/status, the selected prediction and prior confirmed fallback. This avoids reading a new status file together with an old prediction file. Archive URLs reference immutable versions.
 
@@ -305,15 +305,15 @@ Evaluation reads final.json. A later correction, backtest or retrospective recon
 
 ## 6. Implementation tasks
 
-Work in an isolated implementation branch/worktree after execution is requested. This planning turn changes documentation only. Commands below are run from the repository root unless noted. Use a pinned Python environment and record dependency versions for each published model.
+Work in the isolated feature1 worktree selected for execution. Commands below are run from that worktree's repository root unless noted. Record dependency versions for each published model. Remote push, merge and deployment remain separate from local implementation.
 
 ### Task 1 — Event identity, timing and roster contract
 
 **Files:** create ml/src/pipeline/events.py, ml/config/event_overrides.json and ml/tests/test_event_timing.py; modify ml/src/data/jolpica.py.
 
-- [ ] Write clock-controlled tests covering UTC conversion, non-Saturday qualifying, Saturday races, missing timestamps, estimated vs observed finish, schedule changes, and distinct Sprint/Grand Prix qualifying.
-- [ ] Run: python -m pytest ml/tests/test_event_timing.py -v. Confirm assertions fail because the current parser drops these fields.
-- [ ] Implement explicit fields and timing calculations, retaining existing schedule columns for Monday compatibility.
+- [x] Write clock-controlled tests covering UTC conversion, non-Saturday qualifying, Saturday races, missing timestamps, estimated vs observed finish, schedule changes, and distinct Sprint/Grand Prix qualifying.
+- [x] Run: python -m pytest ml/tests/test_event_timing.py -v. Confirm assertions fail because the current parser drops these fields.
+- [x] Implement explicit fields and timing calculations, retaining existing schedule columns for Monday compatibility.
 
 Core calculation:
 ~~~python
@@ -358,9 +358,9 @@ def test_five_hour_wait_uses_qualifying_timestamp_not_race_minus_one_day():
     assert actual["end_time_estimated"] is True
 ~~~
 
-- [ ] Persist event.json fields: season, round, race_name, circuit_id, qualifying_start_at, qualifying_end_at, end_time_estimated, race_start_at, schedule_updated_at, schedule_source, schedule_hash, roster, roster_source and roster_version.
-- [ ] Initialize event_overrides.json to {}. Accept overrides only for exact event IDs with reason and source reference. Missing critical schedule/entry evidence becomes a visible state, not guessed data.
-- [ ] Re-run event tests and existing Jolpica helper tests. Commit this isolated change with message: feat: preserve event session timing and roster provenance.
+- [x] Persist event.json fields: season, round, race_name, circuit_id, qualifying_start_at, qualifying_end_at, end_time_estimated, race_start_at, schedule_updated_at, schedule_source, schedule_hash, roster, roster_source and roster_version.
+- [x] Initialize event_overrides.json to {}. Accept overrides only for exact event IDs with reason and source reference. Missing critical schedule/entry evidence becomes a visible state, not guessed data.
+- [x] Re-run event tests and existing Jolpica helper tests. Commit this isolated change with message: feat: preserve event session timing and roster provenance.
 
 ### Task 2 — Persistent due-action and cutoff logic
 
@@ -593,7 +593,7 @@ jobs:
 - [ ] Verify Monday behavior with integration tests: all original endpoints fetched, backtest still called, next-event publication occurs, and old final/initial files remain unchanged.
 - [ ] Run controller/publication/integration tests. Commit: ci: add qualifying monitor and coordinate existing data writers.
 
-No automation is created by this planning turn. These workflow definitions are repository implementation tasks for later execution.
+Workflow definitions are local repository changes until separately authorized publication/deployment; do not create external automations during implementation.
 
 ### Task 8 — Build the saved-output reader and automatic display
 
@@ -706,4 +706,4 @@ Execution order:
 9. End-to-end verification, followed by removal of RUN.
 10. Documentation, migration and deployment acceptance.
 
-Implementation is not started by accepting this document as a planning deliverable. Execute inline by default if requested; use subagents only if the user chooses that approach. Resolve the three draft assumptions at the top from the user's replies before treating them as settled requirements.
+The user requested Subagent-Driven execution: a fresh implementer per task, followed by independent specification and code-quality reviews. Track verified progress in automatic-qualifying-execution.md. Keep work on feature1 and report any unperformed hosted checks; do not claim local implementation is deployed automation.
