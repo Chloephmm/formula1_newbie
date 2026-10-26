@@ -227,8 +227,12 @@ def complete_qualifying_check(
     *,
     success: bool,
     error: str | None = None,
+    event: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Record completion and the next ordinary retry without deciding publication."""
+    """Record completion and an ordinary retry when it remains safe to advertise.
+
+    Supplying the current event prevents a retry timestamp at or after the cutoff.
+    """
 
     result = copy.deepcopy(dict(status))
     completed = _utc_timestamp(completed_at, "completed_at")
@@ -238,8 +242,18 @@ def complete_qualifying_check(
         result["last_error"] = None
     else:
         result["last_error"] = error or "qualifying_check_failed"
+    if (
+        _is_frozen(result)
+        or result.get("actual_publication_confirmed") is True
+        or result.get("final_check_attempted_at") is not None
+    ):
+        result.pop("next_qualifying_check_at", None)
+        return result
     last_started = _status_timestamp(result, "last_qualifying_check_started_at")
     next_check = (last_started or completed) + timedelta(hours=1)
+    if event is not None and next_check >= _policy_windows(event)["cutoff_at"]:
+        result.pop("next_qualifying_check_at", None)
+        return result
     result["next_qualifying_check_at"] = _format_timestamp(next_check)
     return result
 
@@ -252,6 +266,7 @@ def mark_actual_publication_confirmed(
     result = copy.deepcopy(dict(status))
     result["actual_publication_confirmed"] = True
     result["actual_publication_confirmed_at"] = _format_timestamp(confirmed_at)
+    result.pop("next_qualifying_check_at", None)
     return result
 
 
@@ -262,6 +277,7 @@ def mark_final_check_attempted(
 
     result = copy.deepcopy(dict(status))
     result["final_check_attempted_at"] = _format_timestamp(attempted_at)
+    result.pop("next_qualifying_check_at", None)
     return result
 
 
@@ -276,11 +292,13 @@ def freeze_status(
 
     result = copy.deepcopy(dict(status))
     if _is_frozen(result):
+        result.pop("next_qualifying_check_at", None)
         return result
     result["frozen_at"] = _format_timestamp(frozen_at)
     result["freeze_reason"] = reason
     result["final_state"] = "frozen"
     result["freeze_selection"] = copy.deepcopy(selection)
+    result.pop("next_qualifying_check_at", None)
     return result
 
 
@@ -316,7 +334,11 @@ def write_status_json(
     normalized = dict(status)
     encoded = json.dumps(normalized, indent=2, sort_keys=True, ensure_ascii=True) + "\n"
     try:
-        if json.loads(destination.read_text(encoding="utf-8")) == normalized:
+        existing = json.loads(destination.read_text(encoding="utf-8"))
+        existing_encoded = (
+            json.dumps(existing, indent=2, sort_keys=True, ensure_ascii=True) + "\n"
+        )
+        if existing_encoded == encoded:
             return False
     except FileNotFoundError:
         pass

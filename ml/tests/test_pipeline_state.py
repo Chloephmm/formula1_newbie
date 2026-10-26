@@ -272,3 +272,62 @@ def test_invalid_existing_policy_timestamps_fail_closed_before_check_actions():
         datetime(2026, 10, 24, 15, 15, tzinfo=UTC),
     ) == "unavailable"
     assert final_window.reason == "invalid_timestamp"
+
+
+def test_terminal_transitions_clear_ordinary_retry_and_completion_skips_cutoff_retry():
+    from src.pipeline.state import (
+        complete_qualifying_check,
+        freeze_status,
+        mark_actual_publication_confirmed,
+        mark_final_check_attempted,
+        start_qualifying_check,
+    )
+
+    ordinary = start_qualifying_check({}, _at(16, 30))
+    completed = complete_qualifying_check(
+        ordinary, _at(16, 31), success=False, error="not published"
+    )
+    final_attempt = mark_final_check_attempted(
+        completed, datetime(2026, 10, 24, 15, 15, tzinfo=UTC)
+    )
+    confirmed = mark_actual_publication_confirmed(completed, _at(17))
+    frozen = freeze_status(
+        completed, datetime(2026, 10, 24, 15, tzinfo=UTC), reason="cutoff"
+    )
+    near_cutoff = complete_qualifying_check(
+        start_qualifying_check(
+            {}, datetime(2026, 10, 24, 15, 30, tzinfo=UTC)
+        ),
+        datetime(2026, 10, 24, 15, 31, tzinfo=UTC),
+        success=False,
+        event=_event(),
+    )
+
+    assert completed["next_qualifying_check_at"] == "2026-10-23T17:30:00Z"
+    assert "next_qualifying_check_at" not in final_attempt
+    assert "next_qualifying_check_at" not in confirmed
+    assert "next_qualifying_check_at" not in frozen
+    assert "next_qualifying_check_at" not in near_cutoff
+
+
+def test_status_write_is_type_sensitive_but_key_order_insensitive(tmp_path):
+    from src.pipeline.state import write_status_json
+
+    destination = tmp_path / "status.json"
+    destination.write_text(
+        '{"b": 2, "actual_publication_confirmed": true}\n', encoding="utf-8"
+    )
+    original = destination.read_bytes()
+    original_mtime = destination.stat().st_mtime_ns
+
+    assert write_status_json(
+        destination, {"actual_publication_confirmed": True, "b": 2}
+    ) is False
+    assert destination.read_bytes() == original
+    assert destination.stat().st_mtime_ns == original_mtime
+    assert write_status_json(
+        destination, {"actual_publication_confirmed": 1, "b": 2}
+    ) is True
+    assert '"actual_publication_confirmed": 1' in destination.read_text(
+        encoding="utf-8"
+    )
