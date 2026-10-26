@@ -38,6 +38,12 @@ PARTICIPATION_STATES = frozenset(
 EXCEPTION_KINDS = frozenset(
     {"confirmed_substitute", "withdrawn", "excluded", "no_qualifying_lap"}
 )
+EXCEPTION_PARTICIPATION = {
+    "confirmed_substitute": "confirmed_substitute",
+    "withdrawn": "withdrawn",
+    "excluded": "excluded",
+    "no_qualifying_lap": "confirmed",
+}
 SCHEDULE_OVERRIDE_FIELDS = frozenset(
     {"qualifying_start_at", "qualifying_end_observed_at", "race_start_at"}
 )
@@ -315,6 +321,11 @@ def validate_roster_record(record: Mapping[str, Any]) -> dict[str, Any]:
     override_provenance = None
     if record.get("override_provenance") is not None:
         override_provenance = _validate_provenance(record["override_provenance"])
+    if exception and EXCEPTION_PARTICIPATION[exception["kind"]] != participation:
+        raise EventContractError(
+            "invalid_roster",
+            f"{exception['kind']} exception contradicts {participation} participation",
+        )
     if participation == "confirmed_substitute" and (
         not exception or exception["kind"] != "confirmed_substitute"
     ):
@@ -350,6 +361,31 @@ def validate_roster_record(record: Mapping[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def _validate_roster_relationships(roster: list[Mapping[str, Any]]) -> None:
+    by_id = {record["driver_id"]: record for record in roster}
+    replacements: dict[str, str] = {}
+    for record in roster:
+        if record["participation"] != "confirmed_substitute":
+            continue
+        replaced_id = record["exception"]["replaces_driver_id"]
+        if replaced_id == record["driver_id"]:
+            raise EventContractError(
+                "invalid_roster", "a substitute cannot replace itself"
+            )
+        if replaced_id in replacements:
+            raise EventContractError(
+                "invalid_roster",
+                f"multiple active substitutes reference {replaced_id}",
+            )
+        replacements[replaced_id] = record["driver_id"]
+        original = by_id.get(replaced_id)
+        if original and original["participation"] not in {"withdrawn", "excluded"}:
+            raise EventContractError(
+                "invalid_roster",
+                f"replaced driver {replaced_id} must be explicitly inactive",
+            )
+
+
 def roster_version(roster: Iterable[Mapping[str, Any]]) -> str:
     """Hash roster semantics independent of ordering and audit-only timestamps."""
 
@@ -357,6 +393,7 @@ def roster_version(roster: Iterable[Mapping[str, Any]]) -> str:
     driver_ids = [record["driver_id"] for record in normalized]
     if len(driver_ids) != len(set(driver_ids)):
         raise EventContractError("invalid_roster", "duplicate driver_id in roster")
+    _validate_roster_relationships(normalized)
     semantic = []
     for record in normalized:
         exception = record["exception"]

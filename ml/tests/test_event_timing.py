@@ -315,6 +315,32 @@ def test_status_specific_exception_can_remove_an_entrant():
     assert validate_roster_record(record)["participation"] == "withdrawn"
 
 
+def test_exception_kind_must_match_participation_even_with_override_evidence():
+    from src.pipeline.events import (
+        EventContractError,
+        apply_event_override,
+        build_event_metadata,
+    )
+
+    event = build_event_metadata(_schedule(), [_roster_record()], _roster_source())
+    exception_only_change = _participant_override(
+        {
+            "driver_one": {
+                "exception": {
+                    "kind": "withdrawn",
+                    "reason": "Official withdrawal notice",
+                    "source_url": "https://example.test/official-entry-list",
+                    "observed_at": "2026-10-22T15:00:00Z",
+                }
+            }
+        }
+    )
+
+    with pytest.raises(EventContractError) as exc_info:
+        apply_event_override(event, {"2026-20": exception_only_change})
+    assert exc_info.value.code == "invalid_roster"
+
+
 def test_exact_override_can_withdraw_entrant_and_preserves_baseline_provenance():
     from src.pipeline.events import apply_event_override, build_event_metadata
 
@@ -343,6 +369,123 @@ def test_exact_override_can_withdraw_entrant_and_preserves_baseline_provenance()
         "source_url": "https://example.test/official-entry-list",
         "observed_at": "2026-10-22T15:00:00Z",
     }
+
+
+def _substitute_patch(driver_id="substitute", replaces_driver_id="driver_one"):
+    return {
+        "code": driver_id[:3].upper(),
+        "driver_name": driver_id.replace("_", " ").title(),
+        "constructor_id": "example",
+        "constructor_name": "Example Racing",
+        "number": "99",
+        "eligible": True,
+        "expected": True,
+        "participation": "confirmed_substitute",
+        "exception": {
+            "kind": "confirmed_substitute",
+            "reason": "Official substitution notice",
+            "source_url": "https://example.test/official-entry-list",
+            "observed_at": "2026-10-22T15:00:00Z",
+            "replaces_driver_id": replaces_driver_id,
+            "allow_model_position": False,
+        },
+    }
+
+
+def _participant_override(participants):
+    return {
+        "reason": "Official participant changes before qualifying",
+        "source_url": "https://example.test/official-entry-list",
+        "observed_at": "2026-10-22T15:00:00Z",
+        "participants": participants,
+    }
+
+
+def test_substitute_cannot_leave_referenced_original_active():
+    from src.pipeline.events import (
+        EventContractError,
+        apply_event_override,
+        build_event_metadata,
+    )
+
+    event = build_event_metadata(_schedule(), [_roster_record()], _roster_source())
+
+    with pytest.raises(EventContractError) as exc_info:
+        apply_event_override(
+            event,
+            {"2026-20": _participant_override({"substitute": _substitute_patch()})},
+        )
+    assert exc_info.value.code == "invalid_roster"
+
+
+@pytest.mark.parametrize("substitute_first", [True, False])
+def test_atomic_withdrawal_and_substitution_is_order_independent(substitute_first):
+    from src.pipeline.events import apply_event_override, build_event_metadata
+
+    event = build_event_metadata(_schedule(), [_roster_record()], _roster_source())
+    withdrawal = {
+        "participation": "withdrawn",
+        "expected": False,
+        "eligible": False,
+    }
+    ordered_changes = (
+        {"substitute": _substitute_patch(), "driver_one": withdrawal}
+        if substitute_first
+        else {"driver_one": withdrawal, "substitute": _substitute_patch()}
+    )
+
+    updated = apply_event_override(
+        event, {"2026-20": _participant_override(ordered_changes)}
+    )
+
+    by_id = {record["driver_id"]: record for record in updated["roster"]}
+    assert by_id["driver_one"]["participation"] == "withdrawn"
+    assert by_id["substitute"]["participation"] == "confirmed_substitute"
+
+
+def test_substitute_cannot_replace_itself():
+    from src.pipeline.events import EventContractError, roster_version
+
+    substitute = _roster_record(
+        participation="confirmed_substitute",
+        exception={
+            **_substitute_patch("driver_one", "driver_one")["exception"],
+        },
+    )
+
+    with pytest.raises(EventContractError) as exc_info:
+        roster_version([substitute])
+    assert exc_info.value.code == "invalid_roster"
+
+
+def test_only_one_active_substitute_can_replace_an_original():
+    from src.pipeline.events import EventContractError, roster_version
+
+    original = _roster_record(
+        participation="withdrawn",
+        expected=False,
+        eligible=False,
+        exception={
+            "kind": "withdrawn",
+            "reason": "Official withdrawal notice",
+            "source_url": "https://example.test/official-entry-list",
+            "observed_at": "2026-10-22T15:00:00Z",
+        },
+    )
+    substitute_one = _roster_record(
+        "substitute_one",
+        participation="confirmed_substitute",
+        exception=_substitute_patch("substitute_one")["exception"],
+    )
+    substitute_two = _roster_record(
+        "substitute_two",
+        participation="confirmed_substitute",
+        exception=_substitute_patch("substitute_two")["exception"],
+    )
+
+    with pytest.raises(EventContractError) as exc_info:
+        roster_version([original, substitute_one, substitute_two])
+    assert exc_info.value.code == "invalid_roster"
 
 
 def test_exact_event_override_preserves_provenance_and_participant_exception():
