@@ -82,33 +82,9 @@ def _is_frozen(status: Mapping[str, Any]) -> bool:
 
 
 def _policy_windows(event: Mapping[str, Any]) -> dict[str, Any]:
-    """Use canonical windows, retaining the meaningful short-window wait state."""
+    """Use canonical windows; action policy handles valid short polling windows."""
 
-    try:
-        return event_windows(event)
-    except EventContractError as exc:
-        if exc.code != "inconsistent_event_times":
-            raise
-        qualifying_start = _utc_timestamp(
-            event.get("qualifying_start_at"), "qualifying_start_at"
-        )
-        race_start = _utc_timestamp(event.get("race_start_at"), "race_start_at")
-        observed_end = event.get("qualifying_end_observed_at")
-        qualifying_end = (
-            _utc_timestamp(observed_end, "qualifying_end_observed_at")
-            if observed_end is not None
-            else qualifying_start + timedelta(minutes=90)
-        )
-        if not qualifying_start < qualifying_end < race_start:
-            raise exc
-        cutoff = race_start - timedelta(hours=2)
-        return {
-            "qualifying_end_at": qualifying_end,
-            "first_check_at": qualifying_end + timedelta(hours=5),
-            "cutoff_at": cutoff,
-            "final_check_at": cutoff - timedelta(minutes=45),
-            "latest_generation_start_at": cutoff - timedelta(minutes=15),
-        }
+    return event_windows(event)
 
 
 def action_decision(

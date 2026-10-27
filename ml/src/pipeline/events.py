@@ -148,10 +148,10 @@ def event_windows(event: Mapping[str, Any]) -> dict[str, Any]:
 
     cutoff = race_start - timedelta(hours=2)
     first_check = qualifying_end + timedelta(hours=5)
-    if not qualifying_start < qualifying_end < race_start or first_check >= cutoff:
+    if not qualifying_start < qualifying_end < race_start:
         raise EventContractError(
             "inconsistent_event_times",
-            "qualifying and race timestamps do not form a viable event window",
+            "qualifying and race timestamps are not in chronological order",
         )
 
     return {

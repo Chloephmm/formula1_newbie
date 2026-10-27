@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -229,6 +229,103 @@ def test_build_event_metadata_is_json_native_and_preserves_provenance():
     assert event["roster_source"]["source"] == "previous_completed_race"
     assert event["roster"][0]["provenance"]["round"] == 19
     json.dumps(event)
+
+
+@pytest.mark.parametrize(
+    ("race_start_at", "cutoff_at", "first_check_equals_cutoff"),
+    [
+        (
+            "2026-10-23T18:00:00Z",
+            datetime(2026, 10, 23, 16, tzinfo=timezone.utc),
+            False,
+        ),
+        (
+            "2026-10-23T18:30:00Z",
+            datetime(2026, 10, 23, 16, 30, tzinfo=timezone.utc),
+            True,
+        ),
+    ],
+)
+def test_built_short_window_waits_then_freezes_without_losing_initial_forecast(
+    race_start_at, cutoff_at, first_check_equals_cutoff
+):
+    from src.pipeline.events import build_event_metadata, event_windows
+    from src.pipeline.state import action_decision, freeze_status
+
+    event = build_event_metadata(
+        _schedule(
+            qualifying_start_at="2026-10-23T10:00:00Z",
+            race_start_at=race_start_at,
+        ),
+        [_roster_record()],
+        _roster_source(),
+    )
+    initial_forecast = {"podium": ["ONE", "TWO", "THREE"]}
+    status = {"current_prediction_id": "initial-forecast", "forecast": initial_forecast}
+    windows = event_windows(event)
+
+    before_cutoff = action_decision(event, status, cutoff_at - timedelta(minutes=1))
+    at_cutoff = action_decision(event, status, cutoff_at)
+
+    assert windows["first_check_at"] >= windows["cutoff_at"]
+    assert (windows["first_check_at"] == windows["cutoff_at"]) is first_check_equals_cutoff
+    assert before_cutoff.action == "wait"
+    assert before_cutoff.reason == "wait_exceeds_cutoff"
+    assert at_cutoff.action == "freeze"
+    assert at_cutoff.reason == "cutoff_reached"
+
+    frozen = freeze_status(status, cutoff_at, reason="cutoff", selection=initial_forecast)
+
+    assert frozen["current_prediction_id"] == "initial-forecast"
+    assert frozen["forecast"] == initial_forecast
+    assert frozen["freeze_selection"] == initial_forecast
+
+
+@pytest.mark.parametrize(
+    ("race_start_at", "cutoff_at", "first_check_equals_cutoff"),
+    [
+        (
+            "2026-10-23T18:00:00Z",
+            datetime(2026, 10, 23, 16, tzinfo=timezone.utc),
+            False,
+        ),
+        (
+            "2026-10-23T18:30:00Z",
+            datetime(2026, 10, 23, 16, 30, tzinfo=timezone.utc),
+            True,
+        ),
+    ],
+)
+def test_overridden_short_window_waits_then_freezes_at_cutoff(
+    race_start_at, cutoff_at, first_check_equals_cutoff
+):
+    from src.pipeline.events import apply_event_override, build_event_metadata, event_windows
+    from src.pipeline.state import action_decision
+
+    event = build_event_metadata(
+        _schedule(qualifying_start_at="2026-10-23T10:00:00Z"),
+        [_roster_record()],
+        _roster_source(),
+    )
+    overridden = apply_event_override(
+        event,
+        {
+            "2026-20": {
+                "reason": "Official same-day race schedule update",
+                "source_url": "https://example.test/schedule-update",
+                "observed_at": "2026-10-22T15:00:00Z",
+                "schedule": {"race_start_at": race_start_at},
+            }
+        },
+    )
+    windows = event_windows(overridden)
+
+    before_cutoff = cutoff_at - timedelta(minutes=1)
+    assert windows["first_check_at"] >= windows["cutoff_at"]
+    assert (windows["first_check_at"] == windows["cutoff_at"]) is first_check_equals_cutoff
+    assert action_decision(overridden, {}, before_cutoff).reason == "wait_exceeds_cutoff"
+    assert action_decision(overridden, {}, cutoff_at).action == "freeze"
+    assert action_decision(overridden, {}, cutoff_at).reason == "cutoff_reached"
 
 
 def test_write_event_json_atomically_replaces_metadata_file(tmp_path):
