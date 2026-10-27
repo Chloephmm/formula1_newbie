@@ -202,8 +202,8 @@ def digest(payload: Any, *, semantic_prediction: bool = False) -> str:
 def _normalized_training(
     snapshot: Mapping[str, Any], *, event: Mapping[str, Any], training_cutoff: Any
 ) -> tuple[dict[str, list[dict]], dict[str, Any]]:
-    if not isinstance(snapshot, Mapping) or not {"results", "qualifying"}.issubset(snapshot):
-        raise ValueError("training snapshot must contain results and qualifying tables")
+    if not isinstance(snapshot, Mapping) or set(snapshot) != {"results", "qualifying"}:
+        raise ValueError("training snapshot must contain results and qualifying tables only")
     target_season, target_round = _event_identity(event)
     cutoff_text = _utc_text(training_cutoff, field="training_cutoff")
     cutoff = parse_utc(cutoff_text)
@@ -511,9 +511,13 @@ def _validate_training_manifest(
             identities.add(identity)
             if (event_season, event_round) >= (season, round_number):
                 raise ValueError("training manifest contains target or later rows")
-            if table_name == "results":
-                if event.get("min_date") is None or event.get("max_date") is None:
-                    raise ValueError("training manifest result events require min/max dates")
+            has_minimum = event.get("min_date") is not None
+            has_maximum = event.get("max_date") is not None
+            if table_name == "results" and not (has_minimum and has_maximum):
+                raise ValueError("training manifest result events require min/max dates")
+            if has_minimum != has_maximum:
+                raise ValueError("training manifest date bounds require a complete pair")
+            if has_minimum:
                 try:
                     minimum = parse_utc(event["min_date"])
                     maximum = parse_utc(event["max_date"])

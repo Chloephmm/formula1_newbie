@@ -363,7 +363,13 @@ def test_training_snapshot_requires_dated_results_and_linked_qualifying():
         )
 
 
-@pytest.mark.parametrize("mutation", ["arbitrary_table", "missing_dates", "orphan", "reversed_dates"])
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "arbitrary_table", "missing_dates", "orphan", "reversed_dates",
+        "partial_qualifying_dates", "reversed_qualifying_dates",
+    ],
+)
 def test_serialized_training_manifest_rejects_incomplete_or_incoherent_evidence(mutation):
     prediction = _prediction()
     manifest = prediction["training_manifest"]
@@ -381,11 +387,19 @@ def test_serialized_training_manifest_rejects_incomplete_or_incoherent_evidence(
         del result_event["max_date"]
     elif mutation == "orphan":
         manifest["tables"]["qualifying"]["events"][0]["round"] = 18
-    else:
+    elif mutation == "reversed_dates":
         result_event = manifest["tables"]["results"]["events"][0]
         result_event["min_date"], result_event["max_date"] = (
             result_event["max_date"], "2026-10-24T00:00:00Z"
         )
+    elif mutation == "partial_qualifying_dates":
+        manifest["tables"]["qualifying"]["events"][0]["min_date"] = (
+            "2026-10-25T00:00:00Z"
+        )
+    else:
+        qualifying_event = manifest["tables"]["qualifying"]["events"][0]
+        qualifying_event["min_date"] = "2026-10-26T00:00:00Z"
+        qualifying_event["max_date"] = "2026-10-25T00:00:00Z"
     _rehash_tampered_prediction(prediction)
 
     with pytest.raises(ValueError, match="training manifest"):
@@ -414,6 +428,18 @@ def test_training_hash_canonicalizes_legitimate_missing_values_to_null():
     ) == training_snapshot_hash(
         missing_none, event=_event(), training_cutoff="2026-10-30T00:00:00Z"
     )
+
+
+def test_training_snapshot_rejects_unrecognized_tables():
+    snapshot = _training_snapshot()
+    snapshot["telemetry"] = [
+        {"season": 2026, "round": 19, "driver_id": "driver_a", "speed": 300}
+    ]
+
+    with pytest.raises(ValueError, match="results and qualifying tables only"):
+        training_snapshot_hash(
+            snapshot, event=_event(), training_cutoff="2026-10-30T00:00:00Z"
+        )
 
 
 def test_canonical_serialization_rejects_nonfinite_numbers():
