@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from src.model.data import FEATURES
-from src.model.forecast import build_event_features, forecast_event
+from src.model.forecast import _podium, build_event_features, forecast_event
 from src.model.quali import QUALI_FEATURES
 from src.pipeline.qualifying import AcceptedQualifying, QualifyingValidationError
 
@@ -31,6 +31,12 @@ def _entries():
          "eligible": True, "expected": True},
         {"driver_id": "driver_b", "code": "BBB", "driver_name": "Driver B",
          "constructor_id": "team_b", "constructor_name": "Team B",
+         "eligible": True, "expected": True},
+        {"driver_id": "driver_c", "code": "CCC", "driver_name": "Driver C",
+         "constructor_id": "team_c", "constructor_name": "Team C",
+         "eligible": True, "expected": True},
+        {"driver_id": "driver_d", "code": "DDD", "driver_name": "Driver D",
+         "constructor_id": "team_d", "constructor_name": "Team D",
          "eligible": True, "expected": True},
     ]
 
@@ -61,10 +67,16 @@ def _history():
     results = pd.DataFrame([
         _result(2026, 1, "2026-01-01", "driver_a", 2, grid=0),
         _result(2026, 1, "2026-01-01", "driver_b", 5),
+        _result(2026, 1, "2026-01-01", "driver_c", 8),
+        _result(2026, 1, "2026-01-01", "driver_d", 9),
         _result(2026, 2, "2026-02-01", "driver_a", 19, circuit="target_ring"),
         _result(2026, 2, "2026-02-01", "driver_b", 20, circuit="target_ring"),
+        _result(2026, 2, "2026-02-01", "driver_c", 18, circuit="target_ring"),
+        _result(2026, 2, "2026-02-01", "driver_d", 17, circuit="target_ring"),
         _result(2026, 3, "2026-03-01", "driver_a", 18),
         _result(2026, 3, "2026-03-01", "driver_b", 17),
+        _result(2026, 3, "2026-03-01", "driver_c", 16),
+        _result(2026, 3, "2026-03-01", "driver_d", 15),
         # Each half of the identity/date guard is independently hostile.
         _result(2025, 99, "2026-04-01", "driver_a", 1, grid=999),
         _result(2027, 1, "2025-01-01", "driver_b", 1, grid=999),
@@ -72,15 +84,19 @@ def _history():
     qualifying = pd.DataFrame([
         _quali(2026, 1, "driver_a", 2, "1:20.000"),
         _quali(2026, 1, "driver_b", 5, "1:21.500"),
+        _quali(2026, 1, "driver_c", 8, "1:22.000"),
+        _quali(2026, 1, "driver_d", 9, "1:22.500"),
         _quali(2026, 2, "driver_a", 20, "1:40.000"),
         _quali(2026, 2, "driver_b", 19, "1:39.000"),
+        _quali(2026, 2, "driver_c", 18, "1:38.000"),
+        _quali(2026, 2, "driver_d", 17, "1:37.000"),
         _quali(2025, 99, "driver_a", 1, "1:00.000"),
     ])
     return {"results": results, "qualifying": qualifying}
 
 
 class CaptureRegressor:
-    def __init__(self, values=(1.2, 0.2)):
+    def __init__(self, values=(1.2, 0.2, 0.7, 0.9)):
         self.values = np.asarray(values, dtype=float)
         self.calls = []
 
@@ -90,13 +106,48 @@ class CaptureRegressor:
 
 
 class CaptureClassifier:
-    def __init__(self, probabilities=(0.2, 0.7)):
+    def __init__(self, probabilities=(0.2, 0.7, 0.4, 0.3)):
         self.probabilities = np.asarray(probabilities, dtype=float)
         self.calls = []
 
     def predict_proba(self, frame):
         self.calls.append(frame.copy(deep=True))
         return np.column_stack([1.0 - self.probabilities, self.probabilities])
+
+
+def test_podium_estimates_use_capped_sum_to_three_normalization():
+    frame = pd.DataFrame(0.0, index=range(4), columns=FEATURES)
+
+    estimates = _podium(CaptureClassifier((0.9, 0.1, 0.1, 0.1)), frame)
+
+    assert estimates.tolist() == pytest.approx([1.0, 2 / 3, 2 / 3, 2 / 3])
+    assert estimates.sum() == pytest.approx(3.0)
+    assert np.all((0 <= estimates) & (estimates <= 1))
+
+
+def test_podium_estimates_normalize_tiny_positive_scores_without_overflow():
+    frame = pd.DataFrame(0.0, index=range(4), columns=FEATURES)
+
+    estimates = _podium(CaptureClassifier((1e-320,) * 4), frame)
+
+    assert estimates.tolist() == pytest.approx([0.75] * 4)
+
+
+@pytest.mark.parametrize(
+    "scores, message",
+    [
+        ((0.7, 0.2), "at least three entrants"),
+        ((0.7, 0.2, 0.0, 0.0), "positive scores"),
+        ((0.7, -0.1, 0.2), "finite non-negative"),
+        ((0.7, np.inf, 0.2), "finite non-negative"),
+        ((0.0, 0.0, 0.0), "positive scores"),
+    ],
+)
+def test_podium_estimates_fail_closed_when_normalization_is_impossible(scores, message):
+    frame = pd.DataFrame(0.0, index=range(len(scores)), columns=FEATURES)
+
+    with pytest.raises(ValueError, match=message):
+        _podium(CaptureClassifier(scores), frame)
 
 
 def _accepted(rows=None, roster=None):
@@ -113,6 +164,18 @@ def _accepted(rows=None, roster=None):
          "q2": None, "q3": None, "best_qualifying_time_seconds": None,
          "quali_time_gap_to_pole": None, "model_quali_time_gap_to_pole": 0.75,
          "model_position": 2, "eligible": True},
+        {"season": 2026, "round": 2, "race_name": "Target Grand Prix",
+         "circuit_id": "target_ring", "driver_id": "driver_c", "code": "CCC",
+         "constructor_id": "team_c", "quali_position": 3, "q1": "1:20.000",
+         "q2": None, "q3": None, "best_qualifying_time_seconds": 80.0,
+         "quali_time_gap_to_pole": 1.0, "model_quali_time_gap_to_pole": 1.0,
+         "model_position": 3, "eligible": True},
+        {"season": 2026, "round": 2, "race_name": "Target Grand Prix",
+         "circuit_id": "target_ring", "driver_id": "driver_d", "code": "DDD",
+         "constructor_id": "team_d", "quali_position": 4, "q1": "1:20.500",
+         "q2": None, "q3": None, "best_qualifying_time_seconds": 80.5,
+         "quali_time_gap_to_pole": 1.5, "model_quali_time_gap_to_pole": 1.5,
+         "model_position": 4, "eligible": True},
     ])
     return AcceptedQualifying(
         rows=accepted_rows, roster=pd.DataFrame(roster or _entries()),
@@ -130,6 +193,7 @@ def test_build_event_features_filters_raw_history_before_feature_building():
     by_driver = features.set_index("driver_id")
     assert by_driver.loc["driver_a", "recent_form"] == 2
     assert by_driver.loc["driver_b", "recent_form"] == 5
+    assert by_driver.loc["driver_c", "recent_form"] == 8
     assert by_driver.loc["driver_a", "recent_quali_gap"] == 0
     assert by_driver.loc["driver_b", "recent_quali_gap"] == pytest.approx(1.5)
     assert by_driver.loc["driver_a", "name"] == "Driver A"
@@ -149,10 +213,18 @@ def test_predicted_mode_sends_stage_one_estimates_to_stage_two_exactly():
     assert list(quali.calls[0].columns) == QUALI_FEATURES
     assert len(podium.calls) == 1
     assert list(podium.calls[0].columns) == FEATURES
-    assert podium.calls[0]["grid_position"].tolist() == [2.0, 1.0]
-    assert podium.calls[0]["quali_time_gap_to_pole"].tolist() == [1.0, 0.0]
-    assert [row["position"] for row in result["predictedQualifying"]] == [1, 2]
+    assert podium.calls[0]["grid_position"].tolist() == [4.0, 1.0, 2.0, 3.0]
+    assert podium.calls[0]["quali_time_gap_to_pole"].tolist() == pytest.approx(
+        [1.0, 0.0, 0.5, 0.7]
+    )
+    assert [row["position"] for row in result["predictedQualifying"]] == [1, 2, 3, 4]
+    assert [row["driver_id"] for row in result["preQualifyingPodium"][:2]] == [
+        "driver_b", "driver_c"
+    ]
+    assert [row["rank"] for row in result["preQualifyingPodium"]] == [1, 2, 3, 4]
     assert result["mode"] == "predicted_qualifying"
+    assert result["probabilityPolicyVersion"] == "capped-sum-to-three-v1"
+    assert result["podiumEstimateSemantics"] == "normalized_podium_estimate"
     assert result["hasRealGrid"] is False
     assert result["realGridPodium"] is None
 
@@ -160,16 +232,16 @@ def test_predicted_mode_sends_stage_one_estimates_to_stage_two_exactly():
 def test_tied_stage_one_predictions_use_canonical_driver_order():
     first = forecast_event(
         _event(), mode="predicted_qualifying", history=_history(), entries=_entries(),
-        models={"quali": CaptureRegressor((0.5, 0.5)), "podium": CaptureClassifier()},
+        models={"quali": CaptureRegressor((0.5, 0.5, 0.5, 0.5)), "podium": CaptureClassifier()},
     )
     second = forecast_event(
         _event(), mode="predicted_qualifying", history=_history(),
         entries=list(reversed(_entries())),
-        models={"quali": CaptureRegressor((0.5, 0.5)), "podium": CaptureClassifier()},
+        models={"quali": CaptureRegressor((0.5, 0.5, 0.5, 0.5)), "podium": CaptureClassifier()},
     )
 
     assert first["predictedQualifying"] == second["predictedQualifying"]
-    assert [row["code"] for row in first["predictedQualifying"]] == ["AAA", "BBB"]
+    assert [row["code"] for row in first["predictedQualifying"]] == ["AAA", "BBB", "CCC", "DDD"]
 
 
 def test_actual_mode_skips_stage_one_and_preserves_official_values():
@@ -180,14 +252,14 @@ def test_actual_mode_skips_stage_one_and_preserves_official_values():
     )
 
     assert len(podium.calls) == 1
-    assert podium.calls[0]["grid_position"].tolist() == [1.0, 2.0]
-    assert podium.calls[0]["quali_time_gap_to_pole"].tolist() == [0.0, 0.75]
+    assert podium.calls[0]["grid_position"].tolist() == [1.0, 2.0, 3.0, 4.0]
+    assert podium.calls[0]["quali_time_gap_to_pole"].tolist() == [0.0, 0.75, 1.0, 1.5]
     assert result["predictedQualifying"] == []
     assert result["preQualifyingPodium"] == []
     assert result["mode"] == "actual_qualifying"
     assert result["hasRealGrid"] is True
-    assert [row["position"] for row in result["realQualifying"]] == [1, 2]
-    assert [row["gap"] for row in result["realQualifying"]] == [0.0, None]
+    assert [row["position"] for row in result["realQualifying"]] == [1, 2, 3, 4]
+    assert [row["gap"] for row in result["realQualifying"]] == [0.0, None, 1.0, 1.5]
 
 
 @pytest.mark.parametrize("qualifying", [None, _accepted(rows=[_accepted().rows.iloc[0].to_dict()])])
@@ -208,13 +280,13 @@ def test_actual_mode_rechecks_exact_event_and_unique_finite_model_inputs():
     wrong_event.rows.loc[0, "round"] = 1
     invalid.append(wrong_event)
     duplicate_position = _accepted()
-    duplicate_position.rows["model_position"] = [1, 1]
+    duplicate_position.rows["model_position"] = [1, 1, 3, 4]
     invalid.append(duplicate_position)
     non_finite_gap = _accepted()
     non_finite_gap.rows.loc[1, "model_quali_time_gap_to_pole"] = np.inf
     invalid.append(non_finite_gap)
     fractional_official = _accepted()
-    fractional_official.rows["quali_position"] = [1.0, 2.5]
+    fractional_official.rows["quali_position"] = [1.0, 2.5, 3.0, 4.0]
     invalid.append(fractional_official)
     missing_source_version = _accepted()
     missing_source_version.source_version = ""

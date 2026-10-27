@@ -131,8 +131,8 @@ def test_train_podium_live_builds_only_from_filtered_raw_history(monkeypatch):
 
     assert len(fitted) == 1
     frame, target = fitted[0]
-    assert frame["grid_position"].tolist() == [5.0, 5.0]
-    assert len(target) == 2
+    assert frame["grid_position"].tolist() == [9.0, 5.0, 8.0, 9.0]
+    assert len(target) == 4
 
 
 def test_retrain_live_uses_one_recorded_cutoff_snapshot_for_both_stages(monkeypatch):
@@ -161,8 +161,8 @@ def test_retrain_live_uses_one_recorded_cutoff_snapshot_for_both_stages(monkeypa
 
     retrain.retrain_live("2026-02-01", 2026, 2, history=_history())
 
-    assert len(podium_fits[0][1]) == 2
-    assert len(qualifying_fits[0][1]) == 2
+    assert len(podium_fits[0][1]) == 4
+    assert len(qualifying_fits[0][1]) == 4
 
 
 def test_stage_one_accepts_mixed_legacy_and_task3_enriched_qualifying(monkeypatch):
@@ -227,6 +227,6 @@ def test_stage_one_accepts_mixed_legacy_and_task3_enriched_qualifying(monkeypatc
         "target_ring"
     }
     assert len(fits) == 1
-    assert len(fits[0][1]) == 4
+    assert len(fits[0][1]) == 6
     pd.testing.assert_frame_equal(history["results"], original_results)
     pd.testing.assert_frame_equal(mixed_qualifying, original_qualifying)

@@ -1,0 +1,458 @@
+"""Contracts for canonical, immutable prediction artifacts."""
+from __future__ import annotations
+
+import copy
+import json
+
+import pandas as pd
+import pytest
+
+from src.pipeline.artifacts import (
+    ArtifactCollisionError,
+    archive_prediction,
+    build_provenance,
+    build_prediction,
+    canonical_bytes,
+    digest,
+    load_prediction_for_input,
+    training_snapshot_hash,
+    validate_prediction,
+    write_immutable,
+)
+from src.pipeline.qualifying import AcceptedQualifying
+
+
+def _roster_record(driver_id: str, position: int) -> dict:
+    suffix = driver_id[-1].upper()
+    return {
+        "driver_id": driver_id,
+        "code": f"{suffix * 3}",
+        "driver_name": f"Driver {suffix}",
+        "constructor_id": f"team_{suffix.lower()}",
+        "constructor_name": f"Team {suffix}",
+        "number": str(position),
+        "eligible": True,
+        "expected": True,
+        "participation": "confirmed",
+        "exception": None,
+        "provenance": {
+            "source": "previous_completed_race",
+            "source_url": "https://example.test/previous",
+            "observed_at": "2026-10-20T10:00:00Z",
+            "season": 2026,
+            "round": 19,
+        },
+    }
+
+
+def _event(**updates) -> dict:
+    event = {
+        "season": 2026,
+        "round": 20,
+        "race_name": "Artifact Grand Prix",
+        "circuit_id": "artifact_ring",
+        "qualifying_start_at": "2026-10-31T18:00:00Z",
+        "qualifying_end_observed_at": "2026-10-31T19:02:00Z",
+        "race_start_at": "2026-11-01T18:00:00Z",
+        "roster": [
+            _roster_record("driver_a", 1),
+            _roster_record("driver_b", 2),
+            _roster_record("driver_c", 3),
+            _roster_record("driver_d", 4),
+        ],
+    }
+    event.update(updates)
+    return event
+
+
+def _training_snapshot() -> dict:
+    return {
+        "results": [
+            {"season": 2026, "round": 19, "date": "2026-10-25T18:00:00Z",
+             "driver_id": "driver_a", "position": 1},
+            {"season": 2026, "round": 19, "date": "2026-10-25T18:00:00Z",
+             "driver_id": "driver_b", "position": 2},
+        ],
+        "qualifying": [
+            {"season": 2026, "round": 19, "driver_id": "driver_a", "q1": "1:20.100"},
+            {"season": 2026, "round": 19, "driver_id": "driver_b", "q1": "1:20.500"},
+        ],
+    }
+
+
+def _model_manifest(**updates) -> dict:
+    manifest = {
+        "code_hash": "c" * 64,
+        "parameters": {"num_leaves": 31, "random_state": 42},
+        "feature_columns": ["grid_position", "quali_time_gap_to_pole"],
+        "library_versions": {"lightgbm": "4.6.0", "scikit-learn": "1.7.2"},
+    }
+    manifest.update(updates)
+    return manifest
+
+
+def _feature_inputs() -> list[dict]:
+    return [
+        {"driver_id": f"driver_{letter}", "grid_position": index,
+         "quali_time_gap_to_pole": float(index - 1) / 10}
+        for index, letter in enumerate("abcd", start=1)
+    ]
+
+
+def _accepted(source_version: str) -> AcceptedQualifying:
+    rows = pd.DataFrame([
+        {"season": 2026, "round": 20, "driver_id": f"driver_{letter}",
+         "constructor_id": f"team_{letter}", "eligible": True,
+         "quali_position": index, "quali_time_gap_to_pole": float(index - 1) / 10,
+         "model_position": index,
+         "model_quali_time_gap_to_pole": float(index - 1) / 10}
+        for index, letter in enumerate("abcd", start=1)
+    ])
+    return AcceptedQualifying(
+        rows=rows, roster=pd.DataFrame(_event()["roster"]),
+        source_version=source_version, notes=("accepted",),
+        imputation_policy={"no_lap_model_gap": "largest_valid_event_gap"},
+    )
+
+
+def _forecast() -> dict:
+    podium = [
+        {"driver_id": "driver_a", "code": "AAA", "driverName": "Driver A",
+         "team": "Team A", "teamId": "team_a", "podiumProbability": 1.0, "rank": 1},
+        {"driver_id": "driver_b", "code": "BBB", "driverName": "Driver B",
+         "team": "Team B", "teamId": "team_b", "podiumProbability": 0.8, "rank": 2},
+        {"driver_id": "driver_c", "code": "CCC", "driverName": "Driver C",
+         "team": "Team C", "teamId": "team_c", "podiumProbability": 0.7, "rank": 3},
+        {"driver_id": "driver_d", "code": "DDD", "driverName": "Driver D",
+         "team": "Team D", "teamId": "team_d", "podiumProbability": 0.5, "rank": 4},
+    ]
+    return {
+        "error": None,
+        "mode": "predicted_qualifying",
+        "race": {"name": "Artifact Grand Prix", "season": 2026, "round": 20},
+        "predictedQualifying": [
+            {"driver_id": f"driver_{letter}", "position": index,
+             "code": letter.upper() * 3, "driverName": f"Driver {letter.upper()}",
+             "team": f"Team {letter.upper()}", "teamId": f"team_{letter}",
+             "gap": float(index - 1) / 10}
+            for index, letter in enumerate("abcd", start=1)
+        ],
+        "preQualifyingPodium": podium,
+        "hasRealGrid": False,
+        "realGridPodium": None,
+        "realQualifying": None,
+    }
+
+
+def _prediction(**updates) -> dict:
+    target_event = updates.pop("event", _event())
+    kwargs = {
+        "mode": "predicted_qualifying",
+        "training_cutoff": "2026-10-30T00:00:00Z",
+        "training_snapshot": _training_snapshot(),
+        "model_manifest": _model_manifest(),
+        "feature_inputs": _feature_inputs(),
+        "qualifying": None,
+    }
+    forecast = updates.pop("forecast", _forecast())
+    generated_at = updates.pop("generated_at", "2026-10-30T12:00:00Z")
+    previous_candidate = updates.pop("previous_candidate", None)
+    kwargs.update(updates)
+    provenance = build_provenance(target_event, **kwargs)
+    return build_prediction(
+        target_event, forecast=forecast, generated_at=generated_at,
+        provenance=provenance, previous_candidate=previous_candidate,
+    )
+
+
+def test_canonical_hash_is_stable_under_mapping_and_driver_row_ordering():
+    first = _prediction()
+    reordered_training = {
+        "qualifying": list(reversed(_training_snapshot()["qualifying"])),
+        "results": list(reversed(_training_snapshot()["results"])),
+    }
+    second = _prediction(
+        training_snapshot=reordered_training,
+    )
+    reordered_prediction = copy.deepcopy(second)
+    reordered_prediction["forecast"]["predictedQualifying"].reverse()
+    reordered_prediction["forecast"]["preQualifyingPodium"].reverse()
+
+    assert canonical_bytes({"b": 2, "a": 1}) == b'{"a":1,"b":2}'
+    assert first["training_data_hash"] == second["training_data_hash"]
+    assert first["training_manifest"] == second["training_manifest"]
+    assert first["input_hash"] == second["input_hash"]
+    assert first["prediction_id"] == second["prediction_id"]
+    assert digest(reordered_prediction, semantic_prediction=True) == first["prediction_id"]
+
+
+def test_podium_rank_identity_is_semantic_even_when_capped_values_tie():
+    prediction = _prediction()
+    changed = copy.deepcopy(prediction)
+    first, second = changed["forecast"]["preQualifyingPodium"][:2]
+    first["rank"], second["rank"] = second["rank"], first["rank"]
+
+    assert digest(changed, semantic_prediction=True) != prediction["prediction_id"]
+    with pytest.raises(ValueError, match="rank"):
+        validate_prediction(changed, _event())
+
+
+def test_changed_accepted_timing_versions_actual_prediction_but_poll_metadata_does_not():
+    forecast = _forecast() | {
+        "mode": "actual_qualifying",
+        "predictedQualifying": [],
+        "preQualifyingPodium": [],
+        "hasRealGrid": True,
+        "realQualifying": [
+            {"driver_id": f"driver_{letter}", "position": index,
+             "modelPosition": index, "code": letter.upper() * 3,
+             "driverName": f"Driver {letter.upper()}", "team": f"Team {letter.upper()}",
+             "teamId": f"team_{letter}", "gap": float(index - 1) / 10,
+             "modelGap": float(index - 1) / 10}
+            for index, letter in enumerate("abcd", start=1)
+        ],
+        "realGridPodium": copy.deepcopy(_forecast()["preQualifyingPodium"]),
+    }
+    first = _prediction(
+        mode="actual_qualifying", forecast=forecast,
+        qualifying=_accepted("a" * 64),
+    )
+    timing_changed = _prediction(
+        mode="actual_qualifying", forecast=forecast,
+        qualifying=_accepted("b" * 64),
+    )
+    metadata_changed = copy.deepcopy(first)
+    metadata_changed["generated_at"] = "2026-10-30T12:05:00Z"
+    metadata_changed["status"] = "saved-locally"
+    metadata_changed["poll_attempt"] = 9
+
+    assert timing_changed["prediction_id"] != first["prediction_id"]
+    assert digest(metadata_changed, semantic_prediction=True) == first["prediction_id"]
+
+
+def test_same_input_reuses_valid_candidate_and_preserves_generation_time():
+    first = _prediction()
+    reused = _prediction(
+        generated_at="2026-10-30T12:30:00Z",
+        previous_candidate=first,
+    )
+
+    assert reused == first
+    assert reused["generated_at"] == "2026-10-30T12:00:00Z"
+
+
+def test_write_immutable_is_idempotent_and_rejects_collisions(tmp_path):
+    path = tmp_path / "nested" / "artifact.json"
+    write_immutable(path, {"answer": 42})
+    first = path.read_bytes()
+    write_immutable(path, {"answer": 42})
+
+    assert first == b'{"answer":42}\n'
+    with pytest.raises(ArtifactCollisionError, match="immutable collision"):
+        write_immutable(path, {"answer": 43})
+
+
+def test_archive_preserves_first_initial_and_appends_versions(tmp_path):
+    first = _prediction()
+    changed = _prediction(model_manifest=_model_manifest(code_hash="d" * 64))
+    event_dir = archive_prediction(tmp_path, _event(), first)
+    archive_prediction(tmp_path, _event(), changed)
+
+    assert json.loads((event_dir / "initial.json").read_text()) == first
+    assert json.loads((event_dir / "versions" / f"{first['prediction_id']}.json").read_text()) == first
+    assert json.loads((event_dir / "versions" / f"{changed['prediction_id']}.json").read_text()) == changed
+
+
+def test_changed_schedule_builds_new_version_and_refreshes_event_metadata(tmp_path):
+    first = _prediction()
+    archive_prediction(tmp_path, _event(), first)
+    changed_event = _event(qualifying_end_observed_at="2026-10-31T19:05:00Z")
+    changed = _prediction(event=changed_event, previous_candidate=first)
+    archive_prediction(tmp_path, changed_event, changed)
+
+    event_dir = tmp_path / "prediction_snapshots" / "2026-20"
+    assert changed["prediction_id"] != first["prediction_id"]
+    assert json.loads((event_dir / "event.json").read_text())[
+        "qualifying_end_observed_at"
+    ] == "2026-10-31T19:05:00Z"
+
+
+def test_restart_reuses_durable_candidate_and_original_generation_time(tmp_path):
+    first = _prediction()
+    archive_prediction(tmp_path, _event(), first)
+
+    durable = load_prediction_for_input(tmp_path, _event(), first["input_hash"])
+    rebuilt = _prediction(
+        generated_at="2026-10-30T13:00:00Z", previous_candidate=durable
+    )
+    archive_prediction(tmp_path, _event(), rebuilt)
+
+    assert rebuilt == first
+    assert rebuilt["generated_at"] == "2026-10-30T12:00:00Z"
+
+
+def test_durable_lookup_skips_versions_from_an_unrelated_event_revision(tmp_path):
+    first = _prediction()
+    archive_prediction(tmp_path, _event(), first)
+    changed_event = _event(race_start_at="2026-11-01T19:00:00Z")
+
+    assert load_prediction_for_input(tmp_path, changed_event, "e" * 64) is None
+
+
+@pytest.mark.parametrize("probabilities", [
+    [1.1, 0.8, 0.6, 0.5],
+    [float("nan"), 1.0, 1.0, 1.0],
+    [0.9, 0.8, 0.7, 0.5],
+])
+def test_validate_prediction_rejects_invalid_podium_estimates(probabilities):
+    prediction = _prediction()
+    for row, probability in zip(
+        prediction["forecast"]["preQualifyingPodium"], probabilities
+    ):
+        row["podiumProbability"] = probability
+
+    with pytest.raises(ValueError, match="podium"):
+        validate_prediction(prediction, _event())
+
+
+def test_validate_prediction_rejects_wrong_event_identity_and_actual_without_source():
+    prediction = _prediction()
+    with pytest.raises(ValueError, match="event identity"):
+        validate_prediction(prediction, _event(round=21))
+
+    actual = copy.deepcopy(prediction)
+    actual["mode"] = "actual_qualifying"
+    actual["qualifying_source_version"] = None
+    with pytest.raises(ValueError, match="source version"):
+        validate_prediction(actual, _event())
+
+
+def test_training_hash_rejects_target_or_later_rows():
+    snapshot = _training_snapshot()
+    snapshot["results"].append(
+        {"season": 2026, "round": 20, "date": "2026-11-01T18:00:00Z",
+         "driver_id": "driver_c", "position": 1}
+    )
+
+    with pytest.raises(ValueError, match="target or later"):
+        training_snapshot_hash(
+            snapshot, event=_event(), training_cutoff="2026-10-30T00:00:00Z"
+        )
+
+
+def test_training_snapshot_requires_dated_results_and_linked_qualifying():
+    undated = _training_snapshot()
+    del undated["results"][0]["date"]
+    with pytest.raises(ValueError, match="result.*date"):
+        training_snapshot_hash(
+            undated, event=_event(), training_cutoff="2026-10-30T00:00:00Z"
+        )
+
+    orphaned = _training_snapshot()
+    orphaned["qualifying"][0]["round"] = 18
+    with pytest.raises(ValueError, match="orphan"):
+        training_snapshot_hash(
+            orphaned, event=_event(), training_cutoff="2026-10-30T00:00:00Z"
+        )
+
+
+def test_canonical_serialization_rejects_nonfinite_numbers():
+    with pytest.raises(ValueError):
+        canonical_bytes({"not_json": float("nan")})
+
+
+def test_model_manifest_and_feature_inputs_version_pre_model_inputs():
+    baseline = build_provenance(
+        _event(), mode="predicted_qualifying",
+        training_cutoff="2026-10-30T00:00:00Z",
+        training_snapshot=_training_snapshot(), model_manifest=_model_manifest(),
+        feature_inputs=_feature_inputs(), qualifying=None,
+    )
+    parameter_changed = build_provenance(
+        _event(), mode="predicted_qualifying",
+        training_cutoff="2026-10-30T00:00:00Z",
+        training_snapshot=_training_snapshot(),
+        model_manifest=_model_manifest(parameters={"num_leaves": 63, "random_state": 42}),
+        feature_inputs=_feature_inputs(), qualifying=None,
+    )
+    features = _feature_inputs()
+    features[0]["quali_time_gap_to_pole"] = 0.001
+    feature_changed = build_provenance(
+        _event(), mode="predicted_qualifying",
+        training_cutoff="2026-10-30T00:00:00Z",
+        training_snapshot=_training_snapshot(), model_manifest=_model_manifest(),
+        feature_inputs=features, qualifying=None,
+    )
+
+    assert parameter_changed["model_version"] != baseline["model_version"]
+    assert parameter_changed["input_hash"] != baseline["input_hash"]
+    assert feature_changed["feature_input_hash"] != baseline["feature_input_hash"]
+    assert feature_changed["input_hash"] != baseline["input_hash"]
+
+
+def test_build_provenance_recomputes_schedule_and_roster_versions():
+    event = _event(event_schedule_hash="stale", roster_version="stale")
+    provenance = build_provenance(
+        event, mode="predicted_qualifying",
+        training_cutoff="2026-10-30T00:00:00Z",
+        training_snapshot=_training_snapshot(), model_manifest=_model_manifest(),
+        feature_inputs=_feature_inputs(), qualifying=None,
+    )
+
+    assert provenance["event_schedule_hash"] != "stale"
+    assert provenance["roster_version"] != "stale"
+
+
+def test_actual_provenance_requires_accepted_qualifying_not_free_form_digest():
+    with pytest.raises(TypeError, match="AcceptedQualifying"):
+        build_provenance(
+            _event(), mode="actual_qualifying",
+            training_cutoff="2026-10-30T00:00:00Z",
+            training_snapshot=_training_snapshot(), model_manifest=_model_manifest(),
+            feature_inputs=_feature_inputs(), qualifying="a" * 64,
+        )
+
+
+def test_initial_prediction_must_be_generated_before_qualifying():
+    with pytest.raises(ValueError, match="before qualifying"):
+        _prediction(generated_at="2026-10-31T18:00:00Z")
+
+
+def test_provenance_composes_with_prepared_history_and_feature_frames():
+    from src.model.forecast import _prepare_history, build_event_features
+    from test_forecast import _entries as forecast_entries
+    from test_forecast import _event as forecast_event
+    from test_forecast import _history
+
+    target = forecast_event(
+        race_name="Artifact Grand Prix", circuit_id="artifact_ring",
+        training_cutoff="2026-01-31T00:00:00Z",
+        qualifying_start_at="2026-01-31T18:00:00Z",
+        qualifying_end_observed_at="2026-01-31T19:02:00Z",
+        race_start_at="2026-02-01T18:00:00Z",
+        roster=_event()["roster"],
+    )
+    history = _history()
+    history["results"]["optional_note"] = pd.NA
+    prepared = _prepare_history(target, history)
+    features = build_event_features(target, history, forecast_entries())
+
+    provenance = build_provenance(
+        target, mode="predicted_qualifying",
+        training_cutoff="2026-01-31T00:00:00Z",
+        training_snapshot=prepared, model_manifest=_model_manifest(),
+        feature_inputs=features, qualifying=None,
+    )
+
+    assert provenance["training_manifest"]["tables"] == {
+        "qualifying": {"row_count": 4, "events": [{"season": 2026, "round": 1, "row_count": 4}]},
+        "results": {
+            "row_count": 4,
+            "events": [{
+                "season": 2026, "round": 1, "row_count": 4,
+                "min_date": "2026-01-01T00:00:00Z",
+                "max_date": "2026-01-01T00:00:00Z",
+            }],
+        },
+    }
+    assert len(provenance["feature_input_hash"]) == 64

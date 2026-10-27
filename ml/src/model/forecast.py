@@ -8,6 +8,7 @@ and app; it always reconstructs the predicted-qualifying mode.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+import math
 from numbers import Integral
 import re
 from typing import Any
@@ -23,6 +24,7 @@ from src.pipeline.qualifying import AcceptedQualifying, QualifyingValidationErro
 
 RAW = ML_DIR / "data" / "raw"
 WINDOW = 5
+PODIUM_PROBABILITY_POLICY = "capped-sum-to-three-v1"
 
 
 def _load(table):
@@ -342,15 +344,60 @@ def _prepare_forecast_inputs(event, *, mode, history, entries, qualifying=None):
     return prepared, features, actual_rows
 
 
+def _podium_scores(model, frame):
+    """Return raw scores and capped normalized podium estimates.
+
+    At least three positive scores are required because ``min(1, scale * score)``
+    cannot otherwise reach a total of three without inventing mass for zero scores.
+    """
+
+    raw = np.asarray(model.predict_proba(frame[FEATURES]), dtype=float)
+    if raw.ndim != 2 or raw.shape != (len(frame), 2):
+        raise ValueError("podium model returned invalid probability shape")
+    scores = raw[:, 1]
+    if len(scores) < 3:
+        raise ValueError("podium normalization requires at least three entrants")
+    if not np.isfinite(scores).all() or (scores < 0).any():
+        raise ValueError("podium scores must be finite non-negative values")
+    active = scores > 0
+    if active.sum() < 3:
+        raise ValueError("podium normalization requires at least three positive scores")
+
+    normalized = np.zeros(len(scores), dtype=float)
+    remaining = 3.0
+    while active.any():
+        active_scores = scores[active]
+        relative_scores = active_scores / active_scores.max()
+        candidates = relative_scores * (remaining / relative_scores.sum())
+        active_indices = np.flatnonzero(active)
+        capped = candidates >= 1.0
+        if not capped.any():
+            normalized[active] = candidates
+            remaining = 0.0
+            break
+        capped_indices = active_indices[capped]
+        normalized[capped_indices] = 1.0
+        active[capped_indices] = False
+        remaining -= float(len(capped_indices))
+        if remaining < -1e-12:
+            raise ValueError("podium normalization exceeded its total")
+    if remaining > 1e-9 or not math.isclose(
+        float(normalized.sum()), 3.0, rel_tol=0.0, abs_tol=1e-9
+    ):
+        raise ValueError("podium scores cannot be normalized to a capped total of three")
+    return scores, normalized
+
+
 def _podium(model, frame):
-    probabilities = np.asarray(model.predict_proba(frame[FEATURES]))[:, 1]
-    return probabilities * 3.0 / probabilities.sum()
+    return _podium_scores(model, frame)[1]
 
 
-def _pod(row, probability):
+def _pod(row, probability, rank):
     return {
-        "code": row.code, "driverName": row.name, "team": row.team,
+        "driver_id": row.driver_id, "code": row.code,
+        "driverName": row.name, "team": row.team,
         "teamId": row.team_id, "podiumProbability": float(probability),
+        "rank": rank,
     }
 
 
@@ -406,16 +453,23 @@ def _forecast_prepared(event, *, mode, features, models, actual_rows=None) -> di
             grid_position=frame["predicted_position"],
             quali_time_gap_to_pole=frame["predicted_gap"],
         )
-        frame["podium"] = _podium(models["podium"], stage_two)
+        frame["podium_raw_score"], frame["podium"] = _podium_scores(
+            models["podium"], stage_two
+        )
         predicted_qualifying = [
-            {"position": int(row.predicted_position), "code": row.code,
+            {"driver_id": row.driver_id, "position": int(row.predicted_position),
+             "code": row.code,
              "driverName": row.name, "team": row.team, "teamId": row.team_id,
              "gap": float(row.predicted_gap)}
             for row in frame.sort_values("predicted_position").itertuples()
         ]
+        podium_order = frame.sort_values(
+                ["podium", "podium_raw_score", "driver_id"],
+                ascending=[False, False, True], kind="stable",
+            )
         pre_podium = [
-            _pod(row, row.podium)
-            for row in frame.sort_values("podium", ascending=False).itertuples()
+            _pod(row, row.podium, rank)
+            for rank, row in enumerate(podium_order.itertuples(), start=1)
         ]
     elif mode == "actual_qualifying":
         if actual_rows is None:
@@ -429,19 +483,31 @@ def _forecast_prepared(event, *, mode, features, models, actual_rows=None) -> di
             grid_position=frame["actual_model_position"],
             quali_time_gap_to_pole=frame["actual_model_gap"],
         )
-        frame["podium"] = _podium(models["podium"], stage_two)
+        frame["podium_raw_score"], frame["podium"] = _podium_scores(
+            models["podium"], stage_two
+        )
+        podium_order = frame.sort_values(
+                ["podium", "podium_raw_score", "driver_id"],
+                ascending=[False, False, True], kind="stable",
+            )
         real_podium = [
-            _pod(row, row.podium)
-            for row in frame.sort_values("podium", ascending=False).itertuples()
+            _pod(row, row.podium, rank)
+            for rank, row in enumerate(podium_order.itertuples(), start=1)
         ]
         display = frame[["driver_id", "code", "name", "team", "team_id"]].merge(
-            actual_rows[["driver_id", "quali_position", "quali_time_gap_to_pole", "model_position"]],
+            actual_rows[[
+                "driver_id", "quali_position", "quali_time_gap_to_pole",
+                "model_position", "model_quali_time_gap_to_pole",
+            ]],
             on="driver_id", how="inner",
         ).sort_values("model_position")
         real_qualifying = [
-            {"position": _optional_int(row.quali_position), "code": row.code,
+            {"driver_id": row.driver_id,
+             "position": _optional_int(row.quali_position), "code": row.code,
              "driverName": row.name, "team": row.team, "teamId": row.team_id,
-             "gap": _optional_float(row.quali_time_gap_to_pole)}
+             "gap": _optional_float(row.quali_time_gap_to_pole),
+             "modelPosition": int(row.model_position),
+             "modelGap": float(row.model_quali_time_gap_to_pole)}
             for row in display.itertuples()
         ]
     else:
@@ -449,6 +515,8 @@ def _forecast_prepared(event, *, mode, features, models, actual_rows=None) -> di
 
     return {
         "error": None, "mode": mode, "race": _race_payload(event),
+        "probabilityPolicyVersion": PODIUM_PROBABILITY_POLICY,
+        "podiumEstimateSemantics": "normalized_podium_estimate",
         "predictedQualifying": predicted_qualifying,
         "preQualifyingPodium": pre_podium,
         "hasRealGrid": mode == "actual_qualifying",
