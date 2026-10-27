@@ -1,9 +1,2 @@
 streamlit==1.54.0
-pandas
-numpy
-joblib
-scikit-learn
-lightgbm
-xgboost
-pyarrow
 requests

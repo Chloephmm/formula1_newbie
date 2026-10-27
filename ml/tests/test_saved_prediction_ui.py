@@ -277,3 +277,50 @@ def test_apptest_saved_fragment_renders_confirmed_prediction(tmp_path, monkeypat
 
     assert not app.exception
     assert any(feed["current"]["prediction"]["prediction_id"] in item.value for item in app.caption)
+
+
+def test_production_app_has_no_visitor_model_or_jolpica_path():
+    source = (ROOT / "streamlit_app" / "app.py").read_text(encoding="utf-8")
+
+    assert "st.button" not in source
+    assert "refresh_season_data" not in source
+    assert "retrain_live" not in source
+    assert "src.model" not in source
+    assert "jolpica" not in source.lower()
+
+
+def test_production_app_refreshes_saved_mode_and_id_together(tmp_path, monkeypatch):
+    """AppTest drives reruns; the retained browser-timer check remains deployment work."""
+
+    from streamlit.testing.v1 import AppTest
+    from streamlit_app.prediction_data import reset_shared_cache
+
+    feed_path = tmp_path / "feed.json"
+    predicted = _feed(tmp_path)
+    actual_feed = _feed(
+        tmp_path,
+        mode="actual_qualifying",
+        updated="2026-11-01T01:02:00Z",
+    )
+    feed_path.write_text(json.dumps(predicted), encoding="utf-8")
+    monkeypatch.setenv("PREDICTION_FEED_FILE", str(feed_path))
+    monkeypatch.setenv(
+        "PREDICTION_FEED_URL", "http://127.0.0.1:9/prediction_feed.json"
+    )
+    app = AppTest.from_file(str(ROOT / "streamlit_app" / "app.py")).run(timeout=15)
+    predicted_id = predicted["current"]["prediction"]["prediction_id"]
+
+    assert not app.exception
+    assert not app.button
+    assert any(predicted_id in item.value for item in app.caption)
+    feed_path.write_text(json.dumps(actual_feed), encoding="utf-8")
+    reset_shared_cache()
+    app.run(timeout=15)
+    actual_id = actual_feed["current"]["prediction"]["prediction_id"]
+
+    assert not app.exception
+    assert any(
+        actual_id in item.value and "Mode: Actual qualifying" in item.value
+        for item in app.caption
+    )
+    assert not any(predicted_id in item.value for item in app.caption)

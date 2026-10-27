@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import copy
 import importlib.util
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -177,3 +179,88 @@ def test_missed_initial_records_status_without_calling_model(tmp_path, monkeypat
     ).read_text(encoding="utf-8")
     assert result["outcome"] == "missing_initial"
     assert "missing_initial" in status
+
+
+def test_saved_lifecycle_keeps_initial_through_failures_updates_and_freezes_latest():
+    from src.pipeline.controller import PipelineDependencies, run_due_work
+
+    event = {
+        "season": 2026,
+        "round": 18,
+        "race_name": "Lifecycle Grand Prix",
+        "circuit_id": "lifecycle_ring",
+        "qualifying_start_at": "2026-10-23T10:00:00Z",
+        "race_start_at": "2026-10-24T18:00:00Z",
+        "schedule_hash": "schedule-a",
+        "schedule_updated_at": "2026-10-22T00:00:00Z",
+    }
+    initial = {"prediction_id": "initial", "mode": "predicted_qualifying"}
+    initial_before = copy.deepcopy(initial)
+    served = [initial]
+    responses = iter(["empty", "incomplete", "a" * 64, "b" * 64])
+    runtime = {"now": datetime(2026, 10, 23, 16, 30, tzinfo=UTC), "source": None}
+    fits = []
+    receipts = []
+
+    class Missing(ValueError):
+        code = "qualifying_unavailable"
+
+    class Incomplete(ValueError):
+        code = "missing_expected_driver"
+
+    def validate(_event, raw):
+        if raw == "empty":
+            raise Missing()
+        if raw == "incomplete":
+            raise Incomplete()
+        runtime["source"] = raw
+        return SimpleNamespace(source_version=raw)
+
+    def generate(_event, accepted, source):
+        fits.append(source)
+        return {"prediction_id": f"actual-{source[0]}", "mode": "actual_qualifying"}
+
+    def publish(prediction):
+        receipt = {
+            "prediction_id": prediction["prediction_id"],
+            "published_at": runtime["now"].isoformat(),
+        }
+        receipts.append(receipt)
+        served[0] = prediction
+        return receipt
+
+    dependencies = PipelineDependencies(
+        fetch_qualifying=lambda _event: next(responses),
+        validate_qualifying=validate,
+        generate_prediction=generate,
+        validate_prediction=lambda prediction, _event: None,
+        stage_prediction=lambda _event, prediction, accepted, status: prediction,
+        publish_prediction=publish,
+        freeze=lambda _event, _status, _now: receipts[-1],
+    )
+    status = {}
+    for at, expected in (
+        (datetime(2026, 10, 23, 16, 30, tzinfo=UTC), "qualifying_unavailable"),
+        (datetime(2026, 10, 23, 17, 30, tzinfo=UTC), "qualifying_unavailable"),
+        (datetime(2026, 10, 23, 18, 30, tzinfo=UTC), "published"),
+        (datetime(2026, 10, 24, 15, 15, tzinfo=UTC), "published"),
+    ):
+        runtime["now"] = at
+        result = run_due_work(
+            event, status, clock=lambda: runtime["now"], dependencies=dependencies
+        )
+        status = result.status
+        assert result.outcome == expected
+        if expected == "qualifying_unavailable":
+            assert served[0] is initial
+
+    runtime["now"] = datetime(2026, 10, 24, 16, 0, tzinfo=UTC)
+    frozen = run_due_work(
+        event, status, clock=lambda: runtime["now"], dependencies=dependencies
+    )
+
+    assert initial == initial_before
+    assert fits == ["a" * 64, "b" * 64]
+    assert served[0]["prediction_id"] == "actual-b"
+    assert frozen.outcome == "frozen"
+    assert frozen.status["freeze_selection"]["prediction_id"] == "actual-b"

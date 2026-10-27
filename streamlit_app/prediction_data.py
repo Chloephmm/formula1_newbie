@@ -272,6 +272,38 @@ def _event_url(global_url: str, event_id: str) -> str:
     raise ValueError("PREDICTION_FEED_URL must end in prediction_feed.json")
 
 
+def current_saved_event_id(
+    *,
+    state: MutableMapping | None = None,
+    url: str | None = None,
+    transport: Callable | None = None,
+    monotonic: Callable[[], float] = time.monotonic,
+    disk_path: str | Path | None = None,
+) -> str | None:
+    """Return the current saved event, retaining the last valid rollover value."""
+
+    session = _state_mapping(state)
+    global_url = url or os.environ.get("PREDICTION_FEED_URL", DEFAULT_FEED_URL)
+    feed = None
+    try:
+        feed = fetch_feed(global_url, transport=transport, monotonic=monotonic)
+    except Exception:
+        candidates = []
+        if disk_path is not None:
+            candidates.append(Path(disk_path))
+        candidates.append(LOCAL_DATA_ROOT / "prediction_feed.json")
+        for candidate in candidates:
+            try:
+                payload = json.loads(candidate.read_text(encoding="utf-8"))
+                feed = validate_feed(payload)
+                break
+            except (OSError, UnicodeError, json.JSONDecodeError, FeedValidationError):
+                pass
+    if feed is not None:
+        session["_prediction_current_event_id"] = feed["current_event_id"]
+    return session.get("_prediction_current_event_id")
+
+
 def _state_mapping(state: MutableMapping | None) -> MutableMapping:
     if state is not None:
         return state

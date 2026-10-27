@@ -78,7 +78,9 @@ BAR_STOPS = [
 
 
 def _team_code(team_id, team_name):
-    code = TEAM_ID2CODE.get(team_id) or (team_id or team_name or "UNK")[:3].upper()
+    raw = team_id or team_name or "UNK"
+    fallback = raw.rsplit("_", 1)[-1][:3].upper()
+    code = TEAM_ID2CODE.get(team_id) or fallback
     if code not in TEAMS:
         TEAMS[code] = (team_name or code, "#9aa0a6")
     return code
@@ -286,6 +288,7 @@ def render_saved_prediction(event, prediction, status) -> None:
     st.html(race_strip_html(race))
     st.html(mode_html(actual))
     st.caption(
+        f"Mode: {'Actual qualifying' if actual else 'Predicted qualifying'} · "
         f"Saved forecast {prediction['prediction_id']} · generated "
         f"{prediction['generated_at']}"
     )
