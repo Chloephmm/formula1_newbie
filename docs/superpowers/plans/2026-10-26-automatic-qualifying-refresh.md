@@ -10,7 +10,7 @@
 
 **Status:** Implementation authorized using fresh subagents with spec and quality reviews after each task. Work branch: feature1 (tracking origin/feature1, explicitly requested). Based on repository commit 5c0ad5bcbc2e104d6e3d886d34261e1575ef77e0; not pushed or deployed.
 
-**Progress:** Tasks 1-3 are implemented and reviewed; 7 tasks remain. Next is Task 4 (explicit initial and actual-qualifying forecast modes). RUN removal remains Task 9; automatic publication is not enabled yet. See [execution record](automatic-qualifying-execution.md) for commits and verification evidence.
+**Progress:** Tasks 1-4 are implemented and reviewed; 6 tasks remain. Next is Task 5 (prediction artifact validation and versioning, including probability bounds). RUN removal remains Task 9; automatic publication is not enabled yet. See [execution record](automatic-qualifying-execution.md) for commits and verification evidence.
 
 **Execution clarification (2026-10-26):** The user accepts strict forecast eligibility with possible display lag: a forecast must be verified available before the two-hour cutoff; the feed/browser may display that already-eligible version later. Candidate verification, not mutable-feed propagation, is the eligibility event. Persist verifiable confirmation evidence; an uncertain or post-cutoff confirmation is ineligible. Feed publication and immutable freeze selection must consistently enforce that rule. The saved ML-based initial remains the fallback when actual qualifying is unavailable. Execution uses the stated GitHub-only, start-plus-90-minute estimated-end and Monday-safety defaults; the estimate remains explicitly labeled.
 
@@ -436,8 +436,12 @@ def replace_target_rows(existing, accepted, season: int, round_number: int):
 
 **Files:** modify ml/src/model/forecast.py, ml/src/model/retrain.py and ml/tests/test_forecast.py; add relevant tests to ml/tests/test_pipeline_controller.py.
 
-- [ ] Add tests with injected fake regressors/classifiers to capture exact Stage 2 inputs. Test that actual mode never invokes Stage 1 and that missing/incomplete qualifying cannot enter actual mode.
-- [ ] Replace date-implied production mode selection with this explicit contract:
+Task 4 implementation boundaries: add backward-compatible raw-table injection to ml/src/features/build_features.py and ml/src/model/quali.py so live training filters history before constructing features. Create only the generation/reuse seam of ml/src/pipeline/controller.py now: validated inputs and a caller-supplied semantic input hash determine whether to reuse a successful candidate or train the required stage(s). Canonical artifact hashing remains Task 5, and scheduling, fetching, publication, CLI, and workflow orchestration remain Task 7. The seam must not treat its supplied hash as publication evidence. Keep the legacy forecast wrapper usable for offline reconstruction without claiming that a date or cached qualifying proves historical publication/availability.
+
+Offline compatibility only: existing date-only schedule caches may retain the legacy race-minus-one-day `qualifyingDate` display estimate in `forecast(asof, models=None)`, explicitly labeled estimated and with its source recorded. This wrapper produces a predicted-qualifying reconstruction, never claims actual availability, and never writes that estimate into canonical session timestamps. `forecast_event` and the controller seam must use explicit event metadata and must not infer qualifying timing. The legacy UI wiring is replaced in Tasks 8-9.
+
+- [x] Add tests with injected fake regressors/classifiers to capture exact Stage 2 inputs. Test that actual mode never invokes Stage 1 and that missing/incomplete qualifying cannot enter actual mode.
+- [x] Replace date-implied production mode selection with this explicit contract:
 
 ~~~python
 # Public interface to implement by extracting the existing feature/prediction body:
@@ -459,11 +463,11 @@ def replace_target_rows(existing, accepted, season: int, round_number: int):
 # whatever historical qualifying happens to exist in a checkout.
 ~~~
 
-- [ ] Factor the current feature builder into build_event_features(event, history, entries), keeping current cold-start values and strict historical filtering. Use explicit roster metadata for substitute names/teams.
-- [ ] For actual mode, call train_podium_live against the recorded historical cutoff only after validated input_hash changes. Do not call retrain_live, which unnecessarily fits Stage 1 too.
-- [ ] Test no target/future race rows in features or training, true qualifying positions preserved, and no-lap values imputed only in model input. Replace historical tests that assume date alone proves what was published.
-- [ ] Keep precomputed initial predictions immutable. Comparing against actual qualifying uses the saved initial; it must not regenerate a “pre-qualifying” forecast after results arrived.
-- [ ] Run: python -m pytest ml/tests/test_forecast.py ml/tests/test_pipeline_controller.py -v. Commit: refactor: generate explicit initial and actual qualifying forecasts.
+- [x] Factor the current feature builder into build_event_features(event, history, entries), keeping current cold-start values and strict historical filtering. Use explicit roster metadata for substitute names/teams.
+- [x] For actual mode, call train_podium_live against the recorded historical cutoff only after validated input_hash changes. Do not call retrain_live, which unnecessarily fits Stage 1 too.
+- [x] Test no target/future race rows in features or training, true qualifying positions preserved, and no-lap values imputed only in model input. Replace historical tests that assume date alone proves what was published.
+- [x] Keep precomputed initial predictions immutable. Comparing against actual qualifying uses the saved initial; it must not regenerate a “pre-qualifying” forecast after results arrived.
+- [x] Run: python -m pytest ml/tests/test_forecast.py ml/tests/test_pipeline_controller.py -v. Commit: refactor: generate explicit initial and actual qualifying forecasts.
 
 ### Task 5 — Validate and version prediction artifacts
 
