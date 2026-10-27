@@ -13,6 +13,7 @@ import math
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from decimal import Decimal, localcontext
 from typing import Any, Callable, Mapping, Sequence
 
 import pandas as pd
@@ -422,14 +423,16 @@ def _lap_seconds(value: Any) -> float | None:
     if match is None:
         _fail("invalid_lap_time", f"invalid qualifying time: {value!r}")
     minutes, seconds = match.groups()
-    parsed = float(seconds)
-    if minutes is not None:
-        if parsed >= 60:
-            _fail("invalid_lap_time", f"invalid qualifying time: {value!r}")
-        parsed += float(minutes) * 60
+    decimal_seconds = Decimal(seconds)
+    if minutes is not None and decimal_seconds >= 60:
+        _fail("invalid_lap_time", f"invalid qualifying time: {value!r}")
+    with localcontext() as context:
+        # Keep every input digit through the arithmetic, then round to float once.
+        context.prec = len(minutes or "") + len(seconds) + 2
+        parsed = float(Decimal(minutes or "0") * 60 + decimal_seconds)
     if not math.isfinite(parsed) or parsed <= 0:
         _fail("invalid_lap_time", f"invalid qualifying time: {value!r}")
-    return float(parsed)
+    return parsed
 
 
 def _normalized_roster(event: Mapping[str, Any]) -> tuple[list[dict[str, Any]], str]:
@@ -632,6 +635,11 @@ def replace_target_rows(
         _fail("mixed_event_rows", "accepted rows contain more than one event")
     if accepted.empty:
         _fail("empty_accepted_rows", "accepted qualifying rows cannot be empty")
+    if any(
+        not isinstance(driver_id, str) or not driver_id.strip()
+        for driver_id in accepted["driver_id"]
+    ):
+        _fail("invalid_accepted_driver", "accepted rows require non-empty driver IDs")
     if accepted.duplicated(["season", "round", "driver_id"]).any():
         _fail("duplicate_accepted_rows", "accepted rows contain duplicate drivers")
 

@@ -623,6 +623,35 @@ def test_source_version_normalizes_equivalent_timing_text():
     assert colon_version == seconds_version
 
 
+@pytest.mark.parametrize(
+    ("colon_time", "seconds_time"),
+    [("1:01.029", "61.029"), ("1:00.009", "60.009"), ("2:03.001", "123.001")],
+)
+def test_millisecond_timing_formats_have_identical_times_gaps_and_version(
+    colon_time, seconds_time
+):
+    colon_results = [
+        _result("driver_one", "1", q1=colon_time),
+        _result("driver_two", "2", q1="180.000"),
+    ]
+    seconds_results = copy.deepcopy(colon_results)
+    seconds_results[0]["Q1"] = seconds_time
+
+    colon = _validated(payload=_payload(colon_results))
+    seconds = _validated(payload=_payload(seconds_results))
+
+    derived_columns = [
+        "driver_id",
+        "best_qualifying_time_seconds",
+        "quali_time_gap_to_pole",
+        "model_quali_time_gap_to_pole",
+    ]
+    pd.testing.assert_frame_equal(
+        colon.rows[derived_columns], seconds.rows[derived_columns], check_exact=True
+    )
+    assert colon.source_version == seconds.source_version
+
+
 def test_validation_rejects_rows_tampered_after_fetch():
     from src.pipeline.qualifying import QualifyingValidationError, validate_qualifying
 
@@ -711,5 +740,28 @@ def test_replace_target_rows_rejects_nullable_missing_identity_without_mutation(
     with pytest.raises(QualifyingValidationError) as exc_info:
         replace_target_rows(existing, accepted, 2026, 20)
     assert exc_info.value.code == "mixed_event_rows"
+    pd.testing.assert_frame_equal(existing, existing_before)
+    pd.testing.assert_frame_equal(accepted, accepted_before)
+
+
+@pytest.mark.parametrize("driver_id", [None, pd.NA, float("nan"), "", " \t", 23, False])
+def test_replace_target_rows_rejects_invalid_driver_id_without_mutation(driver_id):
+    from src.pipeline.qualifying import QualifyingValidationError, replace_target_rows
+
+    existing = pd.DataFrame(
+        [{"season": 2026, "round": 19, "driver_id": "other_event"}]
+    )
+    accepted = pd.DataFrame(
+        [
+            {"season": 2026, "round": 20, "driver_id": "valid"},
+            {"season": 2026, "round": 20, "driver_id": driver_id},
+        ]
+    )
+    existing_before = existing.copy(deep=True)
+    accepted_before = accepted.copy(deep=True)
+
+    with pytest.raises(QualifyingValidationError) as exc_info:
+        replace_target_rows(existing, accepted, 2026, 20)
+    assert exc_info.value.code == "invalid_accepted_driver"
     pd.testing.assert_frame_equal(existing, existing_before)
     pd.testing.assert_frame_equal(accepted, accepted_before)
