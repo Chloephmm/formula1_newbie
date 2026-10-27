@@ -399,7 +399,9 @@ class GitPublisher:
             if confirmed_initial is not None:
                 if encoded != _encoded(confirmed_initial["prediction"]):
                     raise ValueError("initial differs from the confirmed initial selection")
-            elif candidate.prediction["mode"] == "predicted_qualifying":
+            else:
+                if candidate.prediction["mode"] != "predicted_qualifying":
+                    raise ValueError("existing initial has no confirmed feed selection")
                 if encoded != _encoded(candidate.prediction):
                     raise ValueError("initial differs from the first confirmed candidate")
             version_path = f"{base}/versions/{initial['prediction_id']}.json"

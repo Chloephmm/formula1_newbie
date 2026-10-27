@@ -581,6 +581,19 @@ def test_existing_initial_identical_to_first_confirmed_candidate_is_retained(rem
     assert read_remote(remote[1], f"{EVENT}/initial.json") == canonical_bytes(feed["initial"]["prediction"]) + b"\n"
 
 
+def test_actual_cannot_promote_when_existing_initial_has_no_confirmation(remote, tmp_path):
+    initial = stage(tmp_path)
+    compete(remote, initial.version_path, initial.prediction)
+    compete(remote, f"{EVENT}/initial.json", initial.prediction)
+    initial_bytes = read_remote(remote[1], f"{EVENT}/initial.json")
+    candidate = stage(tmp_path, actual())
+    with pytest.raises(api().ReplanRequired, match="initial"):
+        make_publisher(remote, Clock("2026-11-01T02:00:00Z")).publish_candidate(candidate)
+    assert read_remote(remote[1], FEED) is None
+    assert read_remote(remote[1], f"{EVENT}/initial.json") == initial_bytes
+    assert git(remote[1], "ls-tree", "-r", "--name-only", "main", f"{EVENT}/publications") == b""
+
+
 def test_byte_comparison_crossing_deadline_cannot_create_confirmation(tmp_path):
     candidate = stage(tmp_path, actual())
     clock = Clock("2026-11-01T15:59:59Z")
