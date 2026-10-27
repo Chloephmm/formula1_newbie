@@ -1,174 +1,187 @@
-# F1 Prediction Logic
+# F1 prediction and publication logic
 
-The single source of truth for how the Predict app works — the end-to-end flow, the two
-prediction modes (chosen by the user's **as-of date**), and the machine-learning models.
+This is the operational source of truth for how an event moves from a saved initial
+forecast to an actual-qualifying forecast and then to a frozen evaluation selection.
+The model details are in [ml-models.md](ml-models.md).
 
-Code: `streamlit_app/app.py` (UI) · `ml/src/model/forecast.py` (pipeline) ·
-`ml/src/model/quali.py` (Stage 1) · `ml/src/model/train.py` (Stage 2).
+## Principle: the website is a reader
 
-For the data-science detail (algorithms, features, splits, hyperparameters,
-live retrain) see [`ml-models.md`](./ml-models.md). For a one-page visual:
-[`assets/prediction-flow.svg`](./assets/prediction-flow.svg).
+`streamlit_app/app.py` imports only the saved-feed reader and view. It cannot call
+Jolpica, write Parquet, load LightGBM, or train a model. Its timed fragment checks the
+confirmed JSON feed about every 60 seconds while a page is open. A network, validation,
+or stale-CDN failure retains only that same event's newer last-good revision; another
+race is never substituted.
 
-![Prediction flow](./assets/prediction-flow.svg)
+The global feed is:
 
----
-
-## Full logic flow
-
-```
-USER picks a date  (app.py: st.date_input)
-   │   [▶ RUN button → re-fetch season from Jolpica → RETRAIN both models on every race
-   │    before the target GP (leakage-safe) → clear cache + rerun]
-   ▼
-resolve(date)  →  forecast(date)   (src/model/forecast.py)
-   │
-   ├─ 1. Find next race ≥ date            (schedule)            → Barcelona, round 7…
-   ├─ 2. Keep only data BEFORE that race  (t[date < race_date]) → no leakage
-   ├─ 3. Entry list = drivers from the most recent completed race
-   ├─ 4. Build each driver's feature row (form signals + qualifying signals)
-   │
-   ├─ STAGE 1 (quali model) ───────────────┐
-   │     predict gap-to-pole → rank → grid │
-   │                                        ▼
-   ├─ MODE pick by date:        date ≤ quali day → use PREDICTED grid (2-stage)
-   │                            date >  quali day → use REAL grid (if cached)
-   │                                        │
-   ├─ STAGE 2 (podium model) ◄──────────────┘
-   │     P(top-3) per driver → normalize (sum=3) → rank → podium
-   ▼
-race dict {predictedQualifying, preQualifyingPodium, realGridPodium, realQualifying, hasRealGrid}
-   ▼
-app.py renders → race strip · mode badge · quali_html · podium_html · compare_html  (the design)
-                 (+ "📡 Real data from today's qualifying." line when in real-grid mode)
+```text
+https://raw.githubusercontent.com/Chloephmm/formula1_newbie/main/
+  web/public/data/prediction_feed.json
 ```
 
----
+`PREDICTION_FEED_URL` can override this in a controlled deployment. Responses use a
+shared 60-second server cache and ETag conditional requests. A single feed revision
+contains the event, status, current/previous/initial selections, and receipts so mode
+and prediction ID cannot change independently.
 
-## Two prediction types (chosen by date)
+## Event timing (UTC)
 
-```
-find the NEXT race on/after the date → it has a qualifying date and a race date
-      │
-      ├── date ≤ qualifying date   → TYPE 1: PRE-QUALIFYING  (two-stage, predicted grid)
-      └── date > qualifying date   → TYPE 2: REAL GRID        (uses actual qualifying)
-```
+Every event requires explicit `qualifying_start_at` and `race_start_at`. Jolpica does
+not provide an observed qualifying finish. Unless an evidence-backed observed finish
+or event override exists, the controller records:
 
-Boundary: **on/before** quali day → two-stage; **after** quali day → real grid.
-Real grid *also* requires the qualifying to be present in the cache (use the 🔄 Run button
-after a session is published).
-
-### TYPE 1 — Pre-qualifying (date ≤ qualifying date): two-stage
-
-**Stage 1 — predict the grid** (`quali_model`, LightGBM regressor)
-Inputs (pre-race only, no leakage):
-- `quali_track_hist` — qualifying history at this circuit in prior years
-- `recent_quali_gap`, `recent_quali_pos` — recent qualifying form / recent average grid
-- `team_quali_strength` — team's recent qualifying pace
-
-Output: predicted **gap-to-pole** per driver → rank → **predicted grid**.
-
-**Stage 2 — predict the podium** (`podium_model`, calibrated LightGBM classifier)
-Inputs:
-- the **predicted grid** from Stage 1 (`grid_position`, `quali_time_gap_to_pole`)
-- `recent_form`, `recent_points` (recent form)
-- `team_strength`, `track_history`, `dnf_rate` (team, track, reliability)
-
-Output: model `P(top-3)` scores → capped normalization (each value 0–1, sum = 3)
-→ rank → **predicted podium**. The resulting values are normalized podium estimates,
-not a guarantee of calibrated probabilities after rescaling.
-
-### TYPE 2 — Real grid (date > qualifying date): one stage
-
-Skip Stage 1. Use the **actual qualifying** (real grid position + real gap-to-pole) in
-place of the predicted grid, then run the **same** Stage-2 podium model with the same
-form/team/track/reliability features → **podium on the real grid**. A **Compare** panel
-shows predicted grid vs actual grid with ▲/▼ movement, and the app shows the line
-**"📡 Real data from today's qualifying."**
-
----
-
-## Machine-learning models
-
-| Role | Code | Algorithm | Predicts | Calibrated | Trained on |
-|---|---|---|---|---|---|
-| **Stage 1 — Qualifying (live)** | `retrain.train_quali_live` | **LightGBM regressor** | gap-to-pole (s) → grid | n/a | every race before the target GP |
-| **Stage 2 — Podium (live)** | `retrain.train_podium_live` | **LightGBM classifier** | P(top-3) | **yes** (sigmoid, 5-fold CV) | every race before the target GP |
-| Held-out metrics — Stage 2 | `train.py` | LightGBM + Logistic baseline + XGBoost benchmark | P(top-3) | sigmoid (on 2023) | ≤2022 fit · 2023 calib · ≥2024 test |
-| Held-out metrics — Stage 1 | `quali.train_quali` | LightGBM regressor | gap-to-pole (s) | n/a | ≤2022 fit · ≥2024 test |
-
-Discipline: **no leakage** (features use only pre-race data, `shift(1)` in training),
-with sigmoid calibration of model scores before forecast normalization. The "held-out metrics" trainers exist only to populate
-the metrics page (`metrics.json`, `quali_metrics.json`) — they do not serve predictions.
-See [`ml-models.md`](./ml-models.md) for the full data-science reference.
-
-### How the podium is produced (Stage 2)
 ```python
-p = podium_model.predict_proba(X)[:, 1]   # sigmoid-calibrated model scores
-# capped-sum-to-three-v1: choose lambda so sum(min(1, lambda * p)) == 3
-# Reject non-finite/negative scores and fewer than three positive scores.
-# sort desc → top 3 = predicted podium; #1 (highest podium prob) = predicted winner
-```
-Each driver is scored independently, then normalized per race and ranked. Values
-remain full precision until display. Capping-induced ties retain original model
-score order; equal original scores are ordered by driver ID.
-New canonical prediction artifacts record the probability-policy version. This replaces the old
-multiply-by-three rescaling, which could exceed 100%, without changing the trained
-model or rewriting existing archives. Displayed values are **normalized podium
-estimates**; calibration is not guaranteed after this adjustment. (Podium-only
-model; the "winner" is the top of the podium — `top1Accuracy` is reported separately.)
-
-### Measured accuracy (test 2024–2026)
-grid error **±3.4** positions · podium hit rate **70%** · gap MAE **0.60s** · **182**
-training races. Benchmarks: LightGBM AUC 0.935, XGBoost 0.937 (a statistical tie), both
-beat the logistic baseline → **LightGBM shipped** (stronger top-1 accuracy).
-
----
-
-## Data flow / live update
-
-```
-Jolpica API ──(▶ RUN: fetch refresh)──▶ ml/data/raw/*.parquet ──▶ RETRAIN ──▶ app
+qualifying_end_at = qualifying_start_at + 90 minutes
+end_time_estimated = True
+first_check_at = qualifying_end_at + 5 hours
+cutoff_at = race_start_at - 2 hours
+final_check_at = cutoff_at - 45 minutes
+latest_generation_start_at = cutoff_at - 15 minutes
 ```
 
-Predictions run **live** in the app from the **cached** parquet. The cache changes only on
-refresh. The ▶ RUN button does: re-fetch season (`refresh=True`) → **retrain both models on
-the new data** → `st.cache_data.clear()` → `st.rerun()` → `forecast(models=…)` re-predicts →
-mode flips 🟡→🟢 if qualifying is now present and date > quali day.
+These are timestamps, not weekday assumptions. Friday qualifying, Saturday races, and
+schedule changes use the same rules. Cron jobs may be delayed, so every decision is
+recalculated from real UTC at execution time.
 
-### Live retrain
-On every prediction, `src/model/retrain.py` refits **both** stages on **every race strictly
-before the target GP** (expanding window, leakage-safe). The podium probabilities are
-calibrated with **5-fold CV sigmoid** (no held-out season, so recent races train the trees
-too). Features are built **in memory** (`build_feature_table` / `build_quali_features`),
-so it does not need the gitignored `data/processed/features.parquet`.
+## State machine
 
-- **Caching:** `app.py` keys an `st.cache_resource` on a raw-data fingerprint + target race,
-  so a RUN that fetched new data retrains **once** (~10–17s podium / ~20–35s both on Streamlit
-  Cloud); date changes and reruns are instant cache hits.
-- **First paint:** `web/public/data/next_race_prediction.json` (written by
-  `scripts/precompute_next_race.py`) is served instantly when its race matches today's
-  next-race. When it doesn't match (e.g. user picks a future race), `forecast()` retrains
-  inline — one-time spinner, then cached.
-- **Why:** backtests (`scripts/backtest_live.py`) show recency helps — podium hit rate up
-  (biggest on 2026), quali pole accuracy 22%→31%, gap MAE 0.67s→0.58s over 2024–26.
-- **Accuracy bar:** shows the live model's **walk-forward backtest** over 2024–26
-  (`live_metrics.json`, from `scripts/backtest_live.py --write`) — leakage-safe and
-  representative of the production regime. (The separate Next.js metrics page still
-  uses the held-out `metrics.json` / `quali_metrics.json`.)
+| State/action | Rule |
+|---|---|
+| `waiting_initial` | Monday may create the first initial only before qualifying starts. A missed deadline becomes `missing_initial`; it is never backdated. |
+| `waiting_qualifying` | Keep the confirmed initial and make no qualifying request before `first_check_at`. |
+| `check_qualifying` | Fetch only `/{season}/{round}/qualifying`; validate exact event/session, pagination, roster, positions, and timing. |
+| `retry_wait` | Missing, timeout, incomplete, or recoverable validation failure; next ordinary attempt is one hour after the prior attempt started. No training. |
+| `published_actual` | A changed complete source produced and confirmed an `actual_qualifying` artifact. Pause ordinary retries. |
+| `final_check` | Once at/after `final_check_at`, even after an earlier actual success. A corrected complete source may replace the current version only before cutoff. |
+| `frozen` | At cutoff, select the latest receipt whose real availability was confirmed before cutoff. A delayed freeze writer may materialize that fixed choice later. |
+| `unavailable` | No confirmed eligible selection exists. Display the exact event plus “Prediction temporarily unavailable”. |
 
-| Moment (predicting Race N) | Needs | Action |
-|---|---|---|
-| Before qualifying (Type 1) | races 1…N−1 | refresh after Race N−1 |
-| After qualifying (Type 2) | + Race N's **qualifying** | 🔄 Run after qualifying → unlocks real grid |
-| After the race | + Race N's **result** | 🔄 Run after the race (to compare) |
+If the five-hour wait reaches/exceeds the cutoff, keep the initial and record
+`wait_exceeds_cutoff`. If less than the 15-minute generation reserve remains, do not
+start a model. A final-check failure never restarts an uncontrolled retry loop.
 
-Notes:
-- The button only fetches what Jolpica has **published** (qualifying appears a few hours
-  after the real session). Click after qualifying → real grid; click before → stays
-  pre-qualifying (expected).
-- Models retrain on every prediction (cached aggressively). The offline trainers
-  (`train_model.py`, `build_quali_model.py`) still produce the held-out metrics for the
-  metrics page — they don't serve predictions.
-- macOS: LightGBM/XGBoost need `libomp` — run `bash ml/scripts/fix_libomp_macos.sh` if an
-  import fails after recreating the venv.
+## Qualifying validation
+
+The qualifying input must prove all of the following before model code is called:
+
+- Formula 1 series, exact season/round/race/circuit, and `QualifyingResults` session.
+- Stable provider `limit`/`total`, contiguous offsets, and exact declared row coverage.
+- Unique driver IDs and official positive classification positions when present.
+- Coverage of the evidence-backed event roster, including confirmed substitutes,
+  withdrawals, and explicitly authorized no-lap cases.
+- Every present Q1/Q2/Q3 value parses to a finite positive lap time; absent Q2/Q3 for
+  eliminated drivers is normal.
+- At least one usable event lap time. An all-missing response is rejected.
+
+The roster begins with the last completed race only as a provisional baseline. Changes
+need a same-event source or an entry in `ml/config/event_overrides.json` with reason,
+source URL, and observation timestamp. Uncertain entries fail closed; they do not add a
+visitor control.
+
+The accepted source version hashes semantic qualifying content, roster policy, and exact
+event identity. Retrieval time, page layout, page/row order, and equivalent lap strings
+do not create a new version. A repeated version produces no additional training.
+
+## Two explicit forecast modes
+
+### `predicted_qualifying`
+
+Created before qualifying. Stage 1 predicts each eligible driver's qualifying gap and
+ranks it; Stage 2 uses that predicted position/gap plus pre-event form/team/track inputs
+to estimate the podium. The first confirmed initial is immutable.
+
+### `actual_qualifying`
+
+Created only from `AcceptedQualifying`. Stage 1 is not rerun and the original initial is
+not reconstructed. Stage 2 uses:
+
+- official qualifying classification as displayed `position`;
+- model-only `modelPosition` for an explicitly authorized unclassified/no-lap entrant;
+- each driver's minimum recorded Q1/Q2/Q3 time minus the event's minimum recorded
+  session time as the timing feature;
+- largest valid event gap for a classified no-lap driver's model input, while the
+  displayed official gap remains missing.
+
+“Actual qualifying” is not a penalty-adjusted starting grid. The UI says so explicitly.
+
+## Artifacts and eligibility
+
+```text
+web/public/data/
+  prediction_feed.json
+  next_race_prediction.json             compatibility projection
+  prediction_snapshots/<season>-<round>/
+    event.json
+    initial.json
+    versions/<prediction_id>.json
+    publications/<publication_id>.json
+    final.json
+    status.json
+    checks/<check_id>.json
+    sources/<qualifying_source_version>.json
+```
+
+Schema-2 predictions are content-addressed and validate event identity, mode, roster,
+schedule, model/provenance manifests, input hashes, entrant coverage, positions/gaps,
+and podium-output policy. Versions and the first initial are append-only.
+
+Publication uses a private Git index on the latest remote head and fast-forward-only
+pushes. It confirms the exact committed prediction bytes through the same raw GitHub
+origin used by the page. That readback timestamp—not generation time, local commit time,
+workflow trigger time, or later feed delivery—is eligibility evidence. Feed display may
+lag, but a newly confirmed forecast at/after the cutoff is ineligible.
+
+At freeze, `final.json` records the deterministic latest eligible receipt. It cannot be
+reconstructed from model output later or silently reopened after a schedule change.
+
+## GitHub Actions responsibilities
+
+### Monday data + accuracy (`refresh-predictions.yml`)
+
+The original Monday 06:00 UTC work remains:
+
+1. Fetch results, qualifying, driver standings, constructor standings, and schedule.
+2. Materialize the prior event's due final from existing receipts.
+3. Prepare the next event and confirm one initial if still before qualifying.
+4. Recompute the existing walk-forward accuracy benchmark.
+5. Publish completed outputs even if an independent snapshot/backtest step fails, then
+   report the failure.
+
+It never overwrites an old initial/version/final. A failed next-event model does not
+discard data or metrics already completed.
+
+### Stats (`sync-stats.yml`)
+
+The existing March–December Monday job still runs `npm run sync-stats` and publishes only
+`web/public/data/stats.json`.
+
+### Qualifying monitor (`qualifying-monitor.yml`)
+
+The workflow wakes at minutes 07, 22, 37, and 52. A standard-library-only `--plan` gate
+runs before installing model dependencies. A due `--run` refreshes schedule metadata,
+performs at most one exact-session attempt, and publishes only validated changed work.
+`--dry-run --now <UTC>` reports the decision without fetch, model, tracked write, commit,
+or push. Production `--run` rejects an injected clock.
+
+All writers share `f1-data-writes` with `queue: max`; none force-push.
+
+## Evaluation and legacy Austin forecast
+
+The Monday reconstruction backtest remains a retrospective benchmark and is labeled as
+such. Live accuracy must instead score saved `initial.json`/`final.json` artifacts against
+completed results.
+
+Austin 2026's October 19 snapshot is preserved by immutable Git evidence in
+`prediction_snapshots/2026-18/legacy_initial_reference.json`. Its generation time has
+date-only precision; training input, model, roster, schedule, and publication metadata
+are unknown. It is accessible as a legacy forecast but is not schema 2, is not a
+confirmed publication receipt, and must not enter automatic frozen evaluation.
+
+## Failure behavior
+
+- Missing/incomplete/unchanged/late input: no model fit; keep prior confirmed output.
+- Model or publication failure: keep prior served and evaluation-eligible output.
+- Wrong-event/corrupt feed: exact-event last-good or explicit unavailability only.
+- Concurrent writer/path change: revalidate/replan; never stale-overwrite or force-push.
+- Schedule change before freeze: recompute deadlines and require a new event hash.
+- Schedule change after freeze: preserve final and flag operator review.

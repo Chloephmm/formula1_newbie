@@ -4,7 +4,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import copy
 import importlib.util
+import json
 from pathlib import Path
+import subprocess
 import sys
 from types import SimpleNamespace
 
@@ -38,6 +40,34 @@ def test_plan_gate_bootstraps_without_importing_model_stack(tmp_path):
         for name in set(sys.modules) - before
         if name.startswith("src.model") or name.startswith("pandas")
     }
+
+
+def test_plan_gate_dry_run_against_saved_event_fixture(tmp_path):
+    check = _load_script("check_qualifying")
+    directory = (
+        tmp_path
+        / "web"
+        / "public"
+        / "data"
+        / "prediction_snapshots"
+        / "2026-18"
+    )
+    directory.mkdir(parents=True)
+    event = {
+        "season": 2026,
+        "round": 18,
+        "qualifying_start_at": "2026-10-23T10:00:00Z",
+        "race_start_at": "2026-10-24T18:00:00Z",
+    }
+    status = {"last_schedule_refresh_at": "2026-10-23T16:00:00Z"}
+    (directory / "event.json").write_text(json.dumps(event), encoding="utf-8")
+    (directory / "status.json").write_text(json.dumps(status), encoding="utf-8")
+
+    assert check.plan_needs_work(
+        tmp_path, datetime(2026, 10, 23, 16, 30, tzinfo=UTC)
+    ) == (True, "ordinary_check_due")
+    assert json.loads((directory / "event.json").read_text()) == event
+    assert json.loads((directory / "status.json").read_text()) == status
 
 
 def test_monday_fetch_still_calls_every_original_endpoint(monkeypatch):
@@ -264,3 +294,56 @@ def test_saved_lifecycle_keeps_initial_through_failures_updates_and_freezes_late
     assert served[0]["prediction_id"] == "actual-b"
     assert frozen.outcome == "frozen"
     assert frozen.status["freeze_selection"]["prediction_id"] == "actual-b"
+
+
+def test_workflows_preserve_original_schedules_and_share_one_writer_queue():
+    workflows = ROOT / ".github" / "workflows"
+    weekly = (workflows / "refresh-predictions.yml").read_text(encoding="utf-8")
+    stats = (workflows / "sync-stats.yml").read_text(encoding="utf-8")
+    monitor = (workflows / "qualifying-monitor.yml").read_text(encoding="utf-8")
+
+    assert 'cron: "0 6 * * 1"' in weekly
+    assert "python ml/scripts/refresh_for_next_race.py --backtest" in weekly
+    assert 'cron: "0 6 * 3-12 1"' in stats
+    assert "npm run sync-stats" in stats
+    assert 'cron: "7,22,37,52 * * * *"' in monitor
+    for source in (weekly, stats, monitor):
+        assert "group: f1-data-writes" in source
+        assert "queue: max" in source
+        assert "ref: main" in source
+        assert "fetch-depth: 0" in source
+
+
+def test_austin_legacy_reference_resolves_exact_original_git_blob():
+    path = (
+        ROOT
+        / "web"
+        / "public"
+        / "data"
+        / "prediction_snapshots"
+        / "2026-18"
+        / "legacy_initial_reference.json"
+    )
+    reference = json.loads(path.read_text(encoding="utf-8"))
+    source = reference["source"]
+    resolved = subprocess.run(
+        [
+            "git",
+            "-c",
+            f"safe.directory={ROOT.as_posix()}",
+            "rev-parse",
+            f"{source['commit']}:{source['path']}",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        check=True,
+        text=True,
+        timeout=10,
+    ).stdout.strip()
+
+    assert resolved == source["git_blob"]
+    assert reference["generated_at"] == "2026-10-19"
+    assert reference["generated_at_precision"] == "date"
+    assert set(reference["provenance"].values()) == {"unknown"}
+    assert reference["contract"]["schema_2_validated"] is False
+    assert reference["contract"]["eligible_for_frozen_evaluation"] is False
