@@ -444,3 +444,73 @@ def test_feed_builder_versions_status_without_new_eligibility(remote, tmp_path):
     assert updated["revision"] != original["revision"]
     assert updated["feed_updated_at"] == "2026-11-01T16:05:00.123456Z"
     assert updated["current"]["publication"] == original["current"]["publication"]
+
+
+def test_git_reads_existing_blob_from_long_checkout_path(remote, tmp_path):
+    long_repo = tmp_path / ("nested-" + "x" * 70) / "reader"
+    git(tmp_path, "clone", "--no-checkout", str(remote[1]), str(long_repo))
+    git(long_repo, "config", "core.longpaths", "false")
+    clock = Clock()
+    publisher = make_publisher((long_repo, remote[1]), clock)
+    head = git(long_repo, "rev-parse", "HEAD").decode().strip()
+    path = f"{EVENT}/event.json"
+    assert len(str(long_repo / f"{head}:{path}")) > 260
+    assert publisher._read(head, path, clock() + timedelta(seconds=30)) == canonical_bytes(_event()) + b"\n"
+
+
+def test_git_read_rejects_tree_instead_of_regular_file(remote):
+    clock = Clock()
+    publisher = make_publisher(remote, clock)
+    head = git(remote[0], "rev-parse", "HEAD").decode().strip()
+    with pytest.raises(api().PublicationError, match="regular file"):
+        publisher._read(head, EVENT, clock() + timedelta(seconds=30))
+
+
+def confirmed_selection(tmp_path):
+    candidate = stage(tmp_path)
+    receipt = api().confirm_publication(
+        candidate, "a" * 40, clock=Clock(),
+        remote_reader=lambda commit, path, timeout: canonical_bytes(candidate.prediction) + b"\n",
+    )
+    return candidate, {"event": candidate.event, "prediction": candidate.prediction, "publication": receipt}
+
+
+@pytest.mark.parametrize("mutation", ["qualifying_deadline", "cutoff_deadline", "late_publication", "before_generation"])
+def test_feed_rejects_receipt_times_inconsistent_with_original_context(tmp_path, mutation):
+    _, selection = confirmed_selection(tmp_path)
+    receipt = selection["publication"]
+    if mutation in {"qualifying_deadline", "late_publication"}:
+        receipt["qualifying_start_at"] = "2030-10-31T18:00:00Z"
+    if mutation in {"cutoff_deadline", "late_publication"}:
+        receipt["cutoff_at"] = "2030-11-01T16:00:00Z"
+    if mutation == "late_publication":
+        receipt["published_at"] = "2026-11-02T00:00:00Z"
+    if mutation == "before_generation":
+        receipt["published_at"] = "2026-10-30T11:59:59Z"
+    receipt["publication_id"] = digest({key: value for key, value in receipt.items() if key != "publication_id"})
+    for position in ("current", "previous", "initial"):
+        with pytest.raises(api().PublicationError, match="selection"):
+            api().build_feed(_event(), {}, updated_at="2026-11-02T01:00:00Z", **{position: selection})
+
+
+def test_confirmation_cannot_precede_prediction_generation(tmp_path):
+    candidate = stage(tmp_path)
+    with pytest.raises(api().PublicationError, match="generation"):
+        api().confirm_publication(
+            candidate, "a" * 40, clock=Clock("2026-10-30T11:59:59Z"),
+            remote_reader=lambda commit, path, timeout: canonical_bytes(candidate.prediction) + b"\n",
+        )
+    assert not (candidate.directory / "confirmation.json").exists()
+
+
+def test_saved_confirmation_rechecks_original_event_deadlines(tmp_path):
+    candidate, selection = confirmed_selection(tmp_path)
+    receipt = selection["publication"]
+    receipt["cutoff_at"] = "2030-11-01T16:00:00Z"
+    receipt["publication_id"] = digest({key: value for key, value in receipt.items() if key != "publication_id"})
+    (candidate.directory / "confirmation.json").write_bytes(canonical_bytes(receipt) + b"\n")
+    with pytest.raises(api().PublicationError, match="selection"):
+        api().confirm_publication(
+            candidate, "a" * 40, clock=Clock("2026-11-02T00:00:00Z"),
+            remote_reader=lambda *args, **kwargs: pytest.fail("saved receipt must be checked locally"),
+        )

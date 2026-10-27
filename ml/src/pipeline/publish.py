@@ -231,6 +231,9 @@ def _validate_selection(selection, target):
             _identity(event) == _identity(target) == _identity(receipt)
             and _valid_receipt(receipt)
             and receipt["checksum"] == _checksum(_encoded(prediction))
+            and parse_utc(receipt["qualifying_start_at"]) == parse_utc(event["qualifying_start_at"])
+            and parse_utc(receipt["cutoff_at"]) == event_windows(event)["cutoff_at"]
+            and parse_utc(prediction["generated_at"]) <= parse_utc(receipt["published_at"])
             and all(receipt[field] == prediction[field] for field in (
                 "prediction_id", "mode", "qualifying_source_version",
                 "event_schedule_hash", "roster_version"))
@@ -259,6 +262,8 @@ def confirm_publication(
         if (not _valid_receipt(receipt) or receipt["commit"] != commit
                 or receipt["checksum"] != _checksum(expected)):
             raise PublicationError("saved confirmation does not match candidate")
+        _validate_selection({"event": candidate.event, "prediction": candidate.prediction,
+                             "publication": receipt}, candidate.event)
         return receipt
     deadline = _deadline(candidate.event, candidate.prediction["mode"])
     try:
@@ -270,6 +275,8 @@ def confirm_publication(
     verified_at = parse_utc(clock())
     if verified_at >= deadline:
         raise PublicationError("saved-output verification completed after deadline")
+    if verified_at < parse_utc(candidate.prediction["generated_at"]):
+        raise PublicationError("verification time precedes prediction generation")
     if not isinstance(retrieved, bytes) or retrieved != expected:
         raise PublicationError("saved-output version/checksum mismatch")
     prediction, event = candidate.prediction, candidate.event
@@ -286,6 +293,7 @@ def confirm_publication(
         "checksum": _checksum(expected), "published_at": _text(verified_at),
     }
     receipt["publication_id"] = _receipt_id(receipt)
+    _validate_selection({"event": event, "prediction": prediction, "publication": receipt}, event)
     write_immutable(saved, receipt)  # May finish late; verified_at cannot be backdated.
     return receipt
 
@@ -324,11 +332,21 @@ class GitPublisher:
         return self._git(["rev-parse", "FETCH_HEAD"], deadline).decode().strip()
 
     def _read(self, head, path, deadline):
-        # Avoid `git show`'s fallback to statting the working tree for absent
-        # objects (including Windows path limits). Other Git errors stay errors.
-        if not self._git(["ls-tree", "-z", head, "--", path], deadline):
+        # `git show rev:path` can stat rev:path as a working-tree filename on
+        # Windows, even for an existing blob. Resolve the exact tree entry first
+        # and read solely by object ID, without any filesystem path interpretation.
+        listing = self._git(["ls-tree", "-z", head, "--", path], deadline)
+        if not listing:
             return None
-        return self._git(["show", f"{head}:{path}"], deadline)
+        records = listing.split(b"\0")
+        metadata, separator, found_path = records[0].partition(b"\t")
+        fields = metadata.split()
+        if (len(records) != 2 or records[-1] != b"" or separator != b"\t"
+                or found_path != path.encode("utf-8") or len(fields) != 3
+                or fields[0] not in {b"100644", b"100755"} or fields[1] != b"blob"
+                or re.fullmatch(rb"[0-9a-f]{40}(?:[0-9a-f]{24})?", fields[2]) is None):
+            raise PublicationError("remote path must identify one exact regular file")
+        return self._git(["cat-file", "blob", fields[2].decode("ascii")], deadline)
 
     def _json(self, head, path, deadline):
         data = self._read(head, path, deadline)
