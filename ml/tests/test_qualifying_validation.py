@@ -232,13 +232,58 @@ def test_rejects_wrong_series_event_circuit_or_session(payload_updates, event_up
     assert exc_info.value.code == code
 
 
+@pytest.mark.parametrize("location", ["table", "race"])
+@pytest.mark.parametrize("field", ["season", "round"])
+@pytest.mark.parametrize("kind", ["fractional", "whole_float", "infinite", "nan", "boolean"])
+def test_raw_event_identity_rejects_coerced_values(location, field, kind):
+    from src.pipeline.qualifying import (
+        QualifyingValidationError,
+        fetch_target_qualifying,
+        validate_qualifying,
+    )
+
+    identity = {"season": 2026, "round": 20}
+    if kind == "boolean":
+        identity[field] = 1
+    value = {
+        "fractional": identity[field] + 0.9,
+        "whole_float": float(identity[field]),
+        "infinite": float("inf"),
+        "nan": float("nan"),
+        "boolean": True,
+    }[kind]
+    payload = _payload(
+        _valid_results(), season=identity["season"], round_number=identity["round"]
+    )
+    table = payload["MRData"]["RaceTable"]
+    target = table if location == "table" else table["Races"][0]
+    target[field] = value
+    fetched = fetch_target_qualifying(
+        identity["season"], identity["round"], lambda path, params: payload
+    )
+
+    with pytest.raises(QualifyingValidationError) as exc_info:
+        validate_qualifying(_event(**identity), fetched.rows, fetched.page_evidence)
+    assert exc_info.value.code == "wrong_event"
+
+
+@pytest.mark.parametrize("location", ["table", "race"])
+def test_raw_event_identity_accepts_integer_values(location):
+    payload = _payload(_valid_results())
+    table = payload["MRData"]["RaceTable"]
+    target = table if location == "table" else table["Races"][0]
+    target.update(season=2026, round=20)
+
+    assert len(_validated(payload=payload).rows) == 2
+
+
 @pytest.mark.parametrize(
     ("pages", "code"),
     [
         (
             [
-                _payload([_valid_results()[0]], total=3, limit=2, offset=0),
-                _payload([_valid_results()[1]], total=3, limit=2, offset=2),
+                _payload(_valid_results(), total=3, limit=2, offset=0),
+                _payload([], total=3, limit=2, offset=2),
             ],
             "incomplete_pagination",
         ),
@@ -264,17 +309,51 @@ def test_rejects_partial_or_changing_pagination(pages, code):
 
 
 def test_rejects_malformed_page_counts_even_when_total_count_adds_up():
-    from src.pipeline.qualifying import QualifyingValidationError, validate_qualifying
+    from src.pipeline.qualifying import (
+        PageEvidence,
+        QualifyingValidationError,
+        validate_qualifying,
+    )
 
     pages = [
         _payload([], total=2, limit=1, offset=0),
         _payload(_valid_results(), total=2, limit=1, offset=1),
     ]
-    fetched, _ = _fetch(pages)
+    fetched, _ = _fetch([_payload(_valid_results())])
+    evidence = PageEvidence(
+        source_pages=tuple(pages),
+        retrieval_metadata=[
+            {
+                **fetched.retrieval_metadata[0],
+                "requested_limit": 100 if offset == 0 else 1,
+                "requested_offset": offset,
+                "returned_offset": offset,
+            }
+            for offset in (0, 1)
+        ],
+    )
 
     with pytest.raises(QualifyingValidationError) as exc_info:
-        validate_qualifying(_event(), fetched.rows, fetched.page_evidence)
+        validate_qualifying(_event(), fetched.rows, evidence)
     assert exc_info.value.code == "malformed_page_count"
+
+
+@pytest.mark.parametrize("first_results", [[], _valid_results()])
+def test_fetch_stops_at_bad_page_count_and_preserves_evidence(first_results):
+    from src.pipeline.qualifying import QualifyingValidationError, validate_qualifying
+
+    first = _payload(first_results, total=2, limit=1, offset=0)
+    second = _payload([_valid_results()[1]], total=2, limit=1, offset=1)
+
+    fetched, calls = _fetch([first, second])
+
+    assert calls == [("2026/20/qualifying", {"limit": 100, "offset": 0})]
+    assert fetched.source_pages == (first,)
+    assert len(fetched.retrieval_metadata) == 1
+    assert len(fetched.rows) == len(first_results)
+    with pytest.raises(QualifyingValidationError) as exc_info:
+        validate_qualifying(_event(), fetched.rows, fetched.page_evidence)
+    assert exc_info.value.code == "noncontiguous_pagination"
 
 
 def test_validation_rejects_page_evidence_from_a_different_endpoint():
@@ -340,6 +419,21 @@ def test_present_timing_must_be_finite_and_positive(bad_time):
 
     results = _valid_results()
     results[1]["Q1"] = bad_time
+    with pytest.raises(QualifyingValidationError) as exc_info:
+        _validated(payload=_payload(results))
+    assert exc_info.value.code == "invalid_lap_time"
+
+
+@pytest.mark.parametrize(
+    "bad_time",
+    ["1:-1", "-1:80", "1:99.000", "1:60", "+80.000", "1.5:20", "1e2", "1:+20", "1:2e1"],
+)
+def test_present_timing_requires_unsigned_decimal_components(bad_time):
+    from src.pipeline.qualifying import QualifyingValidationError
+
+    results = _valid_results()
+    results[1]["Q1"] = bad_time
+
     with pytest.raises(QualifyingValidationError) as exc_info:
         _validated(payload=_payload(results))
     assert exc_info.value.code == "invalid_lap_time"
@@ -594,3 +688,28 @@ def test_replace_target_rows_rejects_invalid_input(accepted, code):
     with pytest.raises(QualifyingValidationError) as exc_info:
         replace_target_rows(pd.DataFrame(), accepted, 2026, 20)
     assert exc_info.value.code == code
+
+
+@pytest.mark.parametrize("missing_field", ["season", "round"])
+def test_replace_target_rows_rejects_nullable_missing_identity_without_mutation(missing_field):
+    from src.pipeline.qualifying import QualifyingValidationError, replace_target_rows
+
+    existing = pd.DataFrame(
+        [{"season": 2026, "round": 19, "driver_id": "other_event"}]
+    )
+    accepted = pd.DataFrame(
+        {
+            "season": pd.array([2026, 2026], dtype="Int64"),
+            "round": pd.array([20, 20], dtype="Int64"),
+            "driver_id": ["one", "two"],
+        }
+    )
+    accepted.loc[1, missing_field] = pd.NA
+    existing_before = existing.copy(deep=True)
+    accepted_before = accepted.copy(deep=True)
+
+    with pytest.raises(QualifyingValidationError) as exc_info:
+        replace_target_rows(existing, accepted, 2026, 20)
+    assert exc_info.value.code == "mixed_event_rows"
+    pd.testing.assert_frame_equal(existing, existing_before)
+    pd.testing.assert_frame_equal(accepted, accepted_before)

@@ -10,6 +10,7 @@ import copy
 import hashlib
 import json
 import math
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Sequence
@@ -103,6 +104,32 @@ def _mrdata(page: Mapping[str, Any]) -> Mapping[str, Any]:
     if not isinstance(mrdata, Mapping):
         _fail("malformed_response", "provider page is missing MRData")
     return mrdata
+
+
+def _event_identity_int(value: Any, field: str) -> int:
+    if isinstance(value, int) and not isinstance(value, bool):
+        parsed = value
+    elif isinstance(value, str) and re.fullmatch(r"[0-9]+", value.strip()):
+        parsed = int(value.strip())
+    else:
+        _fail("wrong_event", f"event {field} must be an integer or digit string")
+    if parsed <= 0:
+        _fail("wrong_event", f"event {field} must be positive")
+    return parsed
+
+
+def _page_result_count(mrdata: Mapping[str, Any]) -> int | None:
+    table = mrdata.get("RaceTable")
+    races = table.get("Races") if isinstance(table, Mapping) else None
+    if not isinstance(races, list):
+        return None
+    count = 0
+    for race in races:
+        results = race.get("QualifyingResults") if isinstance(race, Mapping) else None
+        if not isinstance(results, list):
+            return None
+        count += len(results)
+    return count
 
 
 def _rows_from_pages(pages: Sequence[Mapping[str, Any]]) -> pd.DataFrame:
@@ -211,7 +238,8 @@ def fetch_target_qualifying(
                 or returned_total != first_total
                 or returned_offset != offset
             )
-        if inconsistent:
+        expected_count = min(returned_limit, returned_total - returned_offset)
+        if inconsistent or _page_result_count(mrdata) != expected_count:
             break
         offset += request_limit
         if offset >= first_total:
@@ -239,6 +267,8 @@ def _validate_pages(
     result_count = 0
     page_counts: list[int] = []
     expected_path = f"{event.get('season')}/{event.get('round')}/qualifying"
+    target_season = _event_identity_int(event.get("season"), "season")
+    target_round = _event_identity_int(event.get("round"), "round")
     for index, (page, retrieval) in enumerate(zip(pages, metadata)):
         mrdata = _mrdata(page)
         if mrdata.get("series") != "f1":
@@ -251,16 +281,9 @@ def _validate_pages(
         table = mrdata.get("RaceTable")
         if not isinstance(table, Mapping):
             _fail("wrong_event", "qualifying evidence is missing RaceTable filters")
-        try:
-            table_season = int(table.get("season"))
-            table_round = int(table.get("round"))
-        except (TypeError, ValueError) as exc:
-            raise QualifyingValidationError(
-                "wrong_event", "RaceTable has malformed event filters"
-            ) from exc
-        if table_season != int(event.get("season")) or table_round != int(
-            event.get("round")
-        ):
+        table_season = _event_identity_int(table.get("season"), "season")
+        table_round = _event_identity_int(table.get("round"), "round")
+        if table_season != target_season or table_round != target_round:
             _fail("wrong_event", "RaceTable filters do not match the target event")
 
         races = table.get("Races")
@@ -271,16 +294,13 @@ def _validate_pages(
             if not isinstance(race, Mapping):
                 _fail("malformed_response", "race evidence must be an object")
             circuit = race.get("Circuit")
-            try:
-                same_identity = (
-                    int(race.get("season")) == int(event.get("season"))
-                    and int(race.get("round")) == int(event.get("round"))
-                    and isinstance(circuit, Mapping)
-                    and circuit.get("circuitId") == event.get("circuit_id")
-                    and race.get("raceName") == event.get("race_name")
-                )
-            except (TypeError, ValueError):
-                same_identity = False
+            same_identity = (
+                _event_identity_int(race.get("season"), "season") == target_season
+                and _event_identity_int(race.get("round"), "round") == target_round
+                and isinstance(circuit, Mapping)
+                and circuit.get("circuitId") == event.get("circuit_id")
+                and race.get("raceName") == event.get("race_name")
+            )
             if not same_identity:
                 _fail("wrong_event", "race evidence does not match the target event")
             if "QualifyingResults" not in race or not isinstance(
@@ -398,8 +418,16 @@ def _lap_seconds(value: Any) -> float | None:
         return None
     if not isinstance(value, str) or not value.strip():
         _fail("invalid_lap_time", "present qualifying times must be non-empty strings")
-    parsed = jolpica.laptime_to_seconds(value)
-    if parsed is None or not math.isfinite(parsed) or parsed <= 0:
+    match = re.fullmatch(r"(?:([0-9]+):)?([0-9]+(?:\.[0-9]+)?)", value.strip())
+    if match is None:
+        _fail("invalid_lap_time", f"invalid qualifying time: {value!r}")
+    minutes, seconds = match.groups()
+    parsed = float(seconds)
+    if minutes is not None:
+        if parsed >= 60:
+            _fail("invalid_lap_time", f"invalid qualifying time: {value!r}")
+        parsed += float(minutes) * 60
+    if not math.isfinite(parsed) or parsed <= 0:
         _fail("invalid_lap_time", f"invalid qualifying time: {value!r}")
     return float(parsed)
 
@@ -600,7 +628,7 @@ def replace_target_rows(
             _fail("empty_accepted_rows", "accepted qualifying rows cannot be empty")
         _fail("mixed_event_rows", "accepted rows are missing event identity columns")
     target = (accepted["season"] == season) & (accepted["round"] == round_number)
-    if not bool(target.all()):
+    if not bool(target.fillna(False).all()):
         _fail("mixed_event_rows", "accepted rows contain more than one event")
     if accepted.empty:
         _fail("empty_accepted_rows", "accepted qualifying rows cannot be empty")
