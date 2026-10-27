@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 import importlib
+import hashlib
 import json
 import subprocess
 
@@ -514,3 +515,81 @@ def test_saved_confirmation_rechecks_original_event_deadlines(tmp_path):
             candidate, "a" * 40, clock=Clock("2026-11-02T00:00:00Z"),
             remote_reader=lambda *args, **kwargs: pytest.fail("saved receipt must be checked locally"),
         )
+
+
+@pytest.mark.parametrize("changed_file", ["version", "source", "check", "raw"])
+@pytest.mark.parametrize("when", ["readback", "promotion_conflict"])
+def test_promotion_rechecks_all_uploaded_bytes_after_concurrent_change(remote, tmp_path, changed_file, when):
+    raw_path = "ml/data/raw/qualifying_2026.parquet"
+    baseline = {"baseline": True}
+    compete(remote, raw_path, baseline)
+    paths = {"source": f"{EVENT}/sources/accepted.json", "check": f"{EVENT}/checks/checked.json", "raw": raw_path}
+    files = {path: canonical_bytes({"candidate": key}) + b"\n" for key, path in paths.items()}
+    candidate = stage(tmp_path, files=files, expected_file_checksums={raw_path: hashlib.sha256(canonical_bytes(baseline) + b"\n").hexdigest()})
+    paths["version"] = candidate.version_path
+    before = read_remote(remote[1], FEED)
+    def change_uploaded_file():
+        compete(remote, paths[changed_file], baseline if changed_file == "raw" else {"corrupt": True})
+    def reader(commit, path, *, timeout):
+        verified_bytes = git(remote[1], "show", f"{commit}:{path}")
+        if when == "readback":
+            change_uploaded_file()
+        return verified_bytes
+    pushes = 0
+    def runner(args, **kwargs):
+        nonlocal pushes
+        if args[0] == "push":
+            pushes += 1
+            if when == "promotion_conflict" and pushes == 2:
+                change_uploaded_file()
+        return api().run_git(args, **kwargs)
+    with pytest.raises(api().ReplanRequired):
+        make_publisher(remote, reader=reader, runner=runner).publish_candidate(candidate)
+    assert read_remote(remote[1], FEED) == before
+    assert git(remote[1], "ls-tree", "-r", "--name-only", "main", f"{EVENT}/publications") == b""
+
+
+@pytest.mark.parametrize("existing", ["malformed", "different", "inconsistent_confirmed"])
+def test_existing_initial_must_match_valid_initial_context(remote, tmp_path, existing):
+    initial = stage(tmp_path)
+    if existing == "inconsistent_confirmed":
+        make_publisher(remote).publish_candidate(initial)
+    if existing == "malformed":
+        payload = {"invalid_initial": True}
+    else:
+        forecast = _forecast()
+        forecast["preQualifyingPodium"][1]["podiumProbability"] = 0.9
+        forecast["preQualifyingPodium"][2]["podiumProbability"] = 0.6
+        payload = _prediction(forecast=forecast)
+        compete(remote, f"{EVENT}/versions/{payload['prediction_id']}.json", payload)
+    compete(remote, f"{EVENT}/initial.json", payload)
+    before = read_remote(remote[1], FEED)
+    candidate = stage(tmp_path, actual(), expected_current_id=initial.prediction["prediction_id"]) if existing == "inconsistent_confirmed" else initial
+    clock = Clock("2026-11-01T02:00:00Z") if existing == "inconsistent_confirmed" else Clock()
+    with pytest.raises(api().PublicationError, match="initial"):
+        make_publisher(remote, clock).publish_candidate(candidate)
+    assert read_remote(remote[1], FEED) == before
+    assert json.loads(read_remote(remote[1], f"{EVENT}/initial.json")) == payload
+
+
+def test_existing_initial_identical_to_first_confirmed_candidate_is_retained(remote, tmp_path):
+    candidate = stage(tmp_path)
+    compete(remote, candidate.version_path, candidate.prediction)
+    compete(remote, f"{EVENT}/initial.json", candidate.prediction)
+    make_publisher(remote).publish_candidate(candidate)
+    feed = json.loads(read_remote(remote[1], FEED))
+    assert read_remote(remote[1], f"{EVENT}/initial.json") == canonical_bytes(feed["initial"]["prediction"]) + b"\n"
+
+
+def test_byte_comparison_crossing_deadline_cannot_create_confirmation(tmp_path):
+    candidate = stage(tmp_path, actual())
+    clock = Clock("2026-11-01T15:59:59Z")
+    class SlowComparison(bytes):
+        def __ne__(self, other):
+            clock.now += timedelta(seconds=2)
+            return super().__ne__(other)
+    def reader(commit, path, *, timeout):
+        return SlowComparison(canonical_bytes(candidate.prediction) + b"\n")
+    with pytest.raises(api().PublicationError, match="deadline"):
+        api().confirm_publication(candidate, "a" * 40, clock=clock, remote_reader=reader)
+    assert not (candidate.directory / "confirmation.json").exists()

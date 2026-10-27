@@ -271,14 +271,17 @@ def confirm_publication(
                                   timeout=_remaining(clock, deadline))
     except (OSError, subprocess.SubprocessError) as exc:
         raise PublicationError("saved-output readback failed") from exc
+    expected_checksum = _checksum(expected)
+    if (not isinstance(retrieved, bytes) or retrieved != expected
+            or _checksum(retrieved) != expected_checksum):
+        raise PublicationError("saved-output version/checksum mismatch")
+    # Sample only after exact-byte and checksum verification have finished.
     # Never trust a transport-provided timestamp or HTTP status alone.
     verified_at = parse_utc(clock())
     if verified_at >= deadline:
         raise PublicationError("saved-output verification completed after deadline")
     if verified_at < parse_utc(candidate.prediction["generated_at"]):
         raise PublicationError("verification time precedes prediction generation")
-    if not isinstance(retrieved, bytes) or retrieved != expected:
-        raise PublicationError("saved-output version/checksum mismatch")
     prediction, event = candidate.prediction, candidate.event
     receipt = {
         "schema_version": 1, "confirmed": True,
@@ -290,7 +293,7 @@ def confirm_publication(
         "qualifying_start_at": _text(event["qualifying_start_at"]),
         "cutoff_at": _text(event_windows(event)["cutoff_at"]),
         "commit": commit, "version_path": candidate.version_path,
-        "checksum": _checksum(expected), "published_at": _text(verified_at),
+        "checksum": expected_checksum, "published_at": _text(verified_at),
     }
     receipt["publication_id"] = _receipt_id(receipt)
     _validate_selection({"event": event, "prediction": prediction, "publication": receipt}, event)
@@ -371,7 +374,46 @@ class GitPublisher:
         finally:
             lock.unlink()
 
-    def _context(self, head, candidate, deadline):
+    def _require_uploaded(self, head, candidate, deadline):
+        """A later parent must retain every byte of the coordinated candidate."""
+        files = {candidate.version_path: _encoded(candidate.prediction), **candidate.files}
+        for path, expected in files.items():
+            if self._read(head, path, deadline) != expected:
+                raise ReplanRequired(f"uploaded candidate file changed: {path}")
+
+    def _validate_initial(self, head, candidate, feed, deadline):
+        """Preserve only a canonical initial whose archived context is known."""
+        base = _event_path(candidate.event)
+        encoded = self._read(head, f"{base}/initial.json", deadline)
+        if encoded is None:
+            return
+        try:
+            initial = json.loads(encoded)
+            if not isinstance(initial, dict) or _encoded(initial) != encoded:
+                raise ValueError("initial is not a canonical prediction")
+            confirmed_initial = (feed or {}).get("initial")
+            original_event = confirmed_initial["event"] if confirmed_initial else candidate.event
+            validate_prediction(initial, original_event)
+            if initial["mode"] != "predicted_qualifying":
+                raise ValueError("initial has the wrong mode")
+            if confirmed_initial is not None:
+                if encoded != _encoded(confirmed_initial["prediction"]):
+                    raise ValueError("initial differs from the confirmed initial selection")
+            elif candidate.prediction["mode"] == "predicted_qualifying":
+                if encoded != _encoded(candidate.prediction):
+                    raise ValueError("initial differs from the first confirmed candidate")
+            version_path = f"{base}/versions/{initial['prediction_id']}.json"
+            if self._read(head, version_path, deadline) != encoded:
+                raise ValueError("initial differs from its immutable archived version")
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ReplanRequired("existing initial is malformed or inconsistent") from exc
+
+    def _context(self, head, candidate, deadline, *, uploaded=False):
+        # A durable/reconciled candidate already at this head is in the uploaded
+        # phase even when this is a fresh process. Its baseline is no longer valid.
+        if uploaded or self._read(head, candidate.version_path, deadline) is not None:
+            self._require_uploaded(head, candidate, deadline)
+            uploaded = True
         base = _event_path(candidate.event)
         event = self._json(head, f"{base}/event.json", deadline)
         status = self._json(head, f"{base}/status.json", deadline) or {}
@@ -403,6 +445,7 @@ class GitPublisher:
             raise ReplanRequired("published prediction changed")
         for field in ("current", "previous", "initial"):
             _validate_selection((feed or {}).get(field), candidate.event)
+        self._validate_initial(head, candidate, feed, deadline)
         if prediction.get("prediction_id") == candidate.prediction["prediction_id"]:
             receipt = current.get("publication", {})
             if not _valid_receipt(receipt) or receipt["checksum"] != _checksum(_encoded(candidate.prediction)):
@@ -412,11 +455,12 @@ class GitPublisher:
             raise ReplanRequired("published prediction changed")
         if status.get("qualifying_source_version") != candidate.expected_source_version:
             raise ReplanRequired("accepted source changed")
-        for path, baseline in candidate.expected_file_checksums.items():
-            value = self._read(head, path, deadline)
-            current_hash = _checksum(value) if value is not None else None
-            if current_hash not in {baseline, _checksum(candidate.files[path])}:
-                raise ReplanRequired(f"candidate data path changed: {path}")
+        if not uploaded:
+            for path, baseline in candidate.expected_file_checksums.items():
+                value = self._read(head, path, deadline)
+                current_hash = _checksum(value) if value is not None else None
+                if current_hash != baseline:
+                    raise ReplanRequired(f"candidate data baseline changed: {path}")
         return status, feed, None
 
     def _commit(self, head, files, deadline, *, immutable=()):
@@ -474,7 +518,7 @@ class GitPublisher:
                 commit = None
                 for attempt in range(3):
                     head = self._head(deadline)
-                    _, _, existing = self._context(head, candidate, deadline)
+                    _, _, existing = self._context(head, candidate, deadline, uploaded=saved_receipt.exists())
                     if existing is not None:
                         return existing
                     if saved_receipt.exists():
@@ -495,7 +539,7 @@ class GitPublisher:
                     conflicts_left -= 1
                 # Fetch again before readback: a successful push does not prove context freshness.
                 head = self._head(deadline)
-                self._context(head, candidate, deadline)
+                self._context(head, candidate, deadline, uploaded=True)
                 receipt = confirm_publication(candidate, commit, remote_reader=self.remote_reader, clock=self.clock)
                 delivery_deadline = parse_utc(self.clock()) + timedelta(seconds=self.delivery_seconds)
                 return self._promote(candidate, receipt, delivery_deadline, conflicts_left)
@@ -506,7 +550,7 @@ class GitPublisher:
         base = _event_path(candidate.event)
         for attempt in range(3):
             head = self._head(deadline)
-            status, previous_feed, existing = self._context(head, candidate, deadline)
+            status, previous_feed, existing = self._context(head, candidate, deadline, uploaded=True)
             if existing is not None:
                 return existing
             prior = (previous_feed or {}).get("current")
@@ -530,7 +574,8 @@ class GitPublisher:
                 f"{base}/event.json": _encoded(candidate.event),
                 f"{base}/status.json": _encoded(status),
             }
-            # Keep the original archive even if schedule/roster changed since it was saved.
+            # _context validated any existing initial against its original context.
+            # Never overwrite that archive, including after a schedule change.
             initial_path = f"{base}/initial.json"
             if initial is not None and self._read(head, initial_path, deadline) is None:
                 files[initial_path] = _encoded(initial["prediction"])
