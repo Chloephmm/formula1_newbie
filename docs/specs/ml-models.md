@@ -85,16 +85,30 @@ the target race cleanly excludes itself. No calibration step (it's a regressor).
 ### What it predicts
 
 - **Target `y` = `podium`** ∈ {0, 1}, where `podium = (position ≤ 3)`.
-- The classifier outputs `P(top-3)` per driver, calibrated so the probability
-  literally means what it says (a "70%" really *is* ~70%).
-- Per race, the 20 probabilities are **normalized to sum to 3** (3 podium slots) and
-  sorted descending → top 3 = predicted podium, #1 = predicted winner.
+- The classifier applies sigmoid calibration to its per-driver `P(top-3)` scores.
+  Calibration is an estimate, not a guarantee about any individual prediction.
+- Forecast outputs are **normalized podium estimates**: capped proportional
+  rescaling keeps each value between 0 and 1 and the total at 3 podium slots.
+  This post-processing does not preserve a claim of calibrated probabilities.
+  Sort descending to select the predicted podium; preserve original score order
+  when capping creates equal values, then resolve equal original scores by driver ID.
 
 ```python
-p = podium_model.predict_proba(X)[:, 1]   # calibrated P(top-3) per driver
-p = p * 3 / p.sum()                        # normalize: ~20 drivers → 3 slots
+p = podium_model.predict_proba(X)[:, 1]   # sigmoid-calibrated model scores
+# capped-sum-to-three-v1: choose lambda so sum(min(1, lambda * p)) == 3
+# Reject non-finite/negative scores and fewer than three positive scores.
 # sort desc → top 3 = predicted podium
 ```
+
+New canonical prediction artifacts record `probability_policy_version="capped-sum-to-three-v1"`.
+The earlier `p * 3 / p.sum()` rule could exceed 1; simply clipping it would
+lose the sum-to-three constraint. The new policy redistributes remaining mass
+proportionally after capping saturated entries, preserving score order/ties.
+Keep full precision in saved forecasts and round only for display. Existing
+archived forecasts are not rewritten by this policy change.
+This policy applies to the explicit `forecast_event` path and its `forecast`
+compatibility wrapper. The separate legacy `predict_per_race` historical exporter
+is unchanged and does not produce the new validated artifact format.
 
 ### Features (7)
 

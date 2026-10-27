@@ -10,7 +10,7 @@
 
 **Status:** Implementation authorized using fresh subagents with spec and quality reviews after each task. Work branch: feature1 (tracking origin/feature1, explicitly requested). Based on repository commit 5c0ad5bcbc2e104d6e3d886d34261e1575ef77e0; not pushed or deployed.
 
-**Progress:** Tasks 1-4 are implemented and reviewed; 6 tasks remain. Next is Task 5 (prediction artifact validation and versioning, including probability bounds). RUN removal remains Task 9; automatic publication is not enabled yet. See [execution record](automatic-qualifying-execution.md) for commits and verification evidence.
+**Progress:** Tasks 1-5 are implemented and reviewed; 5 tasks remain. Next is Task 6 (safe publication, availability confirmation, and freeze selection). RUN removal remains Task 9; automatic publication is not enabled yet. See [execution record](automatic-qualifying-execution.md) for commits and verification evidence.
 
 **Execution clarification (2026-10-26):** The user accepts strict forecast eligibility with possible display lag: a forecast must be verified available before the two-hour cutoff; the feed/browser may display that already-eligible version later. Candidate verification, not mutable-feed propagation, is the eligibility event. Persist verifiable confirmation evidence; an uncertain or post-cutoff confirmation is ineligible. Feed publication and immutable freeze selection must consistently enforce that rule. The saved ML-based initial remains the fallback when actual qualifying is unavailable. Execution uses the stated GitHub-only, start-plus-90-minute estimated-end and Monday-safety defaults; the estimate remains explicitly labeled.
 
@@ -473,14 +473,18 @@ Offline compatibility only: existing date-only schedule caches may retain the le
 
 **Files:** create ml/src/pipeline/artifacts.py and ml/tests/test_prediction_artifacts.py.
 
-- [ ] Write tests for stable hashing under row/key ordering, changed timing causing a new version, timestamp-only changes causing no version, immutable collisions, invalid probabilities and wrong event identity.
-- [ ] Run: python -m pytest ml/tests/test_prediction_artifacts.py -v.
-- [ ] Implement canonical serialization with allow_nan=False. Sort driver rows by driver_id before hashing; include mode, event, training/source/model/feature versions, but exclude operational timestamps.
+Task 5 integration boundary: modify `ml/src/model/forecast.py` only as needed to apply the specified capped probability policy and emit canonical driver identity/model-input metadata required by artifact validation. Extend forecast/controller fixture tests accordingly, using at least three eligible entrants for the sum-to-three contract. Update only the affected probability-policy descriptions in `docs/specs/ml-models.md` and `docs/specs/prediction-logic.md`; broad strategy/migration documentation remains Task 10. Do not change model families, feature definitions, training hyperparameters, or the saved initial forecast. Full controller integration, publication/eligibility receipts, and UI wording remain Tasks 6-9; artifact metadata must already identify the values as normalized podium estimates and record the probability-policy version.
+
+- [x] Write tests for stable hashing under row/key ordering, changed timing causing a new version, timestamp-only changes causing no version, immutable collisions, invalid probabilities and wrong event identity.
+- [x] Run: python -m pytest ml/tests/test_prediction_artifacts.py -v.
+- [x] Implement canonical serialization with allow_nan=False. Sort driver rows by driver_id before hashing; include mode, event, training/source/model/feature versions, but exclude operational timestamps.
 
 Core primitives:
 ~~~python
 import hashlib
 import json
+import os
+import tempfile
 from pathlib import Path
 
 def canonical_bytes(payload: dict) -> bytes:
@@ -498,13 +502,27 @@ def write_immutable(path: Path, payload: dict) -> None:
         if path.read_bytes() != encoded:
             raise ValueError(f"Immutable artifact collision: {path.name}")
         return
-    with path.open("xb") as output:
-        output.write(encoded)
+    descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=".artifact-")
+    try:
+        with os.fdopen(descriptor, "wb") as output:
+            output.write(encoded)
+            output.flush()
+            os.fsync(output.fileno())
+        try:
+            os.link(temporary, path)  # Atomic exposure; never overwrite an existing version.
+        except FileExistsError:
+            if path.read_bytes() != encoded:
+                raise ValueError(f"Immutable artifact collision: {path.name}")
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 ~~~
 
-- [ ] Implement validate_prediction(prediction, event) using the complete contract in section 5. Keep probabilities full precision internally; apply display rounding only at rendering. Add capped-normalization tests if production scores violate bounds.
-- [ ] Preserve the first initial.json; append revisions under versions/<prediction_id>.json. Status changes do not change prediction_id or generated_at.
-- [ ] Re-run tests. Commit: feat: store immutable forecast versions with input provenance.
+Review hardening: the immutable final pathname must not appear before its complete contents are written. Interrupted writes leave no partial final artifact; retries can succeed without clobbering any existing version. Reject malformed existing initial forecasts explicitly, while preserving valid older initials across schedule/roster changes. Atomic no-clobber linking requires filesystem support and fails closed when unavailable; the local Windows and CI Linux paths must be verified separately. Git publication transactions remain Task 6.
+
+- [x] Implement validate_prediction(prediction, event) using the complete contract in section 5. Keep probabilities full precision internally; apply display rounding only at rendering. Add capped-normalization tests if production scores violate bounds.
+- [x] Preserve the first initial.json; append revisions under versions/<prediction_id>.json. Status changes do not change prediction_id or generated_at.
+- [x] Re-run tests. Commit: feat: store immutable forecast versions with input provenance.
 
 ### Task 6 — Publish, confirm and freeze safely
 

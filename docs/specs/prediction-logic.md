@@ -74,7 +74,9 @@ Inputs:
 - `recent_form`, `recent_points` (recent form)
 - `team_strength`, `track_history`, `dnf_rate` (team, track, reliability)
 
-Output: **P(top-3)** per driver → normalize (sum = 3) → rank → **predicted podium**.
+Output: model `P(top-3)` scores → capped normalization (each value 0–1, sum = 3)
+→ rank → **predicted podium**. The resulting values are normalized podium estimates,
+not a guarantee of calibrated probabilities after rescaling.
 
 ### TYPE 2 — Real grid (date > qualifying date): one stage
 
@@ -96,17 +98,24 @@ shows predicted grid vs actual grid with ▲/▼ movement, and the app shows the
 | Held-out metrics — Stage 1 | `quali.train_quali` | LightGBM regressor | gap-to-pole (s) | n/a | ≤2022 fit · ≥2024 test |
 
 Discipline: **no leakage** (features use only pre-race data, `shift(1)` in training),
-probabilities **calibrated**. The "held-out metrics" trainers exist only to populate
+with sigmoid calibration of model scores before forecast normalization. The "held-out metrics" trainers exist only to populate
 the metrics page (`metrics.json`, `quali_metrics.json`) — they do not serve predictions.
 See [`ml-models.md`](./ml-models.md) for the full data-science reference.
 
 ### How the podium is produced (Stage 2)
 ```python
-p = podium_model.predict_proba(X)[:, 1]   # calibrated P(top-3) per driver
-p = p * 3 / p.sum()                        # normalize: ~20 drivers sum to 3 podium spots
+p = podium_model.predict_proba(X)[:, 1]   # sigmoid-calibrated model scores
+# capped-sum-to-three-v1: choose lambda so sum(min(1, lambda * p)) == 3
+# Reject non-finite/negative scores and fewer than three positive scores.
 # sort desc → top 3 = predicted podium; #1 (highest podium prob) = predicted winner
 ```
-Each driver is scored independently, then normalized per race and ranked. (Podium-only
+Each driver is scored independently, then normalized per race and ranked. Values
+remain full precision until display. Capping-induced ties retain original model
+score order; equal original scores are ordered by driver ID.
+New canonical prediction artifacts record the probability-policy version. This replaces the old
+multiply-by-three rescaling, which could exceed 100%, without changing the trained
+model or rewriting existing archives. Displayed values are **normalized podium
+estimates**; calibration is not guaranteed after this adjustment. (Podium-only
 model; the "winner" is the top of the podium — `top1Accuracy` is reported separately.)
 
 ### Measured accuracy (test 2024–2026)
