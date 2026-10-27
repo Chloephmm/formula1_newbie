@@ -204,6 +204,7 @@ def _validate_exception(value: Any) -> dict[str, Any] | None:
         "observed_at",
         "replaces_driver_id",
         "allow_model_position",
+        "model_position",
     }
     if set(value) - allowed:
         raise EventContractError("invalid_roster", "exception has unsupported fields")
@@ -231,6 +232,18 @@ def _validate_exception(value: Any) -> dict[str, Any] | None:
         raise EventContractError(
             "invalid_roster", "no-lap exception must explicitly allow model position"
         )
+    model_position = value.get("model_position")
+    if model_position is not None and (
+        kind != "no_qualifying_lap"
+        or not allow_model_position
+        or isinstance(model_position, bool)
+        or not isinstance(model_position, int)
+        or model_position <= 0
+    ):
+        raise EventContractError(
+            "invalid_roster",
+            "model_position must be a positive integer on an authorized no-lap exception",
+        )
     if kind in {"withdrawn", "excluded"} and (
         replaces_driver_id or allow_model_position
     ):
@@ -244,6 +257,7 @@ def _validate_exception(value: Any) -> dict[str, Any] | None:
         "observed_at": observed_at,
         "replaces_driver_id": replaces_driver_id,
         "allow_model_position": allow_model_position,
+        "model_position": model_position,
     }
 
 
@@ -418,6 +432,7 @@ def roster_version(roster: Iterable[Mapping[str, Any]]) -> str:
                         "kind": exception["kind"],
                         "replaces_driver_id": exception["replaces_driver_id"],
                         "allow_model_position": exception["allow_model_position"],
+                        "model_position": exception["model_position"],
                     }
                     if exception
                     else None

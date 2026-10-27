@@ -1,6 +1,7 @@
 """Event identity, timing, roster, and override contracts (no network I/O)."""
 from __future__ import annotations
 
+import copy
 import json
 from datetime import datetime, timedelta, timezone
 
@@ -705,6 +706,33 @@ def test_no_lap_exception_schema_can_authorize_model_position_later():
     )
 
     assert validate_roster_record(record)["exception"]["allow_model_position"] is True
+    assert validate_roster_record(record)["exception"]["model_position"] is None
+
+
+def test_no_lap_model_position_is_semantic_and_must_be_positive_integer():
+    from src.pipeline.events import EventContractError, roster_version, validate_roster_record
+
+    record = _roster_record(
+        participation="confirmed",
+        exception={
+            "kind": "no_qualifying_lap",
+            "reason": "Official timing shows no classification",
+            "source_url": "https://example.test/official-timing",
+            "observed_at": "2026-10-23T17:00:00Z",
+            "allow_model_position": True,
+            "model_position": 21,
+        },
+    )
+    changed = copy.deepcopy(record)
+    changed["exception"]["model_position"] = 22
+
+    assert roster_version([record]) != roster_version([changed])
+    for invalid in (0, -1, 1.5, True):
+        bad = copy.deepcopy(record)
+        bad["exception"]["model_position"] = invalid
+        with pytest.raises(EventContractError) as exc_info:
+            validate_roster_record(bad)
+        assert exc_info.value.code == "invalid_roster"
 
 
 def test_jolpica_schedule_uses_only_grand_prix_qualifying_timestamp(monkeypatch):
