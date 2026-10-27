@@ -305,7 +305,7 @@ Evaluation reads final.json. A later correction, backtest or retrospective recon
 
 ## 6. Implementation tasks
 
-Work in the isolated feature1 worktree selected for execution. Commands below are run from that worktree's repository root unless noted. Record dependency versions for each published model. Remote push, merge and deployment remain separate from local implementation.
+Work directly in C:/Users/user/Documents/Projects/formula1_newbie on feature1, as the user requested after Task 2. Commands below are run from that repository root unless noted. The former isolated checkout is retained only as a backup. Record dependency versions for each published model. Remote push, merge and deployment remain separate from local implementation.
 
 ### Task 1 — Event identity, timing and roster contract
 

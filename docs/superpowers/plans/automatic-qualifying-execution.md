@@ -1,7 +1,10 @@
 # Automatic qualifying execution record
 
 Branch: `feature1` (tracking `origin/feature1`, as explicitly requested).
-Worktree: `.worktrees/automatic-qualifying-refresh`.
+Working directory: `C:/Users/user/Documents/Projects/formula1_newbie` (direct checkout, explicitly requested).
+
+Relocated after Task 2 by fast-forwarding this clean feature1 checkout with all 10 local commits through 2681000. The previous checkout at `C:/Users/user/Documents/Codex/Formula1` remains intact as a backup; no remote push occurred.
+Relocation verification: source and destination HEAD/tree matched; the ML test suite passed in the new directory (61 passed, 2 skipped). Tests used a fresh, uniquely named temporary directory to avoid a Windows permission conflict with an existing pytest temporary root. Only disposable test/Python caches were left behind in the former implementation worktree.
 No remote push, merge, or deployment is authorized by this record.
 
 ## Decisions
