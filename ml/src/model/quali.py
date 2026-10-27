@@ -35,8 +35,16 @@ def _load(t):
                      ignore_index=True)
 
 
-def build_quali_features() -> pd.DataFrame:
-    res, qua = _load("results"), _load("qualifying")
+def build_quali_features(
+    results: pd.DataFrame | None = None,
+    qualifying: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Build qualifying features from cache or supplied raw table snapshots."""
+
+    if (results is None) != (qualifying is None):
+        raise ValueError("results and qualifying must be supplied together")
+    res = _load("results") if results is None else results.copy(deep=True)
+    qua = _load("qualifying") if qualifying is None else qualifying.copy(deep=True)
     cmap = res[["season", "round", "circuit_id"]].drop_duplicates()
     q = qua.merge(cmap, on=["season", "round"], how="left")
 
