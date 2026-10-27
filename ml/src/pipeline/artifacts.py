@@ -127,9 +127,7 @@ def _json_safe(value: Any, *, missing_as_null: bool) -> Any:
         value = value.item()
     if isinstance(value, Real) and not isinstance(value, bool):
         if not math.isfinite(float(value)):
-            if missing_as_null:
-                return None
-            raise ValueError("model inputs must be finite")
+            raise ValueError("infinite numeric values are not canonical")
         if isinstance(value, Integral):
             return int(value)
         return float(value)
@@ -335,15 +333,35 @@ def _qualifying_provenance(event: Mapping[str, Any], qualifying: Any) -> tuple[s
     )
     season, round_number = _event_identity(event)
     expected = _eligible_driver_ids(event)
+    try:
+        accepted_roster = _records(qualifying.roster, name="accepted qualifying roster")
+        accepted_roster_version = roster_version(accepted_roster)
+        current_roster_version = roster_version(event["roster"])
+    except EventContractError as exc:
+        raise ValueError(f"accepted qualifying roster is invalid: {exc}") from exc
+    if accepted_roster_version != current_roster_version:
+        raise ValueError("accepted qualifying roster does not match the event roster")
+    current_constructors = {
+        record["driver_id"]: record["constructor_id"]
+        for record in (validate_roster_record(item) for item in event["roster"])
+        if record["expected"] and record["eligible"]
+    }
     eligible_rows = [row for row in rows if row.get("eligible") is True]
     if [row["driver_id"] for row in eligible_rows] != expected:
         raise ValueError("accepted qualifying does not match the eligible event roster")
     manifest_rows = []
     for row in eligible_rows:
-        if (int(row.get("season", -1)), int(row.get("round", -1))) != (
-            season, round_number
-        ):
+        try:
+            row_identity = (
+                _integer(row.get("season"), field="qualifying season"),
+                _integer(row.get("round"), field="qualifying round"),
+            )
+        except ValueError as exc:
+            raise ValueError("accepted qualifying has an invalid event identity") from exc
+        if row_identity != (season, round_number):
             raise ValueError("accepted qualifying has the wrong event identity")
+        if row.get("constructor_id") != current_constructors[row["driver_id"]]:
+            raise ValueError("accepted qualifying constructor does not match event roster")
         manifest_rows.append({
             "driver_id": row["driver_id"],
             "position": row.get("quali_position"),
@@ -470,26 +488,52 @@ def _validate_training_manifest(
 ) -> None:
     if not isinstance(manifest, Mapping) or not isinstance(manifest.get("tables"), Mapping):
         raise ValueError("training manifest is malformed")
+    tables = manifest["tables"]
+    if set(tables) != {"results", "qualifying"}:
+        raise ValueError("training manifest requires results and qualifying tables only")
     counted = 0
-    for table in manifest["tables"].values():
+    event_identities: dict[str, set[tuple[int, int]]] = {}
+    for table_name, table in tables.items():
         if not isinstance(table, Mapping) or not isinstance(table.get("events"), list):
             raise ValueError("training manifest is malformed")
         event_count = 0
+        identities: set[tuple[int, int]] = set()
         for event in table["events"]:
-            event_season = _integer(event.get("season"), field="training season")
-            event_round = _integer(event.get("round"), field="training round")
-            count = _integer(event.get("row_count"), field="training row_count")
+            try:
+                event_season = _integer(event.get("season"), field="training season")
+                event_round = _integer(event.get("round"), field="training round")
+                count = _integer(event.get("row_count"), field="training row_count")
+            except ValueError as exc:
+                raise ValueError("training manifest event identity/count is invalid") from exc
+            identity = (event_season, event_round)
+            if identity in identities:
+                raise ValueError("training manifest contains duplicate event identities")
+            identities.add(identity)
             if (event_season, event_round) >= (season, round_number):
                 raise ValueError("training manifest contains target or later rows")
-            for key in ("min_date", "max_date"):
-                if event.get(key) is not None and parse_utc(event[key]) >= cutoff:
+            if table_name == "results":
+                if event.get("min_date") is None or event.get("max_date") is None:
+                    raise ValueError("training manifest result events require min/max dates")
+                try:
+                    minimum = parse_utc(event["min_date"])
+                    maximum = parse_utc(event["max_date"])
+                except EventContractError as exc:
+                    raise ValueError("training manifest result dates are invalid") from exc
+                if minimum > maximum:
+                    raise ValueError("training manifest result date range is reversed")
+                if maximum >= cutoff:
                     raise ValueError("training manifest contains rows at or after cutoff")
             event_count += count
         if event_count != table.get("row_count"):
             raise ValueError("training manifest row counts are inconsistent")
+        if table_name == "results" and event_count <= 0:
+            raise ValueError("training manifest requires nonempty result history")
+        event_identities[table_name] = identities
         counted += event_count
     if counted <= 0 or counted != manifest.get("row_count"):
         raise ValueError("training manifest row counts are inconsistent")
+    if not event_identities["qualifying"].issubset(event_identities["results"]):
+        raise ValueError("training manifest contains orphan qualifying events")
 
 
 def _finite_number(value: Any, *, nullable: bool = False) -> float | None:

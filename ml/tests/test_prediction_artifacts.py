@@ -14,6 +14,7 @@ from src.pipeline.artifacts import (
     build_prediction,
     canonical_bytes,
     digest,
+    _input_payload,
     load_prediction_for_input,
     training_snapshot_hash,
     validate_prediction,
@@ -163,6 +164,12 @@ def _prediction(**updates) -> dict:
         target_event, forecast=forecast, generated_at=generated_at,
         provenance=provenance, previous_candidate=previous_candidate,
     )
+
+
+def _rehash_tampered_prediction(prediction: dict) -> dict:
+    prediction["input_hash"] = digest(_input_payload(prediction))
+    prediction["prediction_id"] = digest(prediction, semantic_prediction=True)
+    return prediction
 
 
 def test_canonical_hash_is_stable_under_mapping_and_driver_row_ordering():
@@ -356,6 +363,59 @@ def test_training_snapshot_requires_dated_results_and_linked_qualifying():
         )
 
 
+@pytest.mark.parametrize("mutation", ["arbitrary_table", "missing_dates", "orphan", "reversed_dates"])
+def test_serialized_training_manifest_rejects_incomplete_or_incoherent_evidence(mutation):
+    prediction = _prediction()
+    manifest = prediction["training_manifest"]
+    if mutation == "arbitrary_table":
+        manifest["tables"] = {
+            "unrecognized": {
+                "row_count": 1,
+                "events": [{"season": 2026, "round": 19, "row_count": 1}],
+            }
+        }
+        manifest["row_count"] = 1
+    elif mutation == "missing_dates":
+        result_event = manifest["tables"]["results"]["events"][0]
+        del result_event["min_date"]
+        del result_event["max_date"]
+    elif mutation == "orphan":
+        manifest["tables"]["qualifying"]["events"][0]["round"] = 18
+    else:
+        result_event = manifest["tables"]["results"]["events"][0]
+        result_event["min_date"], result_event["max_date"] = (
+            result_event["max_date"], "2026-10-24T00:00:00Z"
+        )
+    _rehash_tampered_prediction(prediction)
+
+    with pytest.raises(ValueError, match="training manifest"):
+        validate_prediction(prediction, _event())
+
+
+@pytest.mark.parametrize("nonfinite", [float("inf"), float("-inf")])
+def test_training_hash_rejects_infinite_historical_values(nonfinite):
+    snapshot = _training_snapshot()
+    snapshot["results"][0]["points"] = nonfinite
+
+    with pytest.raises(ValueError, match="infinite"):
+        training_snapshot_hash(
+            snapshot, event=_event(), training_cutoff="2026-10-30T00:00:00Z"
+        )
+
+
+def test_training_hash_canonicalizes_legitimate_missing_values_to_null():
+    missing_nan = _training_snapshot()
+    missing_none = _training_snapshot()
+    missing_nan["results"][0]["optional"] = float("nan")
+    missing_none["results"][0]["optional"] = None
+
+    assert training_snapshot_hash(
+        missing_nan, event=_event(), training_cutoff="2026-10-30T00:00:00Z"
+    ) == training_snapshot_hash(
+        missing_none, event=_event(), training_cutoff="2026-10-30T00:00:00Z"
+    )
+
+
 def test_canonical_serialization_rejects_nonfinite_numbers():
     with pytest.raises(ValueError):
         canonical_bytes({"not_json": float("nan")})
@@ -410,6 +470,41 @@ def test_actual_provenance_requires_accepted_qualifying_not_free_form_digest():
             training_cutoff="2026-10-30T00:00:00Z",
             training_snapshot=_training_snapshot(), model_manifest=_model_manifest(),
             feature_inputs=_feature_inputs(), qualifying="a" * 64,
+        )
+
+
+@pytest.mark.parametrize("mismatch", ["rows", "roster", "both"])
+def test_actual_provenance_rejects_constructor_mismatch_with_event_roster(mismatch):
+    accepted = _accepted("a" * 64)
+    if mismatch in {"rows", "both"}:
+        accepted.rows.loc[accepted.rows["driver_id"] == "driver_a", "constructor_id"] = (
+            "wrong_team"
+        )
+    if mismatch in {"roster", "both"}:
+        accepted.roster.loc[
+            accepted.roster["driver_id"] == "driver_a", "constructor_id"
+        ] = "wrong_team"
+
+    with pytest.raises(ValueError, match="constructor|roster"):
+        build_provenance(
+            _event(), mode="actual_qualifying",
+            training_cutoff="2026-10-30T00:00:00Z",
+            training_snapshot=_training_snapshot(), model_manifest=_model_manifest(),
+            feature_inputs=_feature_inputs(), qualifying=accepted,
+        )
+
+
+def test_actual_provenance_rejects_lossy_event_identity_conversion():
+    accepted = _accepted("a" * 64)
+    accepted.rows["season"] = accepted.rows["season"].astype(float)
+    accepted.rows.loc[0, "season"] = 2026.5
+
+    with pytest.raises(ValueError, match="identity"):
+        build_provenance(
+            _event(), mode="actual_qualifying",
+            training_cutoff="2026-10-30T00:00:00Z",
+            training_snapshot=_training_snapshot(), model_manifest=_model_manifest(),
+            feature_inputs=_feature_inputs(), qualifying=accepted,
         )
 
 
