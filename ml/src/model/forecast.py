@@ -488,11 +488,26 @@ def forecast(asof, models=None) -> dict:
     season, round_number = int(target.season), int(target["round"])
     target_date = pd.Timestamp(target["date"])
     history = {"results": _load("results"), "qualifying": _load("qualifying")}
-    scheduled_quali = target.get("qualifying_date", target.get("qualifyingDate"))
-    if scheduled_quali is not None and not pd.isna(scheduled_quali):
+    scheduled_quali = next(
+        (
+            value
+            for value in (
+                target.get("qualifying_date"),
+                target.get("qualifyingDate"),
+            )
+            if value is not None and not pd.isna(value)
+        ),
+        None,
+    )
+    qualifying_start = target.get("qualifying_start_at")
+    if scheduled_quali is not None:
         qualifying_date = str(pd.Timestamp(scheduled_quali).date())
         qualifying_date_estimated = False
         qualifying_date_source = "cached-schedule-field"
+    elif qualifying_start is not None and not pd.isna(qualifying_start):
+        qualifying_date = str(pd.Timestamp(qualifying_start).date())
+        qualifying_date_estimated = False
+        qualifying_date_source = "cached-schedule-qualifying-start"
     else:
         qualifying_date = str((target_date - pd.Timedelta(days=1)).date())
         qualifying_date_estimated = True

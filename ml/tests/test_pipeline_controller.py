@@ -163,3 +163,70 @@ def test_retrain_live_uses_one_recorded_cutoff_snapshot_for_both_stages(monkeypa
 
     assert len(podium_fits[0][1]) == 2
     assert len(qualifying_fits[0][1]) == 2
+
+
+def test_stage_one_accepts_mixed_legacy_and_task3_enriched_qualifying(monkeypatch):
+    from src.model import retrain
+    from src.pipeline.qualifying import (
+        fetch_target_qualifying,
+        replace_target_rows,
+        validate_qualifying,
+    )
+    from test_qualifying_validation import (
+        _event as qualifying_event,
+        _payload,
+        _result as qualifying_result,
+        _roster_record,
+    )
+
+    canonical = qualifying_event(
+        roster=[
+            _roster_record("driver_a", "team_a"),
+            _roster_record("driver_b", "team_b"),
+        ],
+        round=2,
+        circuit_id="target_ring",
+    )
+    payload = _payload(
+        [
+            qualifying_result("driver_a", "1", constructor_id="team_a", q1="1:19.000"),
+            qualifying_result("driver_b", "2", constructor_id="team_b", q1="1:19.750"),
+        ],
+        round_number=2,
+        circuit_id="target_ring",
+    )
+    fetched = fetch_target_qualifying(2026, 2, lambda path, params: payload)
+    accepted = validate_qualifying(canonical, fetched.rows, fetched.page_evidence)
+    history = _history()
+    mixed_qualifying = replace_target_rows(
+        history["qualifying"], accepted.rows, 2026, 2
+    )
+    original_results = history["results"].copy(deep=True)
+    original_qualifying = mixed_qualifying.copy(deep=True)
+    fits = []
+
+    class FakeRegressor:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def fit(self, frame, target):
+            fits.append((frame.copy(deep=True), target.copy(deep=True)))
+            return self
+
+    monkeypatch.setattr(retrain.lgb, "LGBMRegressor", FakeRegressor)
+    retrain.train_quali_live(
+        2026,
+        3,
+        results=history["results"],
+        qualifying=mixed_qualifying,
+        cutoff_date="2026-03-01T00:00:00Z",
+    )
+
+    assert mixed_qualifying.loc[mixed_qualifying["round"] == 1, "circuit_id"].isna().all()
+    assert set(mixed_qualifying.loc[mixed_qualifying["round"] == 2, "circuit_id"]) == {
+        "target_ring"
+    }
+    assert len(fits) == 1
+    assert len(fits[0][1]) == 4
+    pd.testing.assert_frame_equal(history["results"], original_results)
+    pd.testing.assert_frame_equal(mixed_qualifying, original_qualifying)

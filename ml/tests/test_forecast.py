@@ -349,6 +349,7 @@ def test_offline_wrapper_never_inferrs_actual_mode_from_cached_target_qualifying
     target = pd.Series({
         "season": 2026, "round": 2, "race_name": "Target Grand Prix",
         "circuit_id": "target_ring", "country": "Example", "date": pd.Timestamp("2026-02-01"),
+        "qualifying_start_at": np.nan,
     })
     monkeypatch.setattr(forecast_module, "next_race", lambda asof: target)
     monkeypatch.setattr(forecast_module, "_load", lambda table: history[table].copy(deep=True))
@@ -363,3 +364,28 @@ def test_offline_wrapper_never_inferrs_actual_mode_from_cached_target_qualifying
     assert result["race"]["qualifyingDate"] == "2026-01-31"
     assert result["race"]["qualifyingDateEstimated"] is True
     assert result["race"]["qualifyingDateSource"] == "legacy-race-date-minus-one-display-only"
+
+
+def test_offline_wrapper_prefers_known_non_saturday_qualifying_start(monkeypatch):
+    import importlib
+
+    forecast_module = importlib.import_module("src.model.forecast")
+    history = _history()
+    target = pd.Series({
+        "season": 2026, "round": 2, "race_name": "Target Grand Prix",
+        "circuit_id": "target_ring", "country": "Example",
+        "date": pd.Timestamp("2026-02-01"),
+        "qualifying_start_at": "2026-01-30T15:00:00Z",
+    })
+    monkeypatch.setattr(forecast_module, "next_race", lambda asof: target)
+    monkeypatch.setattr(forecast_module, "_load", lambda table: history[table].copy(deep=True))
+
+    result = forecast_module.forecast(
+        "2026-01-31", models={"quali": CaptureRegressor(), "podium": CaptureClassifier()}
+    )
+
+    assert result["mode"] == "predicted_qualifying"
+    assert result["hasRealGrid"] is False
+    assert result["race"]["qualifyingDate"] == "2026-01-30"
+    assert result["race"]["qualifyingDateEstimated"] is False
+    assert result["race"]["qualifyingDateSource"] == "cached-schedule-qualifying-start"
