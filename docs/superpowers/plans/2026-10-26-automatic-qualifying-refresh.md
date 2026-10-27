@@ -10,6 +10,8 @@
 
 **Status:** Implementation authorized using fresh subagents with spec and quality reviews after each task. Work branch: feature1 (tracking origin/feature1, explicitly requested). Based on repository commit 5c0ad5bcbc2e104d6e3d886d34261e1575ef77e0; not pushed or deployed.
 
+**Progress:** Tasks 1-3 are implemented and reviewed; 7 tasks remain. Next is Task 4 (explicit initial and actual-qualifying forecast modes). RUN removal remains Task 9; automatic publication is not enabled yet. See [execution record](automatic-qualifying-execution.md) for commits and verification evidence.
+
 **Execution clarification (2026-10-26):** The user accepts strict forecast eligibility with possible display lag: a forecast must be verified available before the two-hour cutoff; the feed/browser may display that already-eligible version later. Candidate verification, not mutable-feed propagation, is the eligibility event. Persist verifiable confirmation evidence; an uncertain or post-cutoff confirmation is ineligible. Feed publication and immutable freeze selection must consistently enforce that rule. The saved ML-based initial remains the fallback when actual qualifying is unavailable. Execution uses the stated GitHub-only, start-plus-90-minute estimated-end and Monday-safety defaults; the estimate remains explicitly labeled.
 
 **Review additions:** Filter historical raw inputs before feature construction (not only training rows afterward). Preserve the existing Monday reconstruction backtest as a labeled benchmark, and separately score saved initial/final forecasts against completed results; do not present reconstructed predictions as archived live accuracy.
@@ -401,13 +403,15 @@ def decide_action(event: dict, status: dict, now) -> str:
 
 ### Task 3 — Fetch and validate one qualifying event
 
-**Files:** create ml/src/pipeline/qualifying.py and ml/tests/test_qualifying_validation.py; extend ml/src/data/jolpica.py without breaking season-wide Monday fetches.
+**Files:** create ml/src/pipeline/qualifying.py and ml/tests/test_qualifying_validation.py; reuse the existing throttled client in ml/src/data/jolpica.py without changing season-wide Monday fetches. Extend the narrow roster-exception contract in ml/src/pipeline/events.py, with coverage in ml/tests/test_event_timing.py, as clarified below.
 
-- [ ] Write mocked-page tests for zero results, timeout, wrong event, partial pagination, changing total, duplicate IDs/positions, missing expected drivers, no-lap entrants, missing Q2/Q3 and confirmed substitution.
-- [ ] Run: python -m pytest ml/tests/test_qualifying_validation.py ml/tests/test_jolpica.py -v.
-- [ ] Implement fetch_target_qualifying(season, round_number, get_page), using the existing throttled HTTP client via injection. Return source pages and normalized rows; do not mutate Parquet during fetching.
-- [ ] Implement validate_qualifying(event, rows, page_evidence) returning accepted rows, roster, source version, validation notes and imputation policy, or a reason-coded validation failure. No “nonempty means complete” shortcut.
-- [ ] Implement replace_target_rows(existing, accepted, season, round_number) as a pure merge. Reject incoming mixed-event rows first.
+Implementation detail for the existing explicit-exception requirement: an unclassified entrant is accepted only with evidence-backed `allow_model_position=true` and an explicit positive-integer `model_position` in its roster exception. This is a model input, never an official classification; preserve the missing official position in accepted source/display rows. A boolean permission alone is insufficient to choose a position. Extend the exception validator and semantic roster hash in events.py, with tests, to preserve this optional field. Existing classified no-lap entrants retain their actual classification and receive only model-gap imputation. No live event overrides are added by this task.
+
+- [x] Write mocked-page tests for zero results, timeout, wrong event, partial pagination, changing total, duplicate IDs/positions, missing expected drivers, no-lap entrants, missing Q2/Q3 and confirmed substitution.
+- [x] Run: python -m pytest ml/tests/test_qualifying_validation.py ml/tests/test_jolpica.py -v.
+- [x] Implement fetch_target_qualifying(season, round_number, get_page), using the existing throttled HTTP client via injection. Return source pages and normalized rows; do not mutate Parquet during fetching.
+- [x] Implement validate_qualifying(event, rows, page_evidence) returning accepted rows, roster, source version, validation notes and imputation policy, or a reason-coded validation failure. No “nonempty means complete” shortcut.
+- [x] Implement replace_target_rows(existing, accepted, season, round_number) as a pure merge. Reject incoming mixed-event rows first.
 
 Merge logic:
 ~~~python
@@ -425,8 +429,8 @@ def replace_target_rows(existing, accepted, season: int, round_number: int):
     ).reset_index(drop=True)
 ~~~
 
-- [ ] Assert a target update leaves every other event's rows logically identical. Stage the merged Parquet only after validation.
-- [ ] Re-run tests. Commit: feat: validate complete qualifying data before accepting an event.
+- [x] Assert a target update leaves every other event's rows logically identical. Keep Parquet persistence outside these pure helpers; the later controller may stage the merged data only after validation.
+- [x] Re-run tests. Commit: feat: validate complete qualifying data before accepting an event.
 
 ### Task 4 — Separate initial and actual-qualifying generation
 
