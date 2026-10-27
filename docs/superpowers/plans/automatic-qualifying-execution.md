@@ -24,11 +24,21 @@ No remote push, merge, or deployment is authorized by this record.
 | 3 Qualifying validation | bfcedb2 + 103b4f4 + 32d5b97; 97 qualifying / 163 full passed, 2 skipped | Passed after four boundary fixes; final recheck passed | Passed after timing canonicalization and defensive driver-ID fixes; 141 combined focused tests passed |
 | 4 Forecast/training modes | a09d51d + ebd50f2; 22 focused / 180 full passed, 2 skipped | Passed; post-fix recheck passed | Passed after enriched-schema and wrapper fixes; no remaining findings |
 | 5 Artifact contracts | a6d6762 + e5378bf + ea5624d + 55c4b49; 76 focused / 234 full passed, 2 skipped | Passed; final post-fix recheck passed | Passed after durability/policy-label fixes; no remaining findings |
-| 6 Publication and freeze | Pending | Pending | Pending |
-| 7 Monitor and Monday jobs | Pending | Pending | Pending |
+| 6 Publication and freeze | fb62709 + 1f01435 + be33290 + 353e841; 52 publication regressions / 286 full passed, 2 skipped before final focused fix | Passed after long-path and receipt-context fixes | Passed after concurrency/archive/timestamp fixes; final initial-confirmation gap fixed and focused tests passed |
+| 7 Monitor and Monday jobs | Local implementation complete; 72 controller/integration/publication tests passed | Manual plan check complete (user requested no further subagents) | Manual quality check complete; final full-suite verification remains Task 10 |
 | 8 Saved-data UI reader/view | Pending | Pending | Pending |
 | 9 End-to-end and RUN removal | Pending | Pending | Pending |
 | 10 Documentation/migration | Pending | Pending | Pending |
+
+## Tasks 6-8 continuation
+
+- User authorized Tasks 6, 7, and 8 in order, with an explicit stop after Task 8 for their review. Tasks 9-10, production RUN removal, remote push, merge, and deployment are outside this continuation.
+- Starting commit: 4dc7e76. Clean `feature1` checkout in the user-requested project directory. Fresh baseline: 234 passed, 2 expected missing-feature-table skips in 4.70 seconds.
+- Continue with a fresh implementer per task and independent sequential specification and code-quality reviews. Publication tests use isolated local Git remotes and injected clocks/transports; no production pushes or live forecast generation.
+- Task 6 is in progress: candidate publication, strict pre-deadline availability confirmation, and immutable freeze selection. Task 7 and Task 8 follow only after their prerequisites pass review.
+- Task 6 completed in fb62709, 1f01435, be33290, and 353e841. Publication uses private Git indexes, exact blob reads, fast-forward-only pushes, immutable confirmations, strict original-event deadlines, candidate/archive revalidation, and deterministic freeze selection. The last focused regression proved an unconfirmed initial cannot be promoted by a later actual candidate. The prior full suite passed 286 tests with 2 expected dataset skips; the final three affected regressions passed after 353e841.
+- Task 7 was continued directly without subagents at the user's request. The due controller, standard-library plan gate, dry-run, exact qualifying adapter, fast-forward refresh publisher, shared writer concurrency, automatic monitor workflow, Monday initial/final rollover, and failure-isolated backtest path are implemented locally. A combined controller/integration/publication run passed 72 tests in 315.56 seconds. The plan and dry-run commands passed without dependency installation or tracked writes. No live API/model publication, push, workflow enablement, or deployment was performed.
+- Task 6 specification review found two gaps, independently reproduced by the parent: Git's revision/path read fails in a sufficiently long Windows checkout, and a retained receipt's deadline fields were not checked against its embedded original event. The implementer is adding regression fixes before specification re-review. The shorter-path full-suite pass does not establish long-path correctness.
 
 ## Completed Task 5 batch
 

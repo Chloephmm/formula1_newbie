@@ -59,6 +59,62 @@ def _backtest() -> None:
     print(f"  wrote {out.relative_to(ML_DIR.parent)}")
 
 
+def run_refresh(
+    *,
+    asof: str,
+    seasons,
+    no_fetch: bool,
+    no_snapshot: bool,
+    backtest: bool,
+    fetch_step=_fetch,
+    precompute_step=_precompute,
+    backtest_step=_backtest,
+) -> None:
+    """Run every Monday responsibility, preserving completed independent work.
+
+    Snapshot generation is intentionally isolated from the accuracy backtest. If it
+    fails, the backtest still runs and the caller receives the original failure only
+    after all independent work has completed. The workflow's always-run publisher
+    then saves fetched data and metrics before re-reporting the job failure.
+    """
+
+    failures: list[tuple[str, BaseException]] = []
+    if no_fetch:
+        print("[1/3] Skipping fetch (--no-fetch).")
+    else:
+        print(f"[1/3] Fetching {seasons} from Jolpica …")
+        try:
+            fetch_step(seasons)
+        except BaseException as exc:
+            failures.append(("fetch", exc))
+            print(f"  fetch failed: {exc}")
+
+    if no_snapshot:
+        print("[2/3] Skipping next-race snapshot (--no-snapshot).")
+    else:
+        print("[2/3] Precomputing next-race snapshot …")
+        try:
+            precompute_step(asof)
+        except BaseException as exc:
+            failures.append(("snapshot", exc))
+            print(f"  snapshot failed: {exc}")
+
+    if backtest:
+        print("[3/3] Regenerating accuracy backtest (a few minutes) …")
+        try:
+            backtest_step()
+        except BaseException as exc:
+            failures.append(("backtest", exc))
+            print(f"  backtest failed: {exc}")
+    else:
+        print("[3/3] Skipping backtest (pass --backtest to refresh the accuracy bar).")
+
+    if failures:
+        summary = "; ".join(f"{name}: {exc}" for name, exc in failures)
+        raise RuntimeError(f"Monday refresh completed with failures: {summary}")
+    print("Done.")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--asof", default=date.today().isoformat(),
@@ -72,25 +128,13 @@ def main() -> None:
                     help="also regenerate live_metrics.json for the accuracy bar (slow)")
     args = ap.parse_args()
 
-    if args.no_fetch:
-        print("[1/3] Skipping fetch (--no-fetch).")
-    else:
-        print(f"[1/3] Fetching {args.seasons} from Jolpica …")
-        _fetch(args.seasons)
-
-    if args.no_snapshot:
-        print("[2/3] Skipping next-race snapshot (--no-snapshot).")
-    else:
-        print("[2/3] Precomputing next-race snapshot …")
-        _precompute(args.asof)
-
-    if args.backtest:
-        print("[3/3] Regenerating accuracy backtest (a few minutes) …")
-        _backtest()
-    else:
-        print("[3/3] Skipping backtest (pass --backtest to refresh the accuracy bar).")
-
-    print("Done.")
+    run_refresh(
+        asof=args.asof,
+        seasons=args.seasons,
+        no_fetch=args.no_fetch,
+        no_snapshot=args.no_snapshot,
+        backtest=args.backtest,
+    )
 
 
 if __name__ == "__main__":

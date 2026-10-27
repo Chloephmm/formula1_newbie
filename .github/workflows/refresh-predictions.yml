@@ -5,8 +5,8 @@ name: Weekly refresh (data + accuracy bar)
 #   • ml/models/live_metrics.json — the recomputed accuracy bar
 # so the deployed app is current without anyone clicking RUN.
 #
-# The next-race snapshot and real-grid (Mode 2) predictions are still handled at
-# runtime by the app's RUN button — not on a schedule.
+# The next-race initial is archived by this job. Actual-qualifying updates are
+# handled by the scheduled qualifying monitor; visitors never run the model.
 
 on:
   schedule:
@@ -17,14 +17,18 @@ permissions:
   contents: write
 
 concurrency:
-  group: weekly-refresh
+  group: f1-data-writes
   cancel-in-progress: false
+  queue: max
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
@@ -38,16 +42,14 @@ jobs:
         run: pip install -r ml/requirements.txt
 
       - name: Fetch latest data + roll snapshot + recompute accuracy bar
+        id: weekly-refresh
+        continue-on-error: true
         run: python ml/scripts/refresh_for_next_race.py --backtest
 
-      - name: Commit & push if anything changed
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ml/data/raw web/public/data/next_race_prediction.json ml/models/live_metrics.json
-          if git diff --cached --quiet; then
-            echo "Nothing changed."
-          else
-            git commit -m "chore: weekly data + accuracy bar refresh [skip ci]"
-            git push
-          fi
+      - name: Publish the coordinated weekly refresh
+        if: always()
+        run: python ml/scripts/publish_refresh.py --kind weekly
+
+      - name: Report refresh failure after preserving completed outputs
+        if: steps.weekly-refresh.outcome == 'failure'
+        run: exit 1

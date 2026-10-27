@@ -1,12 +1,198 @@
 """Narrow generation-seam tests; scheduling and publication belong to later tasks."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from types import SimpleNamespace
+
 import pandas as pd
 import pytest
 
 from test_forecast import CaptureClassifier, _accepted, _entries, _event, _history
 
 pytestmark = pytest.mark.filterwarnings("error::FutureWarning")
+
+UTC = timezone.utc
+
+
+def _controller_event(**updates):
+    event = {
+        "season": 2026,
+        "round": 18,
+        "race_name": "Fixture Grand Prix",
+        "circuit_id": "fixture_ring",
+        "qualifying_start_at": "2026-10-23T10:00:00Z",
+        "race_start_at": "2026-10-24T18:00:00Z",
+        "schedule_hash": "schedule-a",
+        "schedule_updated_at": "2026-10-01T00:00:00Z",
+    }
+    event.update(updates)
+    return event
+
+
+def _clock(*values):
+    iterator = iter(values)
+    last = values[-1]
+
+    def current():
+        nonlocal last
+        try:
+            last = next(iterator)
+        except StopIteration:
+            pass
+        return last
+
+    return current
+
+
+def _deps(calls, *, validate=None):
+    from src.pipeline.controller import PipelineDependencies
+
+    def record(name, result):
+        def invoke(*args):
+            calls.append(name)
+            return result(*args) if callable(result) else result
+
+        return invoke
+
+    accepted = SimpleNamespace(source_version="a" * 64)
+    prediction = {"prediction_id": "b" * 64}
+    return PipelineDependencies(
+        fetch_qualifying=record("fetch", {"raw": True}),
+        validate_qualifying=record("validate", validate or accepted),
+        generate_prediction=record("generate", prediction),
+        validate_prediction=record("validate_prediction", None),
+        stage_prediction=record("stage", {"candidate": True}),
+        publish_prediction=record(
+            "publish",
+            {
+                "published_at": "2026-10-23T16:31:00Z",
+                "prediction_id": "b" * 64,
+            },
+        ),
+        persist_status=lambda status: calls.append("persist"),
+    )
+
+
+@pytest.mark.parametrize(
+    ("event", "status", "now", "outcome"),
+    [
+        (_controller_event(), {}, "2026-10-23T16:00:00Z", "wait"),
+        (
+            _controller_event(race_start_at="not-a-time"),
+            {},
+            "2026-10-23T16:30:00Z",
+            "unavailable",
+        ),
+        (
+            _controller_event(),
+            {"frozen_at": "2026-10-23T15:00:00Z"},
+            "2026-10-23T16:30:00Z",
+            "frozen",
+        ),
+    ],
+)
+def test_controller_wait_unavailable_and_frozen_never_train(
+    event, status, now, outcome
+):
+    from src.pipeline.controller import run_due_work
+
+    calls = []
+    result = run_due_work(
+        event,
+        status,
+        clock=_clock(datetime.fromisoformat(now.replace("Z", "+00:00"))),
+        dependencies=_deps(calls),
+    )
+
+    assert result.outcome == outcome
+    assert "generate" not in calls
+    assert "publish" not in calls
+
+
+def test_controller_incomplete_qualifying_records_retry_without_training():
+    from src.pipeline.controller import run_due_work
+
+    class Incomplete(ValueError):
+        code = "missing_expected_driver"
+
+    calls = []
+
+    def reject(*_args):
+        raise Incomplete("not complete")
+
+    result = run_due_work(
+        _controller_event(),
+        {},
+        clock=_clock(datetime(2026, 10, 23, 16, 30, tzinfo=UTC)),
+        dependencies=_deps(calls, validate=reject),
+    )
+
+    assert result.outcome == "qualifying_unavailable"
+    assert result.status["validation_reason"] == "missing_expected_driver"
+    assert result.status["next_qualifying_check_at"] == "2026-10-23T17:30:00Z"
+    assert "generate" not in calls
+
+
+def test_controller_unchanged_source_never_trains_again():
+    from src.pipeline.controller import run_due_work
+
+    calls = []
+    status = {
+        "qualifying_source_version": "a" * 64,
+        "actual_publication_confirmed": True,
+    }
+    # A confirmed actual normally pauses until the final check. Exercise that due
+    # verification window and prove the same semantic input remains a no-op.
+    result = run_due_work(
+        _controller_event(),
+        status,
+        clock=_clock(datetime(2026, 10, 24, 15, 15, tzinfo=UTC)),
+        dependencies=_deps(calls),
+    )
+
+    assert result.outcome == "unchanged"
+    assert result.status["validation_reason"] == "unchanged_qualifying"
+    assert "generate" not in calls
+    assert "publish" not in calls
+
+
+def test_controller_rechecks_generation_reserve_after_fetch_without_training():
+    from src.pipeline.controller import run_due_work
+
+    calls = []
+    result = run_due_work(
+        _controller_event(),
+        {},
+        clock=_clock(
+            datetime(2026, 10, 24, 15, 44, tzinfo=UTC),
+            datetime(2026, 10, 24, 15, 44, tzinfo=UTC),
+            datetime(2026, 10, 24, 15, 46, tzinfo=UTC),
+        ),
+        dependencies=_deps(calls),
+    )
+
+    assert result.outcome == "too_late"
+    assert result.status["validation_reason"] == "insufficient_publication_window"
+    assert "generate" not in calls
+    assert "publish" not in calls
+
+
+def test_controller_valid_changed_input_runs_generation_and_publication_once():
+    from src.pipeline.controller import run_due_work
+
+    calls = []
+    result = run_due_work(
+        _controller_event(),
+        {},
+        clock=_clock(datetime(2026, 10, 23, 16, 30, tzinfo=UTC)),
+        dependencies=_deps(calls),
+    )
+
+    assert result.outcome == "published"
+    assert calls.count("generate") == 1
+    assert calls.count("publish") == 1
+    assert result.status["actual_publication_confirmed"] is True
+    assert result.status["qualifying_source_version"] == "a" * 64
 
 
 def test_actual_candidate_trains_stage_two_on_filtered_history_after_hash_change(monkeypatch):
