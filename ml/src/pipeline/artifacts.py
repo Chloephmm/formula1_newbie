@@ -672,6 +672,10 @@ def validate_prediction(prediction: Mapping[str, Any], event: Mapping[str, Any])
     forecast = prediction.get("forecast")
     if not isinstance(forecast, Mapping) or forecast.get("error") is not None:
         raise ValueError("forecast output is malformed or empty")
+    if forecast.get("probabilityPolicyVersion") != PROBABILITY_POLICY_VERSION:
+        raise ValueError("forecast probability policy version is invalid")
+    if forecast.get("podiumEstimateSemantics") != "normalized_podium_estimate":
+        raise ValueError("forecast podium estimate semantics are invalid")
     race = forecast.get("race")
     if (
         not isinstance(race, Mapping)
@@ -725,18 +729,82 @@ def validate_prediction(prediction: Mapping[str, Any], event: Mapping[str, Any])
 
 
 def write_immutable(path: str | Path, payload: Any) -> None:
-    """Create canonical JSON exclusively; identical existing bytes are a no-op."""
+    """Atomically expose canonical JSON once; identical bytes are a no-op."""
 
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     encoded = canonical_bytes(payload) + b"\n"
-    try:
-        with target.open("xb") as stream:
-            stream.write(encoded)
-    except FileExistsError as exc:
+    if target.exists():
         if target.read_bytes() == encoded:
             return
-        raise ArtifactCollisionError(f"immutable collision at {target}") from exc
+        raise ArtifactCollisionError(f"immutable collision at {target}")
+
+    descriptor, temp_name = tempfile.mkstemp(
+        dir=target.parent, prefix=f".{target.name}-", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(encoded)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temp_name, target)
+        except FileExistsError as exc:
+            if target.read_bytes() != encoded:
+                raise ArtifactCollisionError(f"immutable collision at {target}") from exc
+    finally:
+        if os.path.exists(temp_name):
+            os.unlink(temp_name)
+
+
+def _verify_existing_initial(event_dir: Path, season: int, round_number: int) -> None:
+    """Verify an older initial without comparing it to mutable current event hashes."""
+
+    initial_path = event_dir / "initial.json"
+    if not initial_path.exists():
+        return
+    encoded = initial_path.read_bytes()
+    try:
+        initial = json.loads(encoded)
+        canonical = canonical_bytes(initial) + b"\n"
+    except (UnicodeError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        raise ArtifactCollisionError("existing initial.json is malformed") from exc
+    if not isinstance(initial, Mapping):
+        raise ArtifactCollisionError("existing initial.json must contain an object")
+    forecast = initial.get("forecast")
+    identity_is_valid = (
+        initial.get("schema_version") == SCHEMA_VERSION
+        and initial.get("mode") == "predicted_qualifying"
+        and initial.get("season") == season
+        and initial.get("round") == round_number
+        and isinstance(forecast, Mapping)
+        and forecast.get("mode") == "predicted_qualifying"
+        and isinstance(forecast.get("race"), Mapping)
+        and forecast["race"].get("season") == season
+        and forecast["race"].get("round") == round_number
+    )
+    prediction_id = initial.get("prediction_id")
+    try:
+        semantic_identity_is_valid = (
+            isinstance(prediction_id, str)
+            and HEX_DIGEST.fullmatch(prediction_id) is not None
+            and prediction_id == digest(initial, semantic_prediction=True)
+        )
+    except (TypeError, ValueError) as exc:
+        raise ArtifactCollisionError(
+            "existing initial.json has malformed prediction content"
+        ) from exc
+    version_path = event_dir / "versions" / f"{prediction_id}.json"
+    if (
+        encoded != canonical
+        or not identity_is_valid
+        or not semantic_identity_is_valid
+        or not version_path.exists()
+        or version_path.read_bytes() != encoded
+    ):
+        raise ArtifactCollisionError(
+            "existing initial.json does not match its immutable prediction version"
+        )
 
 
 def archive_prediction(
@@ -747,6 +815,7 @@ def archive_prediction(
     validate_prediction(prediction, event)
     season, round_number = _event_identity(event)
     event_dir = Path(root) / "prediction_snapshots" / f"{season}-{round_number}"
+    _verify_existing_initial(event_dir, season, round_number)
     event_path = event_dir / "event.json"
     event_dir.mkdir(parents=True, exist_ok=True)
     event_bytes = canonical_bytes(_json_safe(event, missing_as_null=True)) + b"\n"

@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import copy
 import json
+from pathlib import Path
 
 import pandas as pd
 import pytest
 
+import src.pipeline.artifacts as artifacts
 from src.pipeline.artifacts import (
     ArtifactCollisionError,
     archive_prediction,
@@ -130,6 +132,8 @@ def _forecast() -> dict:
     return {
         "error": None,
         "mode": "predicted_qualifying",
+        "probabilityPolicyVersion": "capped-sum-to-three-v1",
+        "podiumEstimateSemantics": "normalized_podium_estimate",
         "race": {"name": "Artifact Grand Prix", "season": 2026, "round": 20},
         "predictedQualifying": [
             {"driver_id": f"driver_{letter}", "position": index,
@@ -259,6 +263,53 @@ def test_write_immutable_is_idempotent_and_rejects_collisions(tmp_path):
         write_immutable(path, {"answer": 43})
 
 
+class _InterruptedBinaryWriter:
+    def __init__(self, stream):
+        self._stream = stream
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self._stream.close()
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+    def write(self, value):
+        self._stream.write(value[: max(1, len(value) // 2)])
+        self._stream.flush()
+        raise OSError("injected partial write")
+
+
+def _inject_partial_binary_write(monkeypatch):
+    original_path_open = Path.open
+    original_fdopen = artifacts.os.fdopen
+
+    def interrupted_path_open(path, mode="r", *args, **kwargs):
+        stream = original_path_open(path, mode, *args, **kwargs)
+        return _InterruptedBinaryWriter(stream) if mode == "xb" else stream
+
+    def interrupted_fdopen(fd, mode="r", *args, **kwargs):
+        stream = original_fdopen(fd, mode, *args, **kwargs)
+        return _InterruptedBinaryWriter(stream) if mode == "wb" else stream
+
+    monkeypatch.setattr(Path, "open", interrupted_path_open)
+    monkeypatch.setattr(artifacts.os, "fdopen", interrupted_fdopen)
+
+
+def test_write_immutable_never_exposes_partial_final_and_retry_succeeds(tmp_path, monkeypatch):
+    path = tmp_path / "artifact.json"
+    with monkeypatch.context() as faults:
+        _inject_partial_binary_write(faults)
+        with pytest.raises(OSError, match="partial write"):
+            write_immutable(path, {"answer": 42})
+
+    assert not path.exists()
+    write_immutable(path, {"answer": 42})
+    assert path.read_bytes() == b'{"answer":42}\n'
+
+
 def test_archive_preserves_first_initial_and_appends_versions(tmp_path):
     first = _prediction()
     changed = _prediction(model_manifest=_model_manifest(code_hash="d" * 64))
@@ -268,6 +319,76 @@ def test_archive_preserves_first_initial_and_appends_versions(tmp_path):
     assert json.loads((event_dir / "initial.json").read_text()) == first
     assert json.loads((event_dir / "versions" / f"{first['prediction_id']}.json").read_text()) == first
     assert json.loads((event_dir / "versions" / f"{changed['prediction_id']}.json").read_text()) == changed
+
+
+def test_archive_version_partial_write_is_retryable(tmp_path, monkeypatch):
+    first = _prediction()
+    event_dir = archive_prediction(tmp_path, _event(), first)
+    changed = _prediction(model_manifest=_model_manifest(code_hash="d" * 64))
+    changed_path = event_dir / "versions" / f"{changed['prediction_id']}.json"
+
+    with monkeypatch.context() as faults:
+        _inject_partial_binary_write(faults)
+        with pytest.raises(OSError, match="partial write"):
+            archive_prediction(tmp_path, _event(), changed)
+
+    assert not changed_path.exists()
+    archive_prediction(tmp_path, _event(), changed)
+    assert json.loads(changed_path.read_text()) == changed
+
+
+def test_archive_initial_partial_write_is_retryable(tmp_path, monkeypatch):
+    prediction = _prediction()
+    event_dir = archive_prediction(tmp_path, _event(), prediction)
+    initial_path = event_dir / "initial.json"
+    initial_path.unlink()
+
+    with monkeypatch.context() as faults:
+        _inject_partial_binary_write(faults)
+        with pytest.raises(OSError, match="partial write"):
+            archive_prediction(tmp_path, _event(), prediction)
+
+    assert not initial_path.exists()
+    archive_prediction(tmp_path, _event(), prediction)
+    assert json.loads(initial_path.read_text()) == prediction
+
+
+@pytest.mark.parametrize("corrupt", [b'{"truncated":\n', b'[]\n', b'null\n'])
+def test_archive_rejects_corrupt_existing_initial_without_overwrite(tmp_path, corrupt):
+    prediction = _prediction()
+    event_dir = archive_prediction(tmp_path, _event(), prediction)
+    initial_path = event_dir / "initial.json"
+    initial_path.write_bytes(corrupt)
+
+    with pytest.raises(ArtifactCollisionError, match="existing initial"):
+        archive_prediction(tmp_path, _event(), prediction)
+
+    assert initial_path.read_bytes() == corrupt
+
+
+def test_archive_rejects_malformed_initial_forecast_with_artifact_error(tmp_path):
+    prediction = _prediction()
+    event_dir = archive_prediction(tmp_path, _event(), prediction)
+    initial_path = event_dir / "initial.json"
+    malformed = copy.deepcopy(prediction)
+    malformed["forecast"] = []
+    encoded = canonical_bytes(malformed) + b"\n"
+    initial_path.write_bytes(encoded)
+
+    with pytest.raises(ArtifactCollisionError, match="existing initial"):
+        archive_prediction(tmp_path, _event(), prediction)
+
+    assert initial_path.read_bytes() == encoded
+
+
+def test_archive_rejects_initial_that_differs_from_its_immutable_version(tmp_path):
+    prediction = _prediction()
+    event_dir = archive_prediction(tmp_path, _event(), prediction)
+    version_path = event_dir / "versions" / f"{prediction['prediction_id']}.json"
+    version_path.write_bytes(b'{"different":true}\n')
+
+    with pytest.raises(ArtifactCollisionError, match="existing initial"):
+        archive_prediction(tmp_path, _event(), prediction)
 
 
 def test_changed_schedule_builds_new_version_and_refreshes_event_metadata(tmp_path):
@@ -282,6 +403,7 @@ def test_changed_schedule_builds_new_version_and_refreshes_event_metadata(tmp_pa
     assert json.loads((event_dir / "event.json").read_text())[
         "qualifying_end_observed_at"
     ] == "2026-10-31T19:05:00Z"
+    assert json.loads((event_dir / "initial.json").read_text()) == first
 
 
 def test_restart_reuses_durable_candidate_and_original_generation_time(tmp_path):
@@ -332,6 +454,27 @@ def test_validate_prediction_rejects_wrong_event_identity_and_actual_without_sou
     actual["qualifying_source_version"] = None
     with pytest.raises(ValueError, match="source version"):
         validate_prediction(actual, _event())
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("probabilityPolicyVersion", None),
+        ("probabilityPolicyVersion", "legacy-scale-v0"),
+        ("podiumEstimateSemantics", None),
+        ("podiumEstimateSemantics", "calibrated_probability"),
+    ],
+)
+def test_validate_prediction_requires_supported_nested_probability_semantics(field, value):
+    prediction = _prediction()
+    if value is None:
+        del prediction["forecast"][field]
+    else:
+        prediction["forecast"][field] = value
+    prediction["prediction_id"] = digest(prediction, semantic_prediction=True)
+
+    with pytest.raises(ValueError, match="probability|estimate semantics"):
+        validate_prediction(prediction, _event())
 
 
 def test_training_hash_rejects_target_or_later_rows():
