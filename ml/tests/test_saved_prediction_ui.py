@@ -5,6 +5,8 @@ import copy
 import json
 import os
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -287,6 +289,23 @@ def test_production_app_has_no_visitor_model_or_jolpica_path():
     assert "retrain_live" not in source
     assert "src.model" not in source
     assert "jolpica" not in source.lower()
+
+
+def test_production_entrypoint_bootstraps_repo_root_in_isolated_python(tmp_path):
+    env = os.environ.copy()
+    env["PREDICTION_FEED_URL"] = "http://127.0.0.1:9/prediction_feed.json"
+
+    completed = subprocess.run(
+        [sys.executable, "-I", str(ROOT / "streamlit_app" / "app.py")],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_production_app_refreshes_saved_mode_and_id_together(tmp_path, monkeypatch):
