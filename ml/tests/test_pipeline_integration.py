@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -40,6 +41,84 @@ def test_plan_gate_bootstraps_without_importing_model_stack(tmp_path):
         for name in set(sys.modules) - before
         if name.startswith("src.model") or name.startswith("pandas")
     }
+
+
+def test_direct_monitor_script_makes_ml_package_importable_without_pythonpath():
+    script = SCRIPTS / "check_qualifying.py"
+    probe = (
+        "import importlib.util, pathlib; "
+        f"path = pathlib.Path({str(script)!r}); "
+        "spec = importlib.util.spec_from_file_location('monitor_probe', path); "
+        "module = importlib.util.module_from_spec(spec); "
+        "spec.loader.exec_module(module); "
+        "import src.pipeline.state; "
+        "assert pathlib.Path(src.pipeline.state.__file__).resolve().is_relative_to(path.parents[1])"
+    )
+    environment = dict(os.environ)
+    environment.pop("PYTHONPATH", None)
+
+    result = subprocess.run(
+        [sys.executable, "-I", "-c", probe],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_run_mode_executes_bootstrap_when_event_metadata_is_missing(monkeypatch):
+    check = _load_script("check_qualifying")
+    calls = []
+    monkeypatch.setattr(
+        check,
+        "plan_needs_work",
+        lambda _root, _now: (True, "event_bootstrap_required"),
+    )
+    monkeypatch.setattr(
+        check,
+        "_bootstrap_missing_event",
+        lambda _now: calls.append("bootstrap") or {"outcome": "initial_published"},
+        raising=False,
+    )
+    monkeypatch.setattr(check, "_run", lambda _now: calls.append("run"))
+    monkeypatch.setattr(sys, "argv", [str(SCRIPTS / "check_qualifying.py"), "--run"])
+
+    check.main()
+
+    assert calls == ["bootstrap"]
+
+
+def test_late_bootstrap_continues_to_actual_qualifying_monitor(monkeypatch):
+    check = _load_script("check_qualifying")
+    calls = []
+    monkeypatch.setattr(
+        check,
+        "plan_needs_work",
+        lambda _root, _now: (True, "event_bootstrap_required"),
+    )
+    monkeypatch.setattr(
+        check,
+        "_bootstrap_missing_event",
+        lambda _now: calls.append("bootstrap") or {"outcome": "missing_initial"},
+    )
+    monkeypatch.setattr(check, "_run", lambda _now: calls.append("run"))
+    monkeypatch.setattr(sys, "argv", [str(SCRIPTS / "check_qualifying.py"), "--run"])
+
+    check.main()
+
+    assert calls == ["bootstrap", "run"]
+
+
+def test_monitor_publisher_allows_event_metadata_for_bootstrap_and_schedule_refresh():
+    publisher = _load_script("publish_refresh")
+
+    assert publisher._allowed(
+        "monitor",
+        "web/public/data/prediction_snapshots/2026-20/event.json",
+    )
 
 
 def test_plan_gate_dry_run_against_saved_event_fixture(tmp_path):
@@ -307,6 +386,8 @@ def test_workflows_preserve_original_schedules_and_share_one_writer_queue():
     assert 'cron: "0 6 * 3-12 1"' in stats
     assert "npm run sync-stats" in stats
     assert 'cron: "7,22,37,52 * * * *"' in monitor
+    assert "timeout-minutes: 30" in monitor
+    assert "cache-dependency-path: ml/requirements.txt" in monitor
     for source in (weekly, stats, monitor):
         assert "group: f1-data-writes" in source
         assert "queue: max" in source

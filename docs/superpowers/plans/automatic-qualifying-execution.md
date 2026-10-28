@@ -3,9 +3,9 @@
 Branch: `feature1` (tracking `origin/feature1`, as explicitly requested).
 Working directory: `C:/Users/user/Documents/Projects/formula1_newbie` (direct checkout, explicitly requested).
 
-Relocated after Task 2 by fast-forwarding this clean feature1 checkout with all 10 local commits through 2681000. The previous checkout at `C:/Users/user/Documents/Codex/Formula1` remains intact as a backup; no remote push occurred.
+Relocated after Task 2 by fast-forwarding this clean feature1 checkout with all 10 local commits through 2681000. The previous checkout at `C:/Users/user/Documents/Codex/Formula1` remains intact as a backup; no remote push occurred during that relocation.
 Relocation verification: source and destination HEAD/tree matched; the ML test suite passed in the new directory (61 passed, 2 skipped). Tests used a fresh, uniquely named temporary directory to avoid a Windows permission conflict with an existing pytest temporary root. Only disposable test/Python caches were left behind in the former implementation worktree.
-No remote push, merge, or deployment is authorized by this record.
+The final continuation did not push, merge, or deploy. At its start, local `feature1` and `origin/feature1` already matched at `dc8ae1c`; the final plan-ledger edits are intentionally left uncommitted for the user.
 
 ## Decisions
 
@@ -25,10 +25,27 @@ No remote push, merge, or deployment is authorized by this record.
 | 4 Forecast/training modes | a09d51d + ebd50f2; 22 focused / 180 full passed, 2 skipped | Passed; post-fix recheck passed | Passed after enriched-schema and wrapper fixes; no remaining findings |
 | 5 Artifact contracts | a6d6762 + e5378bf + ea5624d + 55c4b49; 76 focused / 234 full passed, 2 skipped | Passed; final post-fix recheck passed | Passed after durability/policy-label fixes; no remaining findings |
 | 6 Publication and freeze | fb62709 + 1f01435 + be33290 + 353e841; 52 publication regressions / 286 full passed, 2 skipped before final focused fix | Passed after long-path and receipt-context fixes | Passed after concurrency/archive/timestamp fixes; final initial-confirmation gap fixed and focused tests passed |
-| 7 Monitor and Monday jobs | Local implementation complete; 72 controller/integration/publication tests passed | Manual plan check complete (user requested no further subagents) | Manual quality check complete; final full-suite verification remains Task 10 |
-| 8 Saved-data UI reader/view | Local implementation complete; 11 reader/view/AppTest fixtures passed | Manual plan check complete (user requested no further subagents) | Manual quality check complete; production app rewiring remains Task 9 by design |
-| 9 End-to-end and RUN removal | Local implementation complete; 33 controller/lifecycle/UI tests passed | Manual plan check complete (user requested no further subagents) | Manual quality check complete; hosted open-page timer check retained but not run without deployment authorization |
-| 10 Documentation/migration | Pending | Pending | Pending |
+| 7 Monitor and Monday jobs | 6526347; 72 controller/integration/publication tests passed | Manual plan check complete (user requested no further subagents) | Manual quality check complete; final full suite passed in Task 10 |
+| 8 Saved-data UI reader/view | 6e73ed2; 11 reader/view/AppTest fixtures passed | Manual plan check complete (user requested no further subagents) | Manual quality check complete; production app rewiring remained Task 9 by design |
+| 9 End-to-end and RUN removal | 5551311; 33 controller/lifecycle/UI tests passed | Manual plan check complete (user requested no further subagents) | Manual quality check complete; hosted open-page timer check retained but not run without deployment authorization |
+| 10 Documentation/migration | `dc8ae1c` was already present locally and on `origin/feature1`; final implementation and plan-ledger edits remain uncommitted per user request | Manual plan and artifact review complete | 320 passed, 2 expected dataset skips; compile, diff, visitor-path, direct-import, offline-model, dry-run, and workflow checks complete |
+
+## Task 10 completion
+
+- Strategy documentation now describes the five-hour post-session wait, hourly retries, final-check/generation reserves, strict two-hour eligibility cutoff, explicit forecast modes, UTC schedule fields, exact source/roster validation, saved-only presentation, and unchanged Monday data/backtest responsibilities.
+- The Austin October 19 artifact is preserved through `web/public/data/prediction_snapshots/2026-18/legacy_initial_reference.json`. It resolves the exact historical Git blob while retaining date-only precision and marking unavailable provenance as unknown; it is not treated as a schema-v2 or frozen-evaluation artifact.
+- The saved-fixture dry-run passed without mutating tracked output. After post-review fixes, the final full suite passed `320` tests with `2` expected skips for the absent `ml/data/processed/features.parquet` in `373.69s`. `compileall`, `git diff --check`, and a visitor-path scan for RUN/model/Jolpica symbols passed.
+- Workflow integration tests preserve the two original cron expressions and Monday operations while confirming the common `f1-data-writes` queue, explicit `main` checkout, and full-history checkout. GitHub's current workflow-concurrency contract supports `queue: max`. The available actionlint 1.7.12 compatibility run rejected only that newer key; validation copies with only that documented key removed passed.
+- No live Jolpica/model publication, workflow enablement, seed publication, hosted raw-feed check, or no-click/no-reload hosted browser transition was performed. These remain deployment acceptance work and must not be inferred from local tests.
+- No commit, push, merge, or deployment was made in this final continuation. The final implementation and execution-record changes are left in the working tree for the user to review and commit.
+
+## Post-review fixes — 2026-10-28
+
+- Reproduced and fixed the production entry-point failure where `python ml/scripts/check_qualifying.py --run` could not import the repository's `src` package. An isolated subprocess regression now proves direct-script importability without `PYTHONPATH`.
+- Connected `event_bootstrap_required` to the existing Monday-safe initial preparation path. A late bootstrap records `missing_initial` and continues into the actual-qualifying monitor instead of inventing a historical initial.
+- Allowed the monitor publisher to persist exact-event metadata written by bootstrap and schedule refresh, added the planned 30-minute job timeout, and pinned setup-python's cache dependency to `ml/requirements.txt`.
+- Replaced the stale Streamlit subdirectory README with the saved-output-only contract. The production visitor path still has no RUN button and no Jolpica/model/retraining import.
+- A real local offline reconstruction fitted the current model against committed raw history and produced a 22-driver Mexico City qualifying grid plus 22 normalized podium estimates summing to 3.0. This is a local smoke test, not a live publication or frozen evaluation artifact.
 
 ## Tasks 6-8 continuation
 

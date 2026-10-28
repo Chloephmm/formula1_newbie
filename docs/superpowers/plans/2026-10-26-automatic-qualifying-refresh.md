@@ -8,9 +8,9 @@
 
 **Tech Stack:** Python 3.11, pandas/PyArrow, existing LightGBM and scikit-learn models, requests, pytest, GitHub Actions, Streamlit fragments, Git-backed JSON/Parquet.
 
-**Status:** Implementation authorized using fresh subagents with spec and quality reviews after each task. Work branch: feature1 (tracking origin/feature1, explicitly requested). Based on repository commit 5c0ad5bcbc2e104d6e3d886d34261e1575ef77e0; not pushed or deployed.
+**Status:** Local implementation through Task 10 is complete on `feature1`. The local branch and `origin/feature1` were both observed at `dc8ae1c` before this execution-record update; Codex did not push in this continuation. The workflow has not been enabled or deployed, and hosted feed/browser acceptance remains pending explicit deployment authorization.
 
-**Progress:** Tasks 1-5 are implemented and reviewed; 5 tasks remain. Next is Task 6 (safe publication, availability confirmation, and freeze selection). RUN removal remains Task 9; automatic publication is not enabled yet. See [execution record](automatic-qualifying-execution.md) for commits and verification evidence.
+**Progress:** Tasks 1-10 are implemented locally. The production Streamlit path is saved-output-only and contains no RUN button or visitor-triggered model/API path. Final local verification is recorded in the [execution record](automatic-qualifying-execution.md). Deployment-only steps remain intentionally open.
 
 **Execution clarification (2026-10-26):** The user accepts strict forecast eligibility with possible display lag: a forecast must be verified available before the two-hour cutoff; the feed/browser may display that already-eligible version later. Candidate verification, not mutable-feed propagation, is the eligibility event. Persist verifiable confirmation evidence; an uncertain or post-cutoff confirmation is ineligible. Feed publication and immutable freeze selection must consistently enforce that rule. The saved ML-based initial remains the fallback when actual qualifying is unavailable. Execution uses the stated GitHub-only, start-plus-90-minute estimated-end and Monday-safety defaults; the estimate remains explicitly labeled.
 
@@ -528,23 +528,23 @@ Review hardening: the immutable final pathname must not appear before its comple
 
 **Files:** create ml/src/pipeline/publish.py and ml/tests/test_prediction_publication.py.
 
-- [ ] Use a temporary local bare Git repository in tests to simulate concurrent writers, rejected fast-forwards, uncertain push outcomes, failed readback and deadline overruns. No production pushes in tests. Add a fake slow transport that completes after the deadline and verify the candidate has no eligibility receipt and never replaces the prior confirmed feed selection.
-- [ ] Run: python -m pytest ml/tests/test_prediction_publication.py -v.
-- [ ] Implement stage_candidate, publish_candidate and confirm_publication according to section 5. Their injected clock, remote reader and Git runner must make deadline/failure tests deterministic.
-- [ ] Use candidate tree/files distinct from published JSON. Promotion must retain an immutable previous confirmed ID. Confirm retrieval by expected version/checksum, not HTTP 200 alone.
-- [ ] Use at most two conflict retries. On a changed event schedule, source or published version, discard/replan instead of rebasing stale output over newer data. For a disjoint stats change, rebuild the commit on the latest parent without changing forecast content.
-- [ ] Implement select_final(publications, cutoff_at) and write_final(event, selection). Selection uses confirmed publication time and event identity; repeated freeze must be byte-identical.
-- [ ] Add tests that a failed write/model/push/readback leaves the served version unchanged, uncertain outcomes are reconciled, an older mode cannot replace newer actual qualifying, and a run that crosses cutoff cannot become eligible.
-- [ ] Re-run tests. Commit: feat: publish confirmed snapshots and freeze eligible forecasts.
+- [x] Use a temporary local bare Git repository in tests to simulate concurrent writers, rejected fast-forwards, uncertain push outcomes, failed readback and deadline overruns. No production pushes in tests. Add a fake slow transport that completes after the deadline and verify the candidate has no eligibility receipt and never replaces the prior confirmed feed selection.
+- [x] Run: python -m pytest ml/tests/test_prediction_publication.py -v.
+- [x] Implement stage_candidate, publish_candidate and confirm_publication according to section 5. Their injected clock, remote reader and Git runner must make deadline/failure tests deterministic.
+- [x] Use candidate tree/files distinct from published JSON. Promotion must retain an immutable previous confirmed ID. Confirm retrieval by expected version/checksum, not HTTP 200 alone.
+- [x] Use at most two conflict retries. On a changed event schedule, source or published version, discard/replan instead of rebasing stale output over newer data. For a disjoint stats change, rebuild the commit on the latest parent without changing forecast content.
+- [x] Implement select_final(publications, cutoff_at) and write_final(event, selection). Selection uses confirmed publication time and event identity; repeated freeze must be byte-identical.
+- [x] Add tests that a failed write/model/push/readback leaves the served version unchanged, uncertain outcomes are reconciled, an older mode cannot replace newer actual qualifying, and a run that crosses cutoff cannot become eligible.
+- [x] Re-run tests. Commit: feat: publish confirmed snapshots and freeze eligible forecasts.
 
 ### Task 7 — Add the monitor while preserving Monday operations
 
 **Files:** create ml/src/pipeline/controller.py, ml/scripts/check_qualifying.py, ml/scripts/publish_refresh.py and .github/workflows/qualifying-monitor.yml; modify both current workflows plus precompute_next_race.py and refresh_for_next_race.py.
 
-- [ ] Add controller tests with injected fetch/model/publisher fakes. Count calls to prove no training on wait, unavailable, incomplete, unchanged, frozen or no-time-left paths.
-- [ ] Run: python -m pytest ml/tests/test_pipeline_controller.py -v.
-- [ ] Implement the controller sequence: refresh due schedule -> select exact active event -> decide action -> fetch target session if due -> validate -> hash -> generate if changed -> validate output -> recheck deadline -> stage/publish -> record status.
-- [ ] Define CLI commands:
+- [x] Add controller tests with injected fetch/model/publisher fakes. Count calls to prove no training on wait, unavailable, incomplete, unchanged, frozen or no-time-left paths.
+- [x] Run: python -m pytest ml/tests/test_pipeline_controller.py -v.
+- [x] Implement the controller sequence: refresh due schedule -> select exact active event -> decide action -> fetch target session if due -> validate -> hash -> generate if changed -> validate output -> recheck deadline -> stage/publish -> record status.
+- [x] Define CLI commands:
 
 ~~~text
 python ml/scripts/check_qualifying.py --plan --github-output <path>
@@ -565,7 +565,7 @@ python ml/scripts/publish_refresh.py --kind stats
     publishes only web/public/data/stats.json.
 ~~~
 
-- [ ] Add the workflow below. Gate before installing ML dependencies. Skip idle ticks without creating a status commit.
+- [x] Add the workflow below. Gate before installing ML dependencies. Skip idle ticks without creating a status commit.
 
 ~~~yaml
 name: Automatic qualifying update
@@ -611,13 +611,13 @@ jobs:
         run: python ml/scripts/check_qualifying.py --run
 ~~~
 
-- [ ] Preserve Monday prediction cron "0 6 * * 1", its Python setup and its fetch/snapshot/backtest command. Change only the writer lock, additional archive/feed staged paths, and common publication step. Preserve stats cron "0 6 * 3-12 1" and npm run sync-stats; use the same writer group and stats-only publisher.
-- [ ] Use queue:max consistently across these three writers, and explicit checkout ref: main after the lock is acquired. Execution re-evaluates current state; queued jobs cannot rely on a stale scheduled checkout. If the repository platform rejects queue:max, use supported serialization with an independently protected Monday path and document that adjustment.
-- [ ] Integrate Monday precomputation with the new artifact contract. Before rollover, materialize any due final selection from earlier confirmed publications. Then prepare the next eligible event. Do not overwrite archived predictions or regenerate frozen races.
-- [ ] Preserve Monday fetch/metrics even if no new forecast can be generated. Catch a forecast-generation failure at its boundary, retain its previous valid snapshot, record the failure, and continue completed-data/metric work.
-- [ ] Before an initial exists, the monitor can prepare it from committed prior-race history only when still before qualifying. If qualifying already started, report missing_initial; do not invent a historical initial. A valid actual forecast may still be produced during its eligible window.
-- [ ] Verify Monday behavior with integration tests: all original endpoints fetched, backtest still called, next-event publication occurs, and old final/initial files remain unchanged.
-- [ ] Run controller/publication/integration tests. Commit: ci: add qualifying monitor and coordinate existing data writers.
+- [x] Preserve Monday prediction cron "0 6 * * 1", its Python setup and its fetch/snapshot/backtest command. Change only the writer lock, additional archive/feed staged paths, and common publication step. Preserve stats cron "0 6 * 3-12 1" and npm run sync-stats; use the same writer group and stats-only publisher.
+- [x] Use queue:max consistently across these three writers, and explicit checkout ref: main after the lock is acquired. Execution re-evaluates current state; queued jobs cannot rely on a stale scheduled checkout. If the repository platform rejects queue:max, use supported serialization with an independently protected Monday path and document that adjustment.
+- [x] Integrate Monday precomputation with the new artifact contract. Before rollover, materialize any due final selection from earlier confirmed publications. Then prepare the next eligible event. Do not overwrite archived predictions or regenerate frozen races.
+- [x] Preserve Monday fetch/metrics even if no new forecast can be generated. Catch a forecast-generation failure at its boundary, retain its previous valid snapshot, record the failure, and continue completed-data/metric work.
+- [x] Before an initial exists, the monitor can prepare it from committed prior-race history only when still before qualifying. If qualifying already started, report missing_initial; do not invent a historical initial. A valid actual forecast may still be produced during its eligible window.
+- [x] Verify Monday behavior with integration tests: all original endpoints fetched, backtest still called, next-event publication occurs, and old final/initial files remain unchanged.
+- [x] Run controller/publication/integration tests. Commit: ci: add qualifying monitor and coordinate existing data writers.
 
 Workflow definitions are local repository changes until separately authorized publication/deployment; do not create external automations during implementation.
 
@@ -625,19 +625,19 @@ Workflow definitions are local repository changes until separately authorized pu
 
 **Files:** create streamlit_app/prediction_data.py, streamlit_app/prediction_view.py and ml/tests/test_saved_prediction_ui.py; modify streamlit_app/requirements.txt and ml/requirements-dev.txt.
 
-- [ ] Add tests for valid event, wrong event, corrupt JSON, unsupported schema, network failure, version update, frozen selection, and per-event fallback isolation. A previous Austin forecast must never appear as Mexico's fallback.
-- [ ] Run: python -m pytest ml/tests/test_saved_prediction_ui.py -v.
-- [ ] Configure a public saved-output URL with default:
+- [x] Add tests for valid event, wrong event, corrupt JSON, unsupported schema, network failure, version update, frozen selection, and per-event fallback isolation. A previous Austin forecast must never appear as Mexico's fallback.
+- [x] Run: python -m pytest ml/tests/test_saved_prediction_ui.py -v.
+- [x] Configure a public saved-output URL with default:
   https://raw.githubusercontent.com/Chloephmm/formula1_newbie/main/web/public/data/prediction_feed.json
   Allow PREDICTION_FEED_URL to override it in the deployment.
-- [ ] Implement a server-side HTTP reader with 5-second timeout, ETag/conditional requests when supported and a shared TTL of 60 seconds. Read only saved JSON. Avoid one upstream request per visitor or any API secret in browser code.
-- [ ] Validate the whole single-revision feed before accepting it. Keep last-good per event in session state; an on-disk confirmed feed is a cold-start fallback only when its event/version is valid. Do not import forecast, retrain or Jolpica into this module.
-- [ ] If CDN data is stale, retain the last-good feed and display its real timestamp; retry on the next fragment interval. Do not promise an exact 60-second end-to-end delay. Publication verification must test this actual URL, not just the repository checkout.
-- [ ] Extract existing rendering helpers into prediction_view.py, preserving visual layout. Define render_saved_prediction(event, prediction, status) to display:
+- [x] Implement a server-side HTTP reader with 5-second timeout, ETag/conditional requests when supported and a shared TTL of 60 seconds. Read only saved JSON. Avoid one upstream request per visitor or any API secret in browser code.
+- [x] Validate the whole single-revision feed before accepting it. Keep last-good per event in session state; an on-disk confirmed feed is a cold-start fallback only when its event/version is valid. Do not import forecast, retrain or Jolpica into this module.
+- [x] If CDN data is stale, retain the last-good feed and display its real timestamp; retry on the next fragment interval. Do not promise an exact 60-second end-to-end delay. Publication verification must test this actual URL, not just the repository checkout.
+- [x] Extract existing rendering helpers into prediction_view.py, preserving visual layout. Define render_saved_prediction(event, prediction, status) to display:
   mode text; generated time; last attempted and last successful data checks; next scheduled check;
   validation/unavailability/delay reason when relevant; frozen state after cutoff.
-- [ ] Raise Streamlit's minimum to >=1.37 so st.fragment is available; pin the tested release for deployment reproducibility. Add Streamlit to test dependencies for AppTest coverage.
-- [ ] Add a dedicated test harness using the saved reader/view:
+- [x] Raise Streamlit's minimum to >=1.37 so st.fragment is available; pin the tested release for deployment reproducibility. Add Streamlit to test dependencies for AppTest coverage.
+- [x] Add a dedicated test harness using the saved reader/view:
 
 ~~~python
 import streamlit as st
@@ -652,48 +652,48 @@ def forecast_panel(event_id: str):
 
 read_saved_event returns the exact event metadata, its confirmed forecast or None, and status. No inference is permitted on None. The harness renders correctly named unavailability and supports feed replacement during a single open session.
 
-- [ ] Re-run reader/view tests. Commit: feat: display saved predictions with automatic version refresh.
+- [x] Re-run reader/view tests. Commit: feat: display saved predictions with automatic version refresh.
 
 ### Task 9 — Verify integration, then remove RUN and model imports
 
 **Files:** modify streamlit_app/app.py, ml/tests/test_pipeline_integration.py, ml/tests/test_saved_prediction_ui.py and docs.
 
-- [ ] Build a synthetic event fixture with an explicit roster and fake UTC clock. Start with an initial publication, serve empty qualifying, then incomplete qualifying, then complete qualifying, then a corrected final response.
-- [ ] Drive the controller and saved-output view together. Assert:
+- [x] Build a synthetic event fixture with an explicit roster and fake UTC clock. Start with an initial publication, serve empty qualifying, then incomplete qualifying, then complete qualifying, then a corrected final response.
+- [x] Drive the controller and saved-output view together. Assert:
   initial survives failures; actual is published only after validation;
   unchanged inputs cause zero extra training calls; correction is eligible only before cutoff;
   freeze chooses the last confirmed version; Monday rollover retains both archives.
-- [ ] Test a browser session open throughout a saved-feed update, waiting through the refresh interval without clicking or manually reloading. Assert displayed mode and prediction ID change together. AppTest alone does not prove a timed browser rerun; retain this browser acceptance check.
-- [ ] After the above acceptance harness passes, replace production app wiring with the saved reader/view. Remove:
+- [ ] Test a browser session open throughout a saved-feed update, waiting through the refresh interval without clicking or manually reloading. Assert displayed mode and prediction ID change together. AppTest alone does not prove a timed browser rerun; retain this browser acceptance check. The hosted Playwright check is retained but remains unperformed until deployment is authorized.
+- [x] After the local acceptance harness passes, replace production app wiring with the saved reader/view. Remove:
   refresh_season_data, data_version, _live_models, _run_forecast,
   button handler, live_version/refreshed_at button state,
   forecast/retrain imports, inline fallback, button help text and model-loading dependencies no longer needed by the page.
-- [ ] Retain last-good display state and saved-output caches; those are read-only presentation state, not removed button state.
-- [ ] Move forecast/status rendering inside st.fragment(run_every="60s"). Include automatic rollover/default event selection within the fragment or trigger a full rerun on current_event_id change. A date picker value captured outside the fragment must not prevent Monday rollover.
-- [ ] Change “Real grid confirmed”, “Starting Grid”, “locked” and “today's qualifying” wording to actual qualifying, the real session timestamp and a penalties caveat where needed.
-- [ ] On first load with no valid forecast, render exact target event + “Prediction temporarily unavailable”. On temporary read failure after a good load, preserve that event's last valid display and show last-checked status.
-- [ ] Verify there is no model/import/API path reachable from a visitor action. Use a test that makes any Jolpica fetch or training call raise, then renders and refreshes the app successfully.
-- [ ] Commit: feat: remove RUN and serve automatic saved forecasts.
+- [x] Retain last-good display state and saved-output caches; those are read-only presentation state, not removed button state.
+- [x] Move forecast/status rendering inside st.fragment(run_every="60s"). Include automatic rollover/default event selection within the fragment or trigger a full rerun on current_event_id change. A date picker value captured outside the fragment must not prevent Monday rollover.
+- [x] Change “Real grid confirmed”, “Starting Grid”, “locked” and “today's qualifying” wording to actual qualifying, the real session timestamp and a penalties caveat where needed.
+- [x] On first load with no valid forecast, render exact target event + “Prediction temporarily unavailable”. On temporary read failure after a good load, preserve that event's last valid display and show last-checked status.
+- [x] Verify there is no model/import/API path reachable from a visitor action. Use a test that makes any Jolpica fetch or training call raise, then renders and refreshes the app successfully.
+- [x] Commit: feat: remove RUN and serve automatic saved forecasts.
 
 ### Task 10 — Documentation, migration and acceptance handoff
 
 **Files:** README.md, docs/specs/prediction-logic.md, docs/specs/ml-models.md; tests above.
 
-- [ ] Update strategy docs with the five-hour wait, hourly retry, final check reserve, two-hour deadline, explicit actual_qualifying mode, UTC schedule fields, source validation, saved-only UI and unchanged Monday responsibilities.
-- [ ] Document operational exceptions and timing estimates. Explain that exceptional roster uncertainty fails closed until supported evidence is available; it is not a user-facing RUN workflow.
-- [ ] Migrate existing saved snapshots only when their provenance is evidenced. Recover Austin's October 19 JSON from e72637bae4d6475dc2610e4f06b3e4d571577c06 as a legacy initial if needed, preserving date-only generation precision and unknown metadata as unknown. Do not assert the legacy artifact passes the new contract without those caveats.
-- [ ] Use a dry run against saved fixtures before enabling the new schedule. A live historical reconstruction must be labeled retrospective and excluded from frozen evaluation.
-- [ ] Run:
+- [x] Update strategy docs with the five-hour wait, hourly retry, final check reserve, two-hour deadline, explicit actual_qualifying mode, UTC schedule fields, source validation, saved-only UI and unchanged Monday responsibilities.
+- [x] Document operational exceptions and timing estimates. Explain that exceptional roster uncertainty fails closed until supported evidence is available; it is not a user-facing RUN workflow.
+- [x] Migrate existing saved snapshots only when their provenance is evidenced. Recover Austin's October 19 JSON from e72637bae4d6475dc2610e4f06b3e4d571577c06 as a legacy initial if needed, preserving date-only generation precision and unknown metadata as unknown. Do not assert the legacy artifact passes the new contract without those caveats.
+- [x] Use a dry run against saved fixtures before enabling the new schedule. A live historical reconstruction must be labeled retrospective and excluded from frozen evaluation.
+- [x] Run:
 ~~~powershell
 python -m pytest ml/tests -v
 python -m compileall -q ml/src/pipeline ml/scripts streamlit_app
 git diff --check
 ~~~
   Review any dataset-dependent skips separately; all new event/controller/reader tests must run from fixtures without live network.
-- [ ] Validate workflow YAML with a GitHub-aware validator, not string-presence assertions alone. Confirm original cron expressions and original Monday operations remain intact.
-- [ ] Inspect the final diff: production changes are confined to this pipeline and display path. Commit the final documentation and verification evidence.
+- [x] Validate workflow YAML with a GitHub-aware validator, not string-presence assertions alone. Confirm original cron expressions and original Monday operations remain intact. GitHub's current concurrency documentation supports `queue: max`; local actionlint 1.7.12 predates that key, so compatibility validation also passed on copies with only the documented key removed.
+- [x] Inspect the final diff: production changes are confined to this pipeline and display path. Documentation/migration was committed externally as `dc8ae1c`; this continuation creates no commit.
 - [ ] After implementation review and deployment authorization, enable the new workflow, seed a valid feed, and verify one hosted open-page transition with saved test output before considering RUN removal deployed successfully.
-- [ ] Final implementation report must include test results, saved artifact paths, workflow changes, deployed feed verification, and any still-unperformed hosted checks. Do not claim automation is live from a passing local test.
+- [x] Final implementation report must include test results, saved artifact paths, workflow changes, deployed feed verification, and any still-unperformed hosted checks. Do not claim automation is live from a passing local test.
 
 ## 7. Acceptance matrix
 

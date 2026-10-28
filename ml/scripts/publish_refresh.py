@@ -55,7 +55,7 @@ def _allowed(kind: str, path: str) -> bool:
             path == "web/public/data/prediction_feed.json"
             or re.fullmatch(
                 r"web/public/data/prediction_snapshots/[1-9][0-9]*-[1-9][0-9]*/"
-                r"(?:status|feed|final)\.json",
+                r"(?:event|status|feed|final)\.json",
                 path,
             )
             or re.fullmatch(

@@ -13,16 +13,26 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import sys
 import tempfile
 from typing import Any, Mapping
 
 
 ROOT = Path(__file__).resolve().parents[2]
 ML_DIR = ROOT / "ml"
+SCRIPTS_DIR = ML_DIR / "scripts"
 DATA_ROOT = ROOT / "web" / "public" / "data"
 FEED_PATH = DATA_ROOT / "prediction_feed.json"
 SNAPSHOT_ROOT = DATA_ROOT / "prediction_snapshots"
 DEFAULT_REPOSITORY = "Chloephmm/formula1_newbie"
+
+# GitHub Actions launches this file directly from the repository root.  In that
+# mode Python adds ml/scripts, not ml, to sys.path, so the repository's src
+# package would otherwise be unreachable once the due gate enters --run.
+for import_root in (ML_DIR, SCRIPTS_DIR):
+    import_path = str(import_root)
+    if import_path not in sys.path:
+        sys.path.insert(0, import_path)
 
 
 def _utc(value: str | datetime) -> datetime:
@@ -289,6 +299,14 @@ def _atomic_bytes(path: Path, content: bytes) -> None:
                 pass
 
 
+def _bootstrap_missing_event(now: datetime):
+    """Prepare the next event through the existing Monday-safe initial path."""
+
+    from precompute_next_race import main as precompute_next_event
+
+    return precompute_next_event(now.date().isoformat(), now=now)
+
+
 def _run(now: datetime):
     import pandas as pd
 
@@ -534,6 +552,21 @@ def main() -> None:
         return
     if not needs_work:
         print(json.dumps({"outcome": "not_due", "reason": reason}))
+        return
+    if reason == "event_bootstrap_required":
+        result = _bootstrap_missing_event(evaluated)
+        outcome = result.get("outcome", "bootstrap_complete")
+        print(
+            json.dumps(
+                {
+                    "bootstrap": True,
+                    "outcome": outcome,
+                },
+                sort_keys=True,
+            )
+        )
+        if outcome == "missing_initial":
+            _run(evaluated)
         return
     _run(evaluated)
 
