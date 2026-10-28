@@ -10,7 +10,6 @@ Run nothing here directly — these functions are called by the caching layer
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
 
 import pandas as pd
 import requests
@@ -166,36 +165,8 @@ def get_constructor_standings(season: int) -> pd.DataFrame:
     return _coerce_numeric(pd.DataFrame(rows), ["position", "points", "wins"])
 
 
-def _api_datetime(session: dict | None) -> str | None:
-    """Return an API session timestamp only when both date and time are present."""
-    if not session or not session.get("date") or not session.get("time"):
-        return None
-    return f'{session["date"]}T{session["time"]}'
-
-
-def _retrieval_timestamp(value: str | datetime | None) -> str:
-    if value is None:
-        parsed = datetime.now(timezone.utc)
-    elif isinstance(value, datetime):
-        parsed = value
-    else:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    if parsed.tzinfo is None or parsed.utcoffset() is None:
-        raise ValueError("fetched_at must include a timezone")
-    return parsed.astimezone(timezone.utc).isoformat(timespec="seconds").replace(
-        "+00:00", "Z"
-    )
-
-
-def get_schedule(
-    season: int, *, fetched_at: str | datetime | None = None
-) -> pd.DataFrame:
-    """Season calendar with explicit Grand Prix qualifying/race UTC timestamps.
-
-    ``Qualifying`` is intentionally the only source for ``qualifying_start_at``;
-    SprintQualifying and date-based guesses are not interchangeable sessions.
-    """
-    schedule_updated_at = _retrieval_timestamp(fetched_at)
+def get_schedule(season: int) -> pd.DataFrame:
+    """The season calendar: round, race name, circuit, date, location."""
     rows = []
     for mr in _iter_pages(f"{season}"):
         for race in mr["RaceTable"]["Races"]:
@@ -209,10 +180,6 @@ def get_schedule(
                 "country": loc.get("country"),
                 "locality": loc.get("locality"),
                 "date": race.get("date"),
-                "qualifying_start_at": _api_datetime(race.get("Qualifying")),
-                "race_start_at": _api_datetime(race),
-                "schedule_updated_at": schedule_updated_at,
-                "schedule_source": "jolpica",
             })
     return pd.DataFrame(rows)
 
