@@ -10,13 +10,8 @@ from datetime import date, datetime
 import json
 import os
 from pathlib import Path
-import sys
 
 import streamlit as st
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from streamlit_app.prediction_data import (
     current_saved_event_id,
@@ -25,6 +20,7 @@ from streamlit_app.prediction_data import (
 from streamlit_app.prediction_view import render_saved_prediction
 
 
+ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = ROOT / "web" / "public" / "data"
 st.set_page_config(page_title="F1 Race Predictor", page_icon="🏁", layout="wide")
 
