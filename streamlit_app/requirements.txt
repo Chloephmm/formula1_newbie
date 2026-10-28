@@ -1,2 +1,9 @@
-streamlit==1.54.0
+streamlit>=1.33
+pandas
+numpy
+joblib
+scikit-learn
+lightgbm
+xgboost
+pyarrow
 requests

@@ -36,9 +36,6 @@ cache/
 # Test cache
 .pytest_cache/
 
-# Isolated implementation worktrees
-.worktrees/
-
 # Node / Next.js
 node_modules/
 web/node_modules/
