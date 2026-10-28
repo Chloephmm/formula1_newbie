@@ -10,14 +10,18 @@ permissions:
   contents: write
 
 concurrency:
-  group: sync-stats
+  group: f1-data-writes
   cancel-in-progress: false
+  queue: max
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
 
       - uses: actions/setup-node@v5
         with:
@@ -33,14 +37,5 @@ jobs:
         working-directory: web
         run: npm run sync-stats
 
-      - name: Commit if changed
-        run: |
-          git config user.name "f1-stats-bot"
-          git config user.email "actions@github.com"
-          git add web/public/data/stats.json
-          if git diff --cached --quiet; then
-            echo "No stats changes — nothing to commit."
-          else
-            git commit -m "chore: refresh F1 stats"
-            git push
-          fi
+      - name: Publish the coordinated stats refresh
+        run: python ml/scripts/publish_refresh.py --kind stats
