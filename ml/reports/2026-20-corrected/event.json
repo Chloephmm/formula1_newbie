@@ -1,0 +1,444 @@
+{
+  "season": 2026,
+  "round": 20,
+  "race_name": "Brazilian Grand Prix",
+  "circuit_id": "interlagos",
+  "qualifying_start_at": "2026-11-07T18:00:00Z",
+  "qualifying_end_at": "2026-11-07T19:30:00Z",
+  "qualifying_end_observed_at": null,
+  "end_time_estimated": true,
+  "race_start_at": "2026-11-08T17:00:00Z",
+  "schedule_updated_at": "2026-11-02T03:46:26Z",
+  "schedule_source": "jolpica",
+  "schedule_hash": "c9664dbb3328aecd7e2b29db9a235ec0cf504fd1a25adaafb5419c9478c280e6",
+  "roster": [
+    {
+      "driver_id": "albon",
+      "code": "ALB",
+      "driver_name": "Alexander Albon",
+      "constructor_id": "williams",
+      "constructor_name": "Williams",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "alonso",
+      "code": "ALO",
+      "driver_name": "Fernando Alonso",
+      "constructor_id": "aston_martin",
+      "constructor_name": "Aston Martin",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "antonelli",
+      "code": "ANT",
+      "driver_name": "Andrea Kimi Antonelli",
+      "constructor_id": "mercedes",
+      "constructor_name": "Mercedes",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "arvid_lindblad",
+      "code": "LIN",
+      "driver_name": "Arvid Lindblad",
+      "constructor_id": "rb",
+      "constructor_name": "RB F1 Team",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "bearman",
+      "code": "BEA",
+      "driver_name": "Oliver Bearman",
+      "constructor_id": "haas",
+      "constructor_name": "Haas F1 Team",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "bortoleto",
+      "code": "BOR",
+      "driver_name": "Gabriel Bortoleto",
+      "constructor_id": "audi",
+      "constructor_name": "Audi",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "bottas",
+      "code": "BOT",
+      "driver_name": "Valtteri Bottas",
+      "constructor_id": "cadillac",
+      "constructor_name": "Cadillac F1 Team",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "colapinto",
+      "code": "COL",
+      "driver_name": "Franco Colapinto",
+      "constructor_id": "alpine",
+      "constructor_name": "Alpine F1 Team",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "gasly",
+      "code": "GAS",
+      "driver_name": "Pierre Gasly",
+      "constructor_id": "alpine",
+      "constructor_name": "Alpine F1 Team",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "hadjar",
+      "code": "HAD",
+      "driver_name": "Isack Hadjar",
+      "constructor_id": "red_bull",
+      "constructor_name": "Red Bull",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "hamilton",
+      "code": "HAM",
+      "driver_name": "Lewis Hamilton",
+      "constructor_id": "ferrari",
+      "constructor_name": "Ferrari",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "hulkenberg",
+      "code": "HUL",
+      "driver_name": "Nico Hülkenberg",
+      "constructor_id": "audi",
+      "constructor_name": "Audi",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "lawson",
+      "code": "LAW",
+      "driver_name": "Liam Lawson",
+      "constructor_id": "rb",
+      "constructor_name": "RB F1 Team",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "leclerc",
+      "code": "LEC",
+      "driver_name": "Charles Leclerc",
+      "constructor_id": "ferrari",
+      "constructor_name": "Ferrari",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "max_verstappen",
+      "code": "VER",
+      "driver_name": "Max Verstappen",
+      "constructor_id": "red_bull",
+      "constructor_name": "Red Bull",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "norris",
+      "code": "NOR",
+      "driver_name": "Lando Norris",
+      "constructor_id": "mclaren",
+      "constructor_name": "McLaren",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "perez",
+      "code": "PER",
+      "driver_name": "Sergio Pérez",
+      "constructor_id": "cadillac",
+      "constructor_name": "Cadillac F1 Team",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "piastri",
+      "code": "PIA",
+      "driver_name": "Oscar Piastri",
+      "constructor_id": "mclaren",
+      "constructor_name": "McLaren",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "russell",
+      "code": "RUS",
+      "driver_name": "George Russell",
+      "constructor_id": "mercedes",
+      "constructor_name": "Mercedes",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "ryo_hirakawa",
+      "code": "HIR",
+      "driver_name": "Ryo Hirakawa",
+      "constructor_id": "haas",
+      "constructor_name": "Haas F1 Team",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "sainz",
+      "code": "SAI",
+      "driver_name": "Carlos Sainz",
+      "constructor_id": "williams",
+      "constructor_name": "Williams",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    },
+    {
+      "driver_id": "stroll",
+      "code": "STR",
+      "driver_name": "Lance Stroll",
+      "constructor_id": "aston_martin",
+      "constructor_name": "Aston Martin",
+      "number": null,
+      "eligible": true,
+      "expected": true,
+      "participation": "provisional",
+      "exception": null,
+      "provenance": {
+        "source": "previous_completed_race",
+        "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+        "observed_at": "2026-11-02T18:55:38Z",
+        "season": 2026,
+        "round": 19
+      }
+    }
+  ],
+  "roster_source": {
+    "source": "previous_completed_race",
+    "source_url": "https://api.jolpi.ca/ergast/f1/2026/19/results/",
+    "observed_at": "2026-11-02T18:55:38Z",
+    "season": 2026,
+    "round": 19,
+    "provisional": true
+  },
+  "roster_version": "8e07aabd8a0f33c952fa5b189ec914437f06aff5f68c325ad7399651a07cbbf9",
+  "country": "Brazil"
+}

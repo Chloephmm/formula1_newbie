@@ -1,0 +1,3757 @@
+{
+  "schema_version": 2,
+  "season": 2026,
+  "round": 20,
+  "generated_at": "2026-11-02T18:55:38Z",
+  "mode": "predicted_qualifying",
+  "model_manifest": {
+    "code_hash": "f04c01c8e80a62180d6640febd5a787b118bf5371d813545243b2148f06c5996",
+    "parameters": {
+      "stage1": {
+        "n_estimators": 200,
+        "learning_rate": 0.05,
+        "num_leaves": 15,
+        "max_depth": 4,
+        "min_child_samples": 40,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0,
+        "random_state": 42,
+        "verbosity": -1
+      },
+      "stage2": {
+        "n_estimators": 200,
+        "learning_rate": 0.05,
+        "num_leaves": 15,
+        "max_depth": 4,
+        "min_child_samples": 40,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 1.0,
+        "random_state": 42,
+        "verbosity": -1
+      }
+    },
+    "feature_columns": [
+      "grid_position",
+      "quali_time_gap_to_pole",
+      "recent_form",
+      "recent_points",
+      "team_strength",
+      "track_history",
+      "dnf_rate",
+      "recent_quali_gap",
+      "recent_quali_pos",
+      "quali_track_hist",
+      "team_quali_strength"
+    ],
+    "library_versions": {
+      "lightgbm": "4.6.0",
+      "numpy": "2.4.2",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.8.0"
+    },
+    "stages": [
+      "stage1",
+      "stage2"
+    ]
+  },
+  "model_version": "262d22ebc55d4687b8a632e9101889f3fb4fdbc9a8f3bd2a8b80a3ace1e45d42",
+  "training_cutoff": "2026-11-02T18:55:38Z",
+  "training_data_hash": "7cb41e33555a6c6658424cb279ec2134a10cf7922bf8bd5315daecabdb364e74",
+  "training_manifest": {
+    "row_count": 11024,
+    "tables": {
+      "qualifying": {
+        "row_count": 5501,
+        "events": [
+          {
+            "season": 2014,
+            "round": 1,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 2,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 3,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 4,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 5,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 6,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 7,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 8,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 9,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 10,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 11,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 12,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 13,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 14,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 15,
+            "row_count": 22
+          },
+          {
+            "season": 2014,
+            "round": 16,
+            "row_count": 21
+          },
+          {
+            "season": 2014,
+            "round": 17,
+            "row_count": 18
+          },
+          {
+            "season": 2014,
+            "round": 18,
+            "row_count": 18
+          },
+          {
+            "season": 2014,
+            "round": 19,
+            "row_count": 18
+          },
+          {
+            "season": 2015,
+            "round": 1,
+            "row_count": 18
+          },
+          {
+            "season": 2015,
+            "round": 2,
+            "row_count": 19
+          },
+          {
+            "season": 2015,
+            "round": 3,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 4,
+            "row_count": 19
+          },
+          {
+            "season": 2015,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 7,
+            "row_count": 19
+          },
+          {
+            "season": 2015,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 15,
+            "row_count": 19
+          },
+          {
+            "season": 2015,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 18,
+            "row_count": 20
+          },
+          {
+            "season": 2015,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2016,
+            "round": 1,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 2,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 3,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 4,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 5,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 6,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 7,
+            "row_count": 21
+          },
+          {
+            "season": 2016,
+            "round": 8,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 9,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 10,
+            "row_count": 21
+          },
+          {
+            "season": 2016,
+            "round": 11,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 12,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 13,
+            "row_count": 21
+          },
+          {
+            "season": 2016,
+            "round": 14,
+            "row_count": 21
+          },
+          {
+            "season": 2016,
+            "round": 15,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 16,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 17,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 18,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 19,
+            "row_count": 21
+          },
+          {
+            "season": 2016,
+            "round": 20,
+            "row_count": 22
+          },
+          {
+            "season": 2016,
+            "round": 21,
+            "row_count": 22
+          },
+          {
+            "season": 2017,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 3,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 8,
+            "row_count": 19
+          },
+          {
+            "season": 2017,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 18,
+            "row_count": 19
+          },
+          {
+            "season": 2017,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2017,
+            "round": 20,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 3,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 18,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 20,
+            "row_count": 20
+          },
+          {
+            "season": 2018,
+            "round": 21,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 3,
+            "row_count": 18
+          },
+          {
+            "season": 2019,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 18,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 20,
+            "row_count": 20
+          },
+          {
+            "season": 2019,
+            "round": 21,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 3,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2020,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 3,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 5,
+            "row_count": 19
+          },
+          {
+            "season": 2021,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 18,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 20,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 21,
+            "row_count": 20
+          },
+          {
+            "season": 2021,
+            "round": 22,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 3,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 18,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 20,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 21,
+            "row_count": 20
+          },
+          {
+            "season": 2022,
+            "round": 22,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 3,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 18,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 20,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 21,
+            "row_count": 20
+          },
+          {
+            "season": 2023,
+            "round": 22,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 3,
+            "row_count": 19
+          },
+          {
+            "season": 2024,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 18,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 20,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 21,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 22,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 23,
+            "row_count": 20
+          },
+          {
+            "season": 2024,
+            "round": 24,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 1,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 2,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 3,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 4,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 5,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 6,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 7,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 8,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 9,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 10,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 11,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 12,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 13,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 15,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 16,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 17,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 18,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 19,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 20,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 21,
+            "row_count": 19
+          },
+          {
+            "season": 2025,
+            "round": 22,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 23,
+            "row_count": 20
+          },
+          {
+            "season": 2025,
+            "round": 24,
+            "row_count": 20
+          },
+          {
+            "season": 2026,
+            "round": 1,
+            "row_count": 19
+          },
+          {
+            "season": 2026,
+            "round": 2,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 3,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 4,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 5,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 6,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 7,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 8,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 9,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 10,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 11,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 12,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 13,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 14,
+            "row_count": 20
+          },
+          {
+            "season": 2026,
+            "round": 15,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 16,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 17,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 18,
+            "row_count": 22
+          },
+          {
+            "season": 2026,
+            "round": 19,
+            "row_count": 21
+          }
+        ]
+      },
+      "results": {
+        "row_count": 5523,
+        "events": [
+          {
+            "season": 2014,
+            "round": 1,
+            "row_count": 22,
+            "min_date": "2014-03-16T00:00:00Z",
+            "max_date": "2014-03-16T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 2,
+            "row_count": 22,
+            "min_date": "2014-03-30T00:00:00Z",
+            "max_date": "2014-03-30T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 3,
+            "row_count": 22,
+            "min_date": "2014-04-06T00:00:00Z",
+            "max_date": "2014-04-06T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 4,
+            "row_count": 22,
+            "min_date": "2014-04-20T00:00:00Z",
+            "max_date": "2014-04-20T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 5,
+            "row_count": 22,
+            "min_date": "2014-05-11T00:00:00Z",
+            "max_date": "2014-05-11T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 6,
+            "row_count": 22,
+            "min_date": "2014-05-25T00:00:00Z",
+            "max_date": "2014-05-25T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 7,
+            "row_count": 22,
+            "min_date": "2014-06-08T00:00:00Z",
+            "max_date": "2014-06-08T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 8,
+            "row_count": 22,
+            "min_date": "2014-06-22T00:00:00Z",
+            "max_date": "2014-06-22T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 9,
+            "row_count": 22,
+            "min_date": "2014-07-06T00:00:00Z",
+            "max_date": "2014-07-06T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 10,
+            "row_count": 22,
+            "min_date": "2014-07-20T00:00:00Z",
+            "max_date": "2014-07-20T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 11,
+            "row_count": 22,
+            "min_date": "2014-07-27T00:00:00Z",
+            "max_date": "2014-07-27T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 12,
+            "row_count": 22,
+            "min_date": "2014-08-24T00:00:00Z",
+            "max_date": "2014-08-24T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 13,
+            "row_count": 22,
+            "min_date": "2014-09-07T00:00:00Z",
+            "max_date": "2014-09-07T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 14,
+            "row_count": 22,
+            "min_date": "2014-09-21T00:00:00Z",
+            "max_date": "2014-09-21T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 15,
+            "row_count": 22,
+            "min_date": "2014-10-05T00:00:00Z",
+            "max_date": "2014-10-05T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 16,
+            "row_count": 21,
+            "min_date": "2014-10-12T00:00:00Z",
+            "max_date": "2014-10-12T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 17,
+            "row_count": 18,
+            "min_date": "2014-11-02T00:00:00Z",
+            "max_date": "2014-11-02T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 18,
+            "row_count": 18,
+            "min_date": "2014-11-09T00:00:00Z",
+            "max_date": "2014-11-09T00:00:00Z"
+          },
+          {
+            "season": 2014,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2014-11-23T00:00:00Z",
+            "max_date": "2014-11-23T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 1,
+            "row_count": 18,
+            "min_date": "2015-03-15T00:00:00Z",
+            "max_date": "2015-03-15T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2015-03-29T00:00:00Z",
+            "max_date": "2015-03-29T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2015-04-12T00:00:00Z",
+            "max_date": "2015-04-12T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2015-04-19T00:00:00Z",
+            "max_date": "2015-04-19T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2015-05-10T00:00:00Z",
+            "max_date": "2015-05-10T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2015-05-24T00:00:00Z",
+            "max_date": "2015-05-24T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2015-06-07T00:00:00Z",
+            "max_date": "2015-06-07T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2015-06-21T00:00:00Z",
+            "max_date": "2015-06-21T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2015-07-05T00:00:00Z",
+            "max_date": "2015-07-05T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2015-07-26T00:00:00Z",
+            "max_date": "2015-07-26T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2015-08-23T00:00:00Z",
+            "max_date": "2015-08-23T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2015-09-06T00:00:00Z",
+            "max_date": "2015-09-06T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2015-09-20T00:00:00Z",
+            "max_date": "2015-09-20T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2015-09-27T00:00:00Z",
+            "max_date": "2015-09-27T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2015-10-11T00:00:00Z",
+            "max_date": "2015-10-11T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2015-10-25T00:00:00Z",
+            "max_date": "2015-10-25T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2015-11-01T00:00:00Z",
+            "max_date": "2015-11-01T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2015-11-15T00:00:00Z",
+            "max_date": "2015-11-15T00:00:00Z"
+          },
+          {
+            "season": 2015,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2015-11-29T00:00:00Z",
+            "max_date": "2015-11-29T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 1,
+            "row_count": 22,
+            "min_date": "2016-03-20T00:00:00Z",
+            "max_date": "2016-03-20T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 2,
+            "row_count": 22,
+            "min_date": "2016-04-03T00:00:00Z",
+            "max_date": "2016-04-03T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 3,
+            "row_count": 22,
+            "min_date": "2016-04-17T00:00:00Z",
+            "max_date": "2016-04-17T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 4,
+            "row_count": 22,
+            "min_date": "2016-05-01T00:00:00Z",
+            "max_date": "2016-05-01T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 5,
+            "row_count": 22,
+            "min_date": "2016-05-15T00:00:00Z",
+            "max_date": "2016-05-15T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 6,
+            "row_count": 22,
+            "min_date": "2016-05-29T00:00:00Z",
+            "max_date": "2016-05-29T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 7,
+            "row_count": 22,
+            "min_date": "2016-06-12T00:00:00Z",
+            "max_date": "2016-06-12T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 8,
+            "row_count": 22,
+            "min_date": "2016-06-19T00:00:00Z",
+            "max_date": "2016-06-19T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 9,
+            "row_count": 22,
+            "min_date": "2016-07-03T00:00:00Z",
+            "max_date": "2016-07-03T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 10,
+            "row_count": 22,
+            "min_date": "2016-07-10T00:00:00Z",
+            "max_date": "2016-07-10T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 11,
+            "row_count": 22,
+            "min_date": "2016-07-24T00:00:00Z",
+            "max_date": "2016-07-24T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 12,
+            "row_count": 22,
+            "min_date": "2016-07-31T00:00:00Z",
+            "max_date": "2016-07-31T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 13,
+            "row_count": 22,
+            "min_date": "2016-08-28T00:00:00Z",
+            "max_date": "2016-08-28T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 14,
+            "row_count": 22,
+            "min_date": "2016-09-04T00:00:00Z",
+            "max_date": "2016-09-04T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 15,
+            "row_count": 22,
+            "min_date": "2016-09-18T00:00:00Z",
+            "max_date": "2016-09-18T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 16,
+            "row_count": 22,
+            "min_date": "2016-10-02T00:00:00Z",
+            "max_date": "2016-10-02T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 17,
+            "row_count": 22,
+            "min_date": "2016-10-09T00:00:00Z",
+            "max_date": "2016-10-09T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 18,
+            "row_count": 22,
+            "min_date": "2016-10-23T00:00:00Z",
+            "max_date": "2016-10-23T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 19,
+            "row_count": 22,
+            "min_date": "2016-10-30T00:00:00Z",
+            "max_date": "2016-10-30T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 20,
+            "row_count": 22,
+            "min_date": "2016-11-13T00:00:00Z",
+            "max_date": "2016-11-13T00:00:00Z"
+          },
+          {
+            "season": 2016,
+            "round": 21,
+            "row_count": 22,
+            "min_date": "2016-11-27T00:00:00Z",
+            "max_date": "2016-11-27T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2017-03-26T00:00:00Z",
+            "max_date": "2017-03-26T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2017-04-09T00:00:00Z",
+            "max_date": "2017-04-09T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2017-04-16T00:00:00Z",
+            "max_date": "2017-04-16T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2017-04-30T00:00:00Z",
+            "max_date": "2017-04-30T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2017-05-14T00:00:00Z",
+            "max_date": "2017-05-14T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2017-05-28T00:00:00Z",
+            "max_date": "2017-05-28T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2017-06-11T00:00:00Z",
+            "max_date": "2017-06-11T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2017-06-25T00:00:00Z",
+            "max_date": "2017-06-25T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2017-07-09T00:00:00Z",
+            "max_date": "2017-07-09T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2017-07-16T00:00:00Z",
+            "max_date": "2017-07-16T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2017-07-30T00:00:00Z",
+            "max_date": "2017-07-30T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2017-08-27T00:00:00Z",
+            "max_date": "2017-08-27T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2017-09-03T00:00:00Z",
+            "max_date": "2017-09-03T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2017-09-17T00:00:00Z",
+            "max_date": "2017-09-17T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2017-10-01T00:00:00Z",
+            "max_date": "2017-10-01T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2017-10-08T00:00:00Z",
+            "max_date": "2017-10-08T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2017-10-22T00:00:00Z",
+            "max_date": "2017-10-22T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2017-10-29T00:00:00Z",
+            "max_date": "2017-10-29T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2017-11-12T00:00:00Z",
+            "max_date": "2017-11-12T00:00:00Z"
+          },
+          {
+            "season": 2017,
+            "round": 20,
+            "row_count": 20,
+            "min_date": "2017-11-26T00:00:00Z",
+            "max_date": "2017-11-26T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2018-03-25T00:00:00Z",
+            "max_date": "2018-03-25T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2018-04-08T00:00:00Z",
+            "max_date": "2018-04-08T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2018-04-15T00:00:00Z",
+            "max_date": "2018-04-15T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2018-04-29T00:00:00Z",
+            "max_date": "2018-04-29T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2018-05-13T00:00:00Z",
+            "max_date": "2018-05-13T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2018-05-27T00:00:00Z",
+            "max_date": "2018-05-27T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2018-06-10T00:00:00Z",
+            "max_date": "2018-06-10T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2018-06-24T00:00:00Z",
+            "max_date": "2018-06-24T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2018-07-01T00:00:00Z",
+            "max_date": "2018-07-01T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2018-07-08T00:00:00Z",
+            "max_date": "2018-07-08T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2018-07-22T00:00:00Z",
+            "max_date": "2018-07-22T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2018-07-29T00:00:00Z",
+            "max_date": "2018-07-29T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2018-08-26T00:00:00Z",
+            "max_date": "2018-08-26T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2018-09-02T00:00:00Z",
+            "max_date": "2018-09-02T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2018-09-16T00:00:00Z",
+            "max_date": "2018-09-16T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2018-09-30T00:00:00Z",
+            "max_date": "2018-09-30T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2018-10-07T00:00:00Z",
+            "max_date": "2018-10-07T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2018-10-21T00:00:00Z",
+            "max_date": "2018-10-21T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2018-10-28T00:00:00Z",
+            "max_date": "2018-10-28T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 20,
+            "row_count": 20,
+            "min_date": "2018-11-11T00:00:00Z",
+            "max_date": "2018-11-11T00:00:00Z"
+          },
+          {
+            "season": 2018,
+            "round": 21,
+            "row_count": 20,
+            "min_date": "2018-11-25T00:00:00Z",
+            "max_date": "2018-11-25T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2019-03-17T00:00:00Z",
+            "max_date": "2019-03-17T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2019-03-31T00:00:00Z",
+            "max_date": "2019-03-31T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2019-04-14T00:00:00Z",
+            "max_date": "2019-04-14T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2019-04-28T00:00:00Z",
+            "max_date": "2019-04-28T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2019-05-12T00:00:00Z",
+            "max_date": "2019-05-12T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2019-05-26T00:00:00Z",
+            "max_date": "2019-05-26T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2019-06-09T00:00:00Z",
+            "max_date": "2019-06-09T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2019-06-23T00:00:00Z",
+            "max_date": "2019-06-23T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2019-06-30T00:00:00Z",
+            "max_date": "2019-06-30T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2019-07-14T00:00:00Z",
+            "max_date": "2019-07-14T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2019-07-28T00:00:00Z",
+            "max_date": "2019-07-28T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2019-08-04T00:00:00Z",
+            "max_date": "2019-08-04T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2019-09-01T00:00:00Z",
+            "max_date": "2019-09-01T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2019-09-08T00:00:00Z",
+            "max_date": "2019-09-08T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2019-09-22T00:00:00Z",
+            "max_date": "2019-09-22T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2019-09-29T00:00:00Z",
+            "max_date": "2019-09-29T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2019-10-13T00:00:00Z",
+            "max_date": "2019-10-13T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2019-10-27T00:00:00Z",
+            "max_date": "2019-10-27T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2019-11-03T00:00:00Z",
+            "max_date": "2019-11-03T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 20,
+            "row_count": 20,
+            "min_date": "2019-11-17T00:00:00Z",
+            "max_date": "2019-11-17T00:00:00Z"
+          },
+          {
+            "season": 2019,
+            "round": 21,
+            "row_count": 20,
+            "min_date": "2019-12-01T00:00:00Z",
+            "max_date": "2019-12-01T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2020-07-05T00:00:00Z",
+            "max_date": "2020-07-05T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2020-07-12T00:00:00Z",
+            "max_date": "2020-07-12T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2020-07-19T00:00:00Z",
+            "max_date": "2020-07-19T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2020-08-02T00:00:00Z",
+            "max_date": "2020-08-02T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2020-08-09T00:00:00Z",
+            "max_date": "2020-08-09T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2020-08-16T00:00:00Z",
+            "max_date": "2020-08-16T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2020-08-30T00:00:00Z",
+            "max_date": "2020-08-30T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2020-09-06T00:00:00Z",
+            "max_date": "2020-09-06T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2020-09-13T00:00:00Z",
+            "max_date": "2020-09-13T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2020-09-27T00:00:00Z",
+            "max_date": "2020-09-27T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2020-10-11T00:00:00Z",
+            "max_date": "2020-10-11T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2020-10-25T00:00:00Z",
+            "max_date": "2020-10-25T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2020-11-01T00:00:00Z",
+            "max_date": "2020-11-01T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2020-11-15T00:00:00Z",
+            "max_date": "2020-11-15T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2020-11-29T00:00:00Z",
+            "max_date": "2020-11-29T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2020-12-06T00:00:00Z",
+            "max_date": "2020-12-06T00:00:00Z"
+          },
+          {
+            "season": 2020,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2020-12-13T00:00:00Z",
+            "max_date": "2020-12-13T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2021-03-28T00:00:00Z",
+            "max_date": "2021-03-28T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2021-04-18T00:00:00Z",
+            "max_date": "2021-04-18T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2021-05-02T00:00:00Z",
+            "max_date": "2021-05-02T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2021-05-09T00:00:00Z",
+            "max_date": "2021-05-09T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2021-05-23T00:00:00Z",
+            "max_date": "2021-05-23T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2021-06-06T00:00:00Z",
+            "max_date": "2021-06-06T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2021-06-20T00:00:00Z",
+            "max_date": "2021-06-20T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2021-06-27T00:00:00Z",
+            "max_date": "2021-06-27T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2021-07-04T00:00:00Z",
+            "max_date": "2021-07-04T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2021-07-18T00:00:00Z",
+            "max_date": "2021-07-18T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2021-08-01T00:00:00Z",
+            "max_date": "2021-08-01T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2021-08-29T00:00:00Z",
+            "max_date": "2021-08-29T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2021-09-05T00:00:00Z",
+            "max_date": "2021-09-05T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2021-09-12T00:00:00Z",
+            "max_date": "2021-09-12T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2021-09-26T00:00:00Z",
+            "max_date": "2021-09-26T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2021-10-10T00:00:00Z",
+            "max_date": "2021-10-10T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2021-10-24T00:00:00Z",
+            "max_date": "2021-10-24T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2021-11-07T00:00:00Z",
+            "max_date": "2021-11-07T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2021-11-14T00:00:00Z",
+            "max_date": "2021-11-14T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 20,
+            "row_count": 20,
+            "min_date": "2021-11-21T00:00:00Z",
+            "max_date": "2021-11-21T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 21,
+            "row_count": 20,
+            "min_date": "2021-12-05T00:00:00Z",
+            "max_date": "2021-12-05T00:00:00Z"
+          },
+          {
+            "season": 2021,
+            "round": 22,
+            "row_count": 20,
+            "min_date": "2021-12-12T00:00:00Z",
+            "max_date": "2021-12-12T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2022-03-20T00:00:00Z",
+            "max_date": "2022-03-20T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2022-03-27T00:00:00Z",
+            "max_date": "2022-03-27T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2022-04-10T00:00:00Z",
+            "max_date": "2022-04-10T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2022-04-24T00:00:00Z",
+            "max_date": "2022-04-24T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2022-05-08T00:00:00Z",
+            "max_date": "2022-05-08T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2022-05-22T00:00:00Z",
+            "max_date": "2022-05-22T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2022-05-29T00:00:00Z",
+            "max_date": "2022-05-29T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2022-06-12T00:00:00Z",
+            "max_date": "2022-06-12T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2022-06-19T00:00:00Z",
+            "max_date": "2022-06-19T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2022-07-03T00:00:00Z",
+            "max_date": "2022-07-03T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2022-07-10T00:00:00Z",
+            "max_date": "2022-07-10T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2022-07-24T00:00:00Z",
+            "max_date": "2022-07-24T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2022-07-31T00:00:00Z",
+            "max_date": "2022-07-31T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2022-08-28T00:00:00Z",
+            "max_date": "2022-08-28T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2022-09-04T00:00:00Z",
+            "max_date": "2022-09-04T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2022-09-11T00:00:00Z",
+            "max_date": "2022-09-11T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2022-10-02T00:00:00Z",
+            "max_date": "2022-10-02T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2022-10-09T00:00:00Z",
+            "max_date": "2022-10-09T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2022-10-23T00:00:00Z",
+            "max_date": "2022-10-23T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 20,
+            "row_count": 20,
+            "min_date": "2022-10-30T00:00:00Z",
+            "max_date": "2022-10-30T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 21,
+            "row_count": 20,
+            "min_date": "2022-11-13T00:00:00Z",
+            "max_date": "2022-11-13T00:00:00Z"
+          },
+          {
+            "season": 2022,
+            "round": 22,
+            "row_count": 20,
+            "min_date": "2022-11-20T00:00:00Z",
+            "max_date": "2022-11-20T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2023-03-05T00:00:00Z",
+            "max_date": "2023-03-05T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2023-03-19T00:00:00Z",
+            "max_date": "2023-03-19T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2023-04-02T00:00:00Z",
+            "max_date": "2023-04-02T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2023-04-30T00:00:00Z",
+            "max_date": "2023-04-30T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2023-05-07T00:00:00Z",
+            "max_date": "2023-05-07T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2023-05-28T00:00:00Z",
+            "max_date": "2023-05-28T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2023-06-04T00:00:00Z",
+            "max_date": "2023-06-04T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2023-06-18T00:00:00Z",
+            "max_date": "2023-06-18T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2023-07-02T00:00:00Z",
+            "max_date": "2023-07-02T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2023-07-09T00:00:00Z",
+            "max_date": "2023-07-09T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2023-07-23T00:00:00Z",
+            "max_date": "2023-07-23T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2023-07-30T00:00:00Z",
+            "max_date": "2023-07-30T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2023-08-27T00:00:00Z",
+            "max_date": "2023-08-27T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2023-09-03T00:00:00Z",
+            "max_date": "2023-09-03T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2023-09-17T00:00:00Z",
+            "max_date": "2023-09-17T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2023-09-24T00:00:00Z",
+            "max_date": "2023-09-24T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2023-10-08T00:00:00Z",
+            "max_date": "2023-10-08T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2023-10-22T00:00:00Z",
+            "max_date": "2023-10-22T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2023-10-29T00:00:00Z",
+            "max_date": "2023-10-29T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 20,
+            "row_count": 20,
+            "min_date": "2023-11-05T00:00:00Z",
+            "max_date": "2023-11-05T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 21,
+            "row_count": 20,
+            "min_date": "2023-11-19T00:00:00Z",
+            "max_date": "2023-11-19T00:00:00Z"
+          },
+          {
+            "season": 2023,
+            "round": 22,
+            "row_count": 20,
+            "min_date": "2023-11-26T00:00:00Z",
+            "max_date": "2023-11-26T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2024-03-02T00:00:00Z",
+            "max_date": "2024-03-02T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2024-03-09T00:00:00Z",
+            "max_date": "2024-03-09T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 3,
+            "row_count": 19,
+            "min_date": "2024-03-24T00:00:00Z",
+            "max_date": "2024-03-24T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2024-04-07T00:00:00Z",
+            "max_date": "2024-04-07T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2024-04-21T00:00:00Z",
+            "max_date": "2024-04-21T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2024-05-05T00:00:00Z",
+            "max_date": "2024-05-05T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2024-05-19T00:00:00Z",
+            "max_date": "2024-05-19T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2024-05-26T00:00:00Z",
+            "max_date": "2024-05-26T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 9,
+            "row_count": 20,
+            "min_date": "2024-06-09T00:00:00Z",
+            "max_date": "2024-06-09T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2024-06-23T00:00:00Z",
+            "max_date": "2024-06-23T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2024-06-30T00:00:00Z",
+            "max_date": "2024-06-30T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2024-07-07T00:00:00Z",
+            "max_date": "2024-07-07T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2024-07-21T00:00:00Z",
+            "max_date": "2024-07-21T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2024-07-28T00:00:00Z",
+            "max_date": "2024-07-28T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2024-08-25T00:00:00Z",
+            "max_date": "2024-08-25T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2024-09-01T00:00:00Z",
+            "max_date": "2024-09-01T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2024-09-15T00:00:00Z",
+            "max_date": "2024-09-15T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2024-09-22T00:00:00Z",
+            "max_date": "2024-09-22T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2024-10-20T00:00:00Z",
+            "max_date": "2024-10-20T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 20,
+            "row_count": 20,
+            "min_date": "2024-10-27T00:00:00Z",
+            "max_date": "2024-10-27T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 21,
+            "row_count": 20,
+            "min_date": "2024-11-03T00:00:00Z",
+            "max_date": "2024-11-03T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 22,
+            "row_count": 20,
+            "min_date": "2024-11-23T00:00:00Z",
+            "max_date": "2024-11-23T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 23,
+            "row_count": 20,
+            "min_date": "2024-12-01T00:00:00Z",
+            "max_date": "2024-12-01T00:00:00Z"
+          },
+          {
+            "season": 2024,
+            "round": 24,
+            "row_count": 20,
+            "min_date": "2024-12-08T00:00:00Z",
+            "max_date": "2024-12-08T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 1,
+            "row_count": 20,
+            "min_date": "2025-03-16T00:00:00Z",
+            "max_date": "2025-03-16T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 2,
+            "row_count": 20,
+            "min_date": "2025-03-23T00:00:00Z",
+            "max_date": "2025-03-23T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 3,
+            "row_count": 20,
+            "min_date": "2025-04-06T00:00:00Z",
+            "max_date": "2025-04-06T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 4,
+            "row_count": 20,
+            "min_date": "2025-04-13T00:00:00Z",
+            "max_date": "2025-04-13T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 5,
+            "row_count": 20,
+            "min_date": "2025-04-20T00:00:00Z",
+            "max_date": "2025-04-20T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 6,
+            "row_count": 20,
+            "min_date": "2025-05-04T00:00:00Z",
+            "max_date": "2025-05-04T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 7,
+            "row_count": 20,
+            "min_date": "2025-05-18T00:00:00Z",
+            "max_date": "2025-05-18T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 8,
+            "row_count": 20,
+            "min_date": "2025-05-25T00:00:00Z",
+            "max_date": "2025-05-25T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 9,
+            "row_count": 19,
+            "min_date": "2025-06-01T00:00:00Z",
+            "max_date": "2025-06-01T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 10,
+            "row_count": 20,
+            "min_date": "2025-06-15T00:00:00Z",
+            "max_date": "2025-06-15T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 11,
+            "row_count": 20,
+            "min_date": "2025-06-29T00:00:00Z",
+            "max_date": "2025-06-29T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 12,
+            "row_count": 20,
+            "min_date": "2025-07-06T00:00:00Z",
+            "max_date": "2025-07-06T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 13,
+            "row_count": 20,
+            "min_date": "2025-07-27T00:00:00Z",
+            "max_date": "2025-07-27T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 14,
+            "row_count": 20,
+            "min_date": "2025-08-03T00:00:00Z",
+            "max_date": "2025-08-03T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 15,
+            "row_count": 20,
+            "min_date": "2025-08-31T00:00:00Z",
+            "max_date": "2025-08-31T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 16,
+            "row_count": 20,
+            "min_date": "2025-09-07T00:00:00Z",
+            "max_date": "2025-09-07T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 17,
+            "row_count": 20,
+            "min_date": "2025-09-21T00:00:00Z",
+            "max_date": "2025-09-21T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 18,
+            "row_count": 20,
+            "min_date": "2025-10-05T00:00:00Z",
+            "max_date": "2025-10-05T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 19,
+            "row_count": 20,
+            "min_date": "2025-10-19T00:00:00Z",
+            "max_date": "2025-10-19T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 20,
+            "row_count": 20,
+            "min_date": "2025-10-26T00:00:00Z",
+            "max_date": "2025-10-26T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 21,
+            "row_count": 20,
+            "min_date": "2025-11-09T00:00:00Z",
+            "max_date": "2025-11-09T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 22,
+            "row_count": 20,
+            "min_date": "2025-11-23T00:00:00Z",
+            "max_date": "2025-11-23T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 23,
+            "row_count": 20,
+            "min_date": "2025-11-30T00:00:00Z",
+            "max_date": "2025-11-30T00:00:00Z"
+          },
+          {
+            "season": 2025,
+            "round": 24,
+            "row_count": 20,
+            "min_date": "2025-12-07T00:00:00Z",
+            "max_date": "2025-12-07T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 1,
+            "row_count": 22,
+            "min_date": "2026-03-08T00:00:00Z",
+            "max_date": "2026-03-08T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 2,
+            "row_count": 22,
+            "min_date": "2026-03-15T00:00:00Z",
+            "max_date": "2026-03-15T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 3,
+            "row_count": 22,
+            "min_date": "2026-03-29T00:00:00Z",
+            "max_date": "2026-03-29T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 4,
+            "row_count": 22,
+            "min_date": "2026-05-03T00:00:00Z",
+            "max_date": "2026-05-03T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 5,
+            "row_count": 22,
+            "min_date": "2026-05-24T00:00:00Z",
+            "max_date": "2026-05-24T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 6,
+            "row_count": 22,
+            "min_date": "2026-06-07T00:00:00Z",
+            "max_date": "2026-06-07T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 7,
+            "row_count": 22,
+            "min_date": "2026-06-14T00:00:00Z",
+            "max_date": "2026-06-14T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 8,
+            "row_count": 22,
+            "min_date": "2026-06-28T00:00:00Z",
+            "max_date": "2026-06-28T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 9,
+            "row_count": 22,
+            "min_date": "2026-07-05T00:00:00Z",
+            "max_date": "2026-07-05T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 10,
+            "row_count": 22,
+            "min_date": "2026-07-19T00:00:00Z",
+            "max_date": "2026-07-19T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 11,
+            "row_count": 22,
+            "min_date": "2026-07-26T00:00:00Z",
+            "max_date": "2026-07-26T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 12,
+            "row_count": 22,
+            "min_date": "2026-08-23T00:00:00Z",
+            "max_date": "2026-08-23T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 13,
+            "row_count": 22,
+            "min_date": "2026-09-06T00:00:00Z",
+            "max_date": "2026-09-06T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 14,
+            "row_count": 22,
+            "min_date": "2026-09-13T00:00:00Z",
+            "max_date": "2026-09-13T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 15,
+            "row_count": 22,
+            "min_date": "2026-09-26T00:00:00Z",
+            "max_date": "2026-09-26T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 16,
+            "row_count": 22,
+            "min_date": "2026-10-04T00:00:00Z",
+            "max_date": "2026-10-04T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 17,
+            "row_count": 22,
+            "min_date": "2026-10-11T00:00:00Z",
+            "max_date": "2026-10-11T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 18,
+            "row_count": 22,
+            "min_date": "2026-10-25T00:00:00Z",
+            "max_date": "2026-10-25T00:00:00Z"
+          },
+          {
+            "season": 2026,
+            "round": 19,
+            "row_count": 22,
+            "min_date": "2026-11-01T00:00:00Z",
+            "max_date": "2026-11-01T00:00:00Z"
+          }
+        ]
+      }
+    }
+  },
+  "qualifying_source_version": null,
+  "qualifying_manifest": null,
+  "feature_input_hash": "6a01db0b908b57e4a39d15886dfdce2c3d0829270ec0a2db5555e41aa0efc1e0",
+  "feature_policy_version": "qualifying-min-session-v1",
+  "probability_policy_version": "capped-sum-to-three-v1",
+  "event_schedule_hash": "c9664dbb3328aecd7e2b29db9a235ec0cf504fd1a25adaafb5419c9478c280e6",
+  "roster_version": "8e07aabd8a0f33c952fa5b189ec914437f06aff5f68c325ad7399651a07cbbf9",
+  "input_hash": "a3bcb9738462733fe2cf4911196d0d7f38e4c5fbec3c7c0c777ca1bc47e0eec3",
+  "forecast": {
+    "error": null,
+    "mode": "predicted_qualifying",
+    "race": {
+      "name": "Brazilian Grand Prix",
+      "season": 2026,
+      "round": 20,
+      "country": "Brazil",
+      "date": "2026-11-08",
+      "qualifyingDate": "2026-11-07",
+      "qualifyingDateEstimated": false,
+      "qualifyingDateSource": "event-qualifying-start"
+    },
+    "probabilityPolicyVersion": "capped-sum-to-three-v1",
+    "podiumEstimateSemantics": "normalized_podium_estimate",
+    "predictedQualifying": [
+      {
+        "driver_id": "leclerc",
+        "position": 1,
+        "code": "LEC",
+        "driverName": "Charles Leclerc",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "gap": 0.0
+      },
+      {
+        "driver_id": "max_verstappen",
+        "position": 2,
+        "code": "VER",
+        "driverName": "Max Verstappen",
+        "team": "Red Bull",
+        "teamId": "red_bull",
+        "gap": 0.0
+      },
+      {
+        "driver_id": "hamilton",
+        "position": 3,
+        "code": "HAM",
+        "driverName": "Lewis Hamilton",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "gap": 0.1439161904719326
+      },
+      {
+        "driver_id": "russell",
+        "position": 4,
+        "code": "RUS",
+        "driverName": "George Russell",
+        "team": "Mercedes",
+        "teamId": "mercedes",
+        "gap": 0.15641931685122112
+      },
+      {
+        "driver_id": "norris",
+        "position": 5,
+        "code": "NOR",
+        "driverName": "Lando Norris",
+        "team": "McLaren",
+        "teamId": "mclaren",
+        "gap": 0.2162246346271961
+      },
+      {
+        "driver_id": "hadjar",
+        "position": 6,
+        "code": "HAD",
+        "driverName": "Isack Hadjar",
+        "team": "Red Bull",
+        "teamId": "red_bull",
+        "gap": 0.28640554047350564
+      },
+      {
+        "driver_id": "piastri",
+        "position": 7,
+        "code": "PIA",
+        "driverName": "Oscar Piastri",
+        "team": "McLaren",
+        "teamId": "mclaren",
+        "gap": 0.3057868095174179
+      },
+      {
+        "driver_id": "antonelli",
+        "position": 8,
+        "code": "ANT",
+        "driverName": "Andrea Kimi Antonelli",
+        "team": "Mercedes",
+        "teamId": "mercedes",
+        "gap": 0.42882549644713286
+      },
+      {
+        "driver_id": "lawson",
+        "position": 9,
+        "code": "LAW",
+        "driverName": "Liam Lawson",
+        "team": "RB F1 Team",
+        "teamId": "rb",
+        "gap": 1.0699294989577164
+      },
+      {
+        "driver_id": "albon",
+        "position": 10,
+        "code": "ALB",
+        "driverName": "Alexander Albon",
+        "team": "Williams",
+        "teamId": "williams",
+        "gap": 1.288036992722186
+      },
+      {
+        "driver_id": "arvid_lindblad",
+        "position": 11,
+        "code": "LIN",
+        "driverName": "Arvid Lindblad",
+        "team": "RB F1 Team",
+        "teamId": "rb",
+        "gap": 1.5026419291576738
+      },
+      {
+        "driver_id": "gasly",
+        "position": 12,
+        "code": "GAS",
+        "driverName": "Pierre Gasly",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "gap": 1.5548706465133912
+      },
+      {
+        "driver_id": "sainz",
+        "position": 13,
+        "code": "SAI",
+        "driverName": "Carlos Sainz",
+        "team": "Williams",
+        "teamId": "williams",
+        "gap": 1.6657394724521368
+      },
+      {
+        "driver_id": "bortoleto",
+        "position": 14,
+        "code": "BOR",
+        "driverName": "Gabriel Bortoleto",
+        "team": "Audi",
+        "teamId": "audi",
+        "gap": 2.0057967395662177
+      },
+      {
+        "driver_id": "colapinto",
+        "position": 15,
+        "code": "COL",
+        "driverName": "Franco Colapinto",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "gap": 2.0773744396654825
+      },
+      {
+        "driver_id": "hulkenberg",
+        "position": 16,
+        "code": "HUL",
+        "driverName": "Nico Hülkenberg",
+        "team": "Audi",
+        "teamId": "audi",
+        "gap": 2.3344434468400177
+      },
+      {
+        "driver_id": "bearman",
+        "position": 17,
+        "code": "BEA",
+        "driverName": "Oliver Bearman",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "gap": 2.5750521492214244
+      },
+      {
+        "driver_id": "bottas",
+        "position": 18,
+        "code": "BOT",
+        "driverName": "Valtteri Bottas",
+        "team": "Cadillac F1 Team",
+        "teamId": "cadillac",
+        "gap": 2.974740768827409
+      },
+      {
+        "driver_id": "stroll",
+        "position": 19,
+        "code": "STR",
+        "driverName": "Lance Stroll",
+        "team": "Aston Martin",
+        "teamId": "aston_martin",
+        "gap": 3.010306549443199
+      },
+      {
+        "driver_id": "alonso",
+        "position": 20,
+        "code": "ALO",
+        "driverName": "Fernando Alonso",
+        "team": "Aston Martin",
+        "teamId": "aston_martin",
+        "gap": 3.052393415782782
+      },
+      {
+        "driver_id": "perez",
+        "position": 21,
+        "code": "PER",
+        "driverName": "Sergio Pérez",
+        "team": "Cadillac F1 Team",
+        "teamId": "cadillac",
+        "gap": 3.135806450060846
+      },
+      {
+        "driver_id": "ryo_hirakawa",
+        "position": 22,
+        "code": "HIR",
+        "driverName": "Ryo Hirakawa",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "gap": 4.053560875635883
+      }
+    ],
+    "preQualifyingPodium": [
+      {
+        "driver_id": "max_verstappen",
+        "code": "VER",
+        "driverName": "Max Verstappen",
+        "team": "Red Bull",
+        "teamId": "red_bull",
+        "podiumProbability": 0.8120604157231976,
+        "rank": 1
+      },
+      {
+        "driver_id": "leclerc",
+        "code": "LEC",
+        "driverName": "Charles Leclerc",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "podiumProbability": 0.768309509922414,
+        "rank": 2
+      },
+      {
+        "driver_id": "hamilton",
+        "code": "HAM",
+        "driverName": "Lewis Hamilton",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "podiumProbability": 0.5250043428194461,
+        "rank": 3
+      },
+      {
+        "driver_id": "russell",
+        "code": "RUS",
+        "driverName": "George Russell",
+        "team": "Mercedes",
+        "teamId": "mercedes",
+        "podiumProbability": 0.18095759515610446,
+        "rank": 4
+      },
+      {
+        "driver_id": "antonelli",
+        "code": "ANT",
+        "driverName": "Andrea Kimi Antonelli",
+        "team": "Mercedes",
+        "teamId": "mercedes",
+        "podiumProbability": 0.1468605507190126,
+        "rank": 5
+      },
+      {
+        "driver_id": "hadjar",
+        "code": "HAD",
+        "driverName": "Isack Hadjar",
+        "team": "Red Bull",
+        "teamId": "red_bull",
+        "podiumProbability": 0.06255934708354972,
+        "rank": 6
+      },
+      {
+        "driver_id": "norris",
+        "code": "NOR",
+        "driverName": "Lando Norris",
+        "team": "McLaren",
+        "teamId": "mclaren",
+        "podiumProbability": 0.06170052566666761,
+        "rank": 7
+      },
+      {
+        "driver_id": "piastri",
+        "code": "PIA",
+        "driverName": "Oscar Piastri",
+        "team": "McLaren",
+        "teamId": "mclaren",
+        "podiumProbability": 0.050232271763311645,
+        "rank": 8
+      },
+      {
+        "driver_id": "lawson",
+        "code": "LAW",
+        "driverName": "Liam Lawson",
+        "team": "RB F1 Team",
+        "teamId": "rb",
+        "podiumProbability": 0.02933139802729952,
+        "rank": 9
+      },
+      {
+        "driver_id": "arvid_lindblad",
+        "code": "LIN",
+        "driverName": "Arvid Lindblad",
+        "team": "RB F1 Team",
+        "teamId": "rb",
+        "podiumProbability": 0.028389605523536806,
+        "rank": 10
+      },
+      {
+        "driver_id": "albon",
+        "code": "ALB",
+        "driverName": "Alexander Albon",
+        "team": "Williams",
+        "teamId": "williams",
+        "podiumProbability": 0.028138440533943723,
+        "rank": 11
+      },
+      {
+        "driver_id": "bearman",
+        "code": "BEA",
+        "driverName": "Oliver Bearman",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "podiumProbability": 0.02800981491366952,
+        "rank": 12
+      },
+      {
+        "driver_id": "ryo_hirakawa",
+        "code": "HIR",
+        "driverName": "Ryo Hirakawa",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "podiumProbability": 0.027957953421124192,
+        "rank": 13
+      },
+      {
+        "driver_id": "gasly",
+        "code": "GAS",
+        "driverName": "Pierre Gasly",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "podiumProbability": 0.02792802225286801,
+        "rank": 14
+      },
+      {
+        "driver_id": "bortoleto",
+        "code": "BOR",
+        "driverName": "Gabriel Bortoleto",
+        "team": "Audi",
+        "teamId": "audi",
+        "podiumProbability": 0.02790257714278958,
+        "rank": 15
+      },
+      {
+        "driver_id": "hulkenberg",
+        "code": "HUL",
+        "driverName": "Nico Hülkenberg",
+        "team": "Audi",
+        "teamId": "audi",
+        "podiumProbability": 0.02787920666660713,
+        "rank": 16
+      },
+      {
+        "driver_id": "sainz",
+        "code": "SAI",
+        "driverName": "Carlos Sainz",
+        "team": "Williams",
+        "teamId": "williams",
+        "podiumProbability": 0.027875542890458897,
+        "rank": 17
+      },
+      {
+        "driver_id": "perez",
+        "code": "PER",
+        "driverName": "Sergio Pérez",
+        "team": "Cadillac F1 Team",
+        "teamId": "cadillac",
+        "podiumProbability": 0.027849290652328624,
+        "rank": 18
+      },
+      {
+        "driver_id": "alonso",
+        "code": "ALO",
+        "driverName": "Fernando Alonso",
+        "team": "Aston Martin",
+        "teamId": "aston_martin",
+        "podiumProbability": 0.027794588182030705,
+        "rank": 19
+      },
+      {
+        "driver_id": "bottas",
+        "code": "BOT",
+        "driverName": "Valtteri Bottas",
+        "team": "Cadillac F1 Team",
+        "teamId": "cadillac",
+        "podiumProbability": 0.02775893693173785,
+        "rank": 20
+      },
+      {
+        "driver_id": "colapinto",
+        "code": "COL",
+        "driverName": "Franco Colapinto",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "podiumProbability": 0.02775326017867105,
+        "rank": 21
+      },
+      {
+        "driver_id": "stroll",
+        "code": "STR",
+        "driverName": "Lance Stroll",
+        "team": "Aston Martin",
+        "teamId": "aston_martin",
+        "podiumProbability": 0.0277468038292304,
+        "rank": 22
+      }
+    ],
+    "hasRealGrid": false,
+    "realGridPodium": null,
+    "realQualifying": null
+  },
+  "prediction_id": "1f5f775f00d409fbb02ad70c74609899b8c88fba219481002670dfc7d05d55c5"
+}

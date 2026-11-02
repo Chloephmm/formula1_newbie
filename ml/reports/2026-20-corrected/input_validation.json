@@ -1,0 +1,38 @@
+{
+  "2026/19/results": {
+    "reported_total": 22,
+    "received": 22,
+    "pages": 1
+  },
+  "2026/19/qualifying": {
+    "reported_total": 22,
+    "received": 22,
+    "pages": 1
+  },
+  "2026": {
+    "reported_total": 23,
+    "received": 23,
+    "pages": 1
+  },
+  "documented_qualifying_exclusion": {
+    "driver_id": "lawson",
+    "reason": "Disqualified from Mexico qualifying; stale API position duplicates Lindblad P8.",
+    "source_url": "https://www.formula1.com/en/results/2026/races/1298/mexico/qualifying",
+    "action": "Omit qualifying observation only; retain race result and original API response."
+  },
+  "historical_qualifying_missing_drivers": [
+    "lawson"
+  ],
+  "historical_qualifying_policy": "Preserve absent rows; existing model fallback. Not accepted as complete actual-mode qualifying.",
+  "fetched_at": "2026-11-02T03:46:27.021942+00:00",
+  "results": {
+    "before_rows": 396,
+    "after_rows": 418,
+    "added_mexico_rows": 22
+  },
+  "qualifying": {
+    "before_rows": 391,
+    "after_rows": 412,
+    "added_mexico_rows": 21
+  }
+}
