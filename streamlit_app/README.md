@@ -1,31 +1,33 @@
 # F1 Race Predictor — Streamlit
 
-Dark "Pit Wall" prediction dashboard. Pick an as-of date and the model finds the
-next Grand Prix, then predicts qualifying and the podium.
+The Streamlit app is a read-only view of confirmed prediction JSON. Visitors do
+not fetch Jolpica data, train a model, or publish forecasts, and there is no RUN
+button. GitHub Actions owns ingestion, validation, prediction, and publication.
 
-## Run
+## Run locally
+
+From the repository root:
 
 ```bash
-cd streamlit_app
-pip install -r requirements.txt
-streamlit run app.py
+pip install -r streamlit_app/requirements.txt
+streamlit run streamlit_app/app.py
 ```
 
+By default the app reads the confirmed feed from the repository's public GitHub
+raw URL. Set `PREDICTION_FEED_URL` to another URL ending in
+`prediction_feed.json`, or set `PREDICTION_FEED_FILE` to a local confirmed feed
+for development and tests.
+
 ## Files
-- `app.py` — the whole app (data, styles, layout).
-- `assets/bg-sunset2.png` — the background photo (loaded inline as base64).
-- `requirements.txt` — just Streamlit.
 
-## How it works
-- `CALENDAR` / `TEAMS` / `DRIVERS` hold the sample 2026 data. Swap these for your
-  model's output — `resolve()` picks the next race where `race date >= as-of`.
-- **Mode** flips automatically: if the as-of date is on/after the race's quali date
-  *and* a `real` grid exists, it shows the green "real grid" view (with predicted-vs-actual
-  deltas + the Compare expander). Otherwise it's the yellow "pre-qualifying estimate".
-- The visual styling is injected via one `st.markdown` CSS block; cards are built as
-  HTML strings so the look matches the prototype exactly.
+- `app.py` — page layout and the automatic 60-second saved-forecast fragment.
+- `prediction_data.py` — feed retrieval, validation, ETag/TTL caching, and
+  per-event last-good fallback.
+- `prediction_view.py` — rendering for saved predicted-qualifying and
+  actual-qualifying modes.
+- `saved_prediction_harness.py` — focused AppTest/development harness.
+- `assets/bg-sunset2.png` — inline dashboard background.
+- `requirements.txt` — pinned Streamlit runtime and HTTP reader dependency.
 
-## Wiring in a real model
-Replace the static lists with your predictions. Each grid row is
-`(driver_code, team_code, gap_seconds)` sorted P1→Pn; each podium row is
-`(driver_code, team_code, probability_pct)`. Keep `gap == 0` for pole.
+The page displays only saved, publication-confirmed forecasts. Missing or invalid
+data is shown as temporarily unavailable; it never triggers an inline model run.

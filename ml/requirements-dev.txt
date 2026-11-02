@@ -5,3 +5,4 @@
 -r requirements.txt   # dev env also needs the runtime deps
 
 pytest                # unit tests in ml/tests/
+streamlit==1.54.0      # AppTest coverage for saved-output UI fragments
