@@ -1,6 +1,6 @@
 <svg viewBox="0 0 960 1180" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
   <title id="t">F1 Podium Prediction — end-to-end flow</title>
-  <desc id="d">One-page diagram: the live data split timeline, the two prediction steps (quali tipster then podium tipster), Mode 1 vs Mode 2 after the RUN button, and a small scorecard explaining quali pole accuracy and quali gap MAE with frozen-vs-live backtest numbers.</desc>
+  <desc id="d">One-page diagram: the live data split timeline, the qualifying and podium prediction steps, estimated vs actual qualifying inputs, and a small accuracy scorecard.</desc>
 
   <style>
     .h1 { font-size: 22px; font-weight: 700; fill: #111; }
@@ -68,13 +68,13 @@
   <line x1="40" y1="320" x2="920" y2="320" class="rule"/>
 
   <text x="40" y="350" class="h2">2 · How it predicts (two steps)</text>
-  <text x="40" y="370" class="sub">A “qualifying tipster” first, then a “podium tipster.” On RUN-after-quali, the real grid replaces the guess.</text>
+  <text x="40" y="370" class="sub">A “qualifying tipster” first, then a “podium tipster.” Validated actual qualifying replaces the estimate.</text>
 
   <g transform="translate(60,395)">
     <rect width="260" height="120" rx="10" class="box"/>
     <text x="16" y="28" class="h2">Step 1 · Quali tipster</text>
     <text x="16" y="50" class="sub">Predicts each driver’s lap-time gap-to-pole</text>
-    <text x="16" y="68" class="sub">→ ranks them → predicted starting grid</text>
+    <text x="16" y="68" class="sub">→ ranks them → estimated qualifying classification</text>
     <text x="16" y="96" class="tiny">inputs: recent quali form · team pace ·</text>
     <text x="16" y="110" class="tiny">history at this circuit</text>
   </g>
@@ -94,9 +94,9 @@
   <g>
     <path d="M170,540 L170,580 L500,580 L500,540" class="arrowAcc" marker-end="url(#ahAcc)"/>
     <rect x="730" y="395" width="180" height="120" rx="10" class="box"/>
-    <text x="820" y="425" text-anchor="middle" class="h2">🔄 RUN button</text>
+    <text x="820" y="425" text-anchor="middle" class="h2">🔄 Hourly publisher</text>
     <text x="820" y="448" text-anchor="middle" class="sub">After qualifying:</text>
-    <text x="820" y="466" text-anchor="middle" class="sub">fetch real grid from</text>
+    <text x="820" y="466" text-anchor="middle" class="sub">fetch actual qualifying from</text>
     <text x="820" y="484" text-anchor="middle" class="sub">Jolpica · retrain ·</text>
     <text x="820" y="502" text-anchor="middle" class="accentText">re-predict podium</text>
     <path d="M730,455 L700,455" class="arrowAcc" marker-end="url(#ahAcc)"/>
@@ -108,8 +108,8 @@
     <text x="14" y="36" class="sub">Used the moment you pick a date earlier than quali day.</text>
 
     <rect x="420" y="0" width="420" height="44" rx="8" class="chipNew"/>
-    <text x="434" y="20" class="lbl"><tspan font-weight="700" fill="#1f6feb">Mode 2 · after quali (RUN)</tspan> — real grid into Step 2</text>
-    <text x="434" y="36" class="sub">Click RUN once qualifying has run · podium uses the actual grid.</text>
+    <text x="434" y="20" class="lbl"><tspan font-weight="700" fill="#1f6feb">Mode 2 · after validation</tspan> — actual qualifying into Step 2</text>
+    <text x="434" y="36" class="sub">The scheduled publisher updates the podium automatically.</text>
   </g>
 
   <line x1="40" y1="695" x2="920" y2="695" class="rule"/>

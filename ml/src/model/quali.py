@@ -18,6 +18,8 @@ import pandas as pd
 
 from src.data.jolpica import laptime_to_seconds
 from src.model.data import ML_DIR
+from src.features.common import sort_race_rows
+from src.model.config import LGBM_PARAMS
 
 RAW = ML_DIR / "data" / "raw"
 QUALI_FEATURES = [
@@ -31,8 +33,8 @@ WINDOW = 5
 
 
 def _load(t):
-    return pd.concat([pd.read_parquet(f) for f in sorted(RAW.glob(f"{t}_*.parquet"))],
-                     ignore_index=True)
+    return sort_race_rows(pd.concat([pd.read_parquet(f) for f in sorted(RAW.glob(f"{t}_*.parquet"))],
+                                   ignore_index=True))
 
 
 def build_quali_features() -> pd.DataFrame:
@@ -44,7 +46,7 @@ def build_quali_features() -> pd.DataFrame:
         q[f"{c}_s"] = q[c].map(laptime_to_seconds)
     q["best_s"] = q[["q1_s", "q2_s", "q3_s"]].min(axis=1)
     q["quali_gap"] = q["best_s"] - q.groupby(["season", "round"])["best_s"].transform("min")
-    q = q.sort_values(["season", "round"]).reset_index(drop=True)
+    q = sort_race_rows(q)
 
     byd = q.groupby("driver_id")
     q["recent_quali_gap"] = byd["quali_gap"].transform(
@@ -66,16 +68,13 @@ def build_quali_features() -> pd.DataFrame:
     q["recent_quali_pos"] = q["recent_quali_pos"].fillna(11.0)
     q["quali_track_hist"] = q["quali_track_hist"].fillna(q["recent_quali_gap"])
     q["team_quali_strength"] = q["team_quali_strength"].fillna(1.0)
-    return q
+    return sort_race_rows(q)
 
 
 def train_quali():
     q = build_quali_features().dropna(subset=[QTARGET])
     train = q[q.season <= 2022]
-    model = lgb.LGBMRegressor(
-        n_estimators=200, learning_rate=0.05, num_leaves=15, max_depth=4,
-        min_child_samples=40, subsample=0.8, colsample_bytree=0.8,
-        reg_lambda=1.0, random_state=42, verbosity=-1)
+    model = lgb.LGBMRegressor(**LGBM_PARAMS)
     model.fit(train[QUALI_FEATURES], train[QTARGET])
 
     artifact = {"model": model, "features": QUALI_FEATURES}
@@ -91,7 +90,7 @@ def train_quali():
         g["pred_grid"] = g["pred"].rank(method="first")
         grid_err.append((g["pred_grid"] - g["quali_position"]).abs().mean())
         n += 1
-        if g.sort_values("pred").iloc[0]["quali_position"] == 1:
+        if g.sort_values("pred", kind="stable").iloc[0]["quali_position"] == 1:
             pole_hits += 1
     metrics = {
         "mean_grid_error": round(float(np.mean(grid_err)), 2),

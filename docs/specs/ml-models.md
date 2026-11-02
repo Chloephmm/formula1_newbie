@@ -2,7 +2,7 @@
 
 The single source of truth for the **machine-learning** side of the predictor: which
 models, which features, how they're split/trained/calibrated, and what runs when the
-RUN button retrains them.
+scheduled publisher retrains them.
 
 Companion docs: [`prediction-logic.md`](./prediction-logic.md) (UX flow & modes) ·
 visual one-pager: [`assets/prediction-flow.svg`](./assets/prediction-flow.svg).
@@ -100,7 +100,7 @@ p = p * 3 / p.sum()                        # normalize: ~20 drivers → 3 slots
 
 | Feature | Definition |
 |---|---|
-| `grid_position` | Starting grid slot. Source = Stage-1 *predicted* grid in **Mode 1**; **real qualifying** in Mode 2. |
+| `grid_position` | Qualifying classification position. Source = Stage-1 estimate before qualifying; validated actual qualifying results afterward. |
 | `quali_time_gap_to_pole` | Lap-time gap to pole (s). Same source as `grid_position`. |
 | `recent_form` | Driver's avg finish over last 5 races |
 | `recent_points` | Driver's avg points over last 5 races |
@@ -228,8 +228,8 @@ RUN clicked
        │     Stage 1 → predict gaps → rank → grid → feed Stage 2
        │     Stage 2 → P(top-3) → normalize → 🥇🥈🥉
        └─ Mode 2 (date > quali day, real quali present):
-             skip Stage 1; pull real grid + real gap from Jolpica
-             Stage 2 → P(top-3) on the real grid → 🥇🥈🥉
+             skip Stage 1; pull actual qualifying classification + gap from Jolpica
+             Stage 2 → P(top-3) using actual qualifying results → 🥇🥈🥉
 ```
 
 Caching keys the retrain result by the raw-data fingerprint, so re-clicking RUN
@@ -267,4 +267,4 @@ it current.
 | `.github/workflows/refresh-predictions.yml` | Scheduled CI that runs the refresh and commits the results |
 | `ml/scripts/backtest_live.py` | Walk-forward backtest, frozen vs live (`--write` → `live_metrics.json`) |
 | `ml/models/live_metrics.json` | Live-model backtest numbers shown in the Streamlit accuracy bar |
-| `streamlit_app/app.py` | RUN button → `refresh_season_data` + `retrain_live` (cached) |
+| `streamlit_app/app.py` | Read-only polling viewer for published prediction artifacts |

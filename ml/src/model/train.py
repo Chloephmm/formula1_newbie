@@ -19,6 +19,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from src.model.data import FEATURES, ML_DIR, TARGET, load_features, split_by_season
+from src.model.config import LGBM_PARAMS
 
 
 def train():
@@ -37,18 +38,7 @@ def train():
     # Conservative config: small dataset (~3.7k rows, 7 features) overfits easily,
     # so favor shallow trees + regularization. Probabilities are fixed by calibration,
     # so we don't force class weighting (which mainly distorts the probability scale).
-    base = lgb.LGBMClassifier(
-        n_estimators=200,
-        learning_rate=0.05,
-        num_leaves=15,
-        max_depth=4,
-        min_child_samples=40,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        reg_lambda=1.0,
-        random_state=42,
-        verbosity=-1,
-    )
+    base = lgb.LGBMClassifier(**LGBM_PARAMS)
     base.fit(Xtr, ytr)
 
     # --- benchmark model: XGBoost (same train/calibrate recipe for a fair compare) ---

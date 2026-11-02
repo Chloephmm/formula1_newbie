@@ -45,7 +45,7 @@ export static JSON into `web/public/data/`.
 
 ## Phase 3.5 — Qualifying model + two-stage prediction  ✅ DONE
 Stage 1 LightGBM regressor predicts qualifying gap-to-pole → grid; Stage 2 podium model.
-Two modes: pre-qualifying (predicted grid) and real-grid (after qualifying).
+Two inputs: estimated qualifying before validation and actual qualifying results afterward.
 Later evolved into the **live-retrain** regime — see [`ml-models.md`](./ml-models.md).
 **Acceptance:** ✅ both stages train; Mode 1 always, Mode 2 once qualifying exists.
 

@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: sync-stats
+  group: f1-main-writes
   cancel-in-progress: false
 
 jobs:
@@ -18,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
 
       - uses: actions/setup-node@v5
         with:
@@ -42,5 +45,6 @@ jobs:
             echo "No stats changes — nothing to commit."
           else
             git commit -m "chore: refresh F1 stats"
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi

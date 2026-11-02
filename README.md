@@ -13,9 +13,9 @@ forecasts each Grand Prix's calibrated **podium**. Deployed on Vercel.
 - **Learn F1** — a dark, cinematic, motion-led site: an interactive Aurora-shader home, and
   live **Teams** and **Drivers** pages rendering real-time standings, season stats, and
   whole-career driver records from Jolpica.
-- **Predict** — the **Predict** tab opens the Streamlit app, where the **RUN** button re-fetches
-  the latest data and **retrains both models on every race before that Grand Prix**
-  (leakage-safe) before predicting the podium.
+- **Predict** — the **Predict** tab opens a read-only Streamlit dashboard. Scheduled jobs
+  publish an estimated forecast before qualifying, automatically replace it with a validated
+  actual-qualifying forecast, and freeze it two hours before the race.
 - **See the data science** — a transparent, decoupled pipeline (ingest → features →
   train → calibrate → evaluate → export JSON) with honest metrics and a calibration curve.
 
@@ -41,7 +41,7 @@ See [`docs/`](./docs/README.md) — frontend reference, prediction strategy, and
 ## Repository layout
 
 ```
-ml/    Python ML pipeline (offline) — features, live retrain, metrics, JSON export
+ml/    Python ML pipeline — features, scheduled retraining, validation, JSON publication
 web/   Next.js frontend — live Jolpica data + static JSON fallback
 docs/  specs (frontend, prediction strategy, ML models)
 ```

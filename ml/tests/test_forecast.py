@@ -9,14 +9,15 @@ DATA_OK = (RAW / "results_2026.parquet").exists() and (RAW / "qualifying_2026.pa
 pytestmark = pytest.mark.skipif(not DATA_OK, reason="raw 2026 data not cached")
 
 PRE_DATE = "2026-06-12"    # Barcelona — before its qualifying (June 13) -> pre-qualifying
-REAL_DATE = "2026-06-07"   # targets Monaco — after its qualifying (June 6) -> real grid
 
 
 def test_forecast_contract():
     r = forecast(PRE_DATE)
     assert r.get("error") is None
-    for key in ("race", "predictedQualifying", "preQualifyingPodium", "hasRealGrid"):
+    for key in ("race", "predictedQualifying", "preQualifyingPodium", "inputMode"):
         assert key in r
+    assert r["inputMode"] == "estimated_qualifying"
+    assert r["hasActualQualifying"] is False
     assert len(r["preQualifyingPodium"]) >= 3
     # podium is sorted by probability (descending)
     probs = [d["podiumProbability"] for d in r["preQualifyingPodium"]]
@@ -30,11 +31,10 @@ def test_podium_probs_normalized_to_three():
     assert total == pytest.approx(3.0, abs=0.05)
 
 
-def test_mode_selection_by_date():
-    # before qualifying -> predicted grid (no real grid)
-    assert forecast(PRE_DATE)["hasRealGrid"] is False
-    # after the race's qualifying (and cached) -> real grid
-    assert forecast(REAL_DATE)["hasRealGrid"] is True
+def test_weekly_forecast_never_promotes_cached_qualifying():
+    """Only the validated publisher may switch a forecast to actual qualifying."""
+    assert forecast(PRE_DATE)["inputMode"] == "estimated_qualifying"
+    assert forecast("2026-06-07")["inputMode"] == "estimated_qualifying"
 
 
 def test_next_race_matches_forecast_target():

@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+from src.features.common import sort_race_rows
 
 ML_DIR = Path(__file__).resolve().parents[2]
 PROCESSED = ML_DIR / "data" / "processed" / "features.parquet"
@@ -24,11 +25,12 @@ def load_features() -> pd.DataFrame:
     if not PROCESSED.exists():
         raise FileNotFoundError(
             f"{PROCESSED} not found. Run scripts/build_features.py first.")
-    return pd.read_parquet(PROCESSED)
+    return sort_race_rows(pd.read_parquet(PROCESSED))
 
 
 def split_by_season(df: pd.DataFrame):
     """LOCKED three-way chronological split."""
+    df = sort_race_rows(df)
     train_fit = df[df.season <= 2022].reset_index(drop=True)
     calib = df[df.season == 2023].reset_index(drop=True)
     test = df[df.season >= 2024].reset_index(drop=True)
