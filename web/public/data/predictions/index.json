@@ -1,18 +1,8 @@
 {
   "schema_version": 2,
-  "active_race_id": "2026-20",
-  "updated_at": "2026-11-03T21:43:28Z",
+  "active_race_id": "2026-19",
+  "updated_at": "2026-10-30T18:01:16Z",
   "races": [
-    {
-      "race_id": "2026-20",
-      "season": 2026,
-      "round": 20,
-      "race_name": "Brazilian Grand Prix",
-      "race_start_at": "2026-11-08T17:00:00Z",
-      "artifact_url": "predictions/2026-20.json",
-      "input_mode": "estimated_qualifying",
-      "frozen": false
-    },
     {
       "race_id": "2026-19",
       "season": 2026,
