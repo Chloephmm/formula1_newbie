@@ -58,7 +58,7 @@ forecast(date):
    2. use data before it (no leakage)
    3. build feature row (form features + practice_pace)
    4. STAGE 1 quali model → predict grid (sharper, with practice_pace)
-   5. mode: date ≤ quali day → predicted grid;  date > quali day → real grid
+   5. mode: before validation → estimated qualifying; after validation → actual qualifying results
    6. STAGE 2 podium model → P(top-3) → normalize → rank → podium
 ```
 
@@ -67,15 +67,15 @@ forecast(date):
 ```
 │ before the weekend │ Fri/Sat AFTER practice  │ Sat AFTER qualifying │
 ├────────────────────┼─────────────────────────┼──────────────────────┤
-│ 🟡 PRE-QUALI       │ 🟡 PRE-QUALI (sharper)  │ 🟢 REAL GRID         │
-│ practice_pace      │ practice_pace = real     │ uses actual grid;    │
+│ 🟡 PRE-QUALI       │ 🟡 PRE-QUALI (sharper)  │ 🟢 ACTUAL QUALI      │
+│ practice_pace      │ practice_pace = real     │ actual qualifying;   │
 │   missing →        │   → better grid pred     │ practice irrelevant  │
 │   form-only (~3.4) │   (~2.6–2.9)             │ (grid error = 0)     │
 ```
 
 FastF1's benefit lands only in the **narrow window**: during the race weekend, *after
 practice runs but before qualifying*. Before practice → falls back to form-only. After
-qualifying → the real grid takes over and practice doesn't matter.
+qualifying → actual qualifying results take over and practice doesn't matter.
 
 ## D. Runtime cost (RUN latency)
 
@@ -106,4 +106,4 @@ practice), then it's cached.
 ## Verdict
 Real but **modest** accuracy gain, only during the race weekend, at ~2× RUN latency and a
 heavier deploy. Worth it as a **FastF1 showcase**; not essential for accuracy since the
-real-grid mode already gives the exact grid once qualifying runs.
+actual-qualifying mode already uses the validated classification once it is published.

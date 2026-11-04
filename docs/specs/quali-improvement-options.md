@@ -81,11 +81,11 @@ into the model, estimated **~2.6–2.9**.
 - **Heavier deployment** — FastF1's cache doesn't fit Streamlit Cloud well (live downloads
   per request).
 - Benefit only in a **narrow window** (after practice, before qualifying); before practice
-  it falls back to form-only, and after qualifying the real grid takes over.
+  it falls back to form-only, and after validation actual qualifying results take over.
 
 **Verdict: Deferred — future enhancement.** Full design in
 [`fastf1-plan.md`](fastf1-plan.md). Worth building as a FastF1 showcase; not essential for
-accuracy since the real-grid mode already gives the exact grid once qualifying runs.
+accuracy since actual-qualifying mode already uses the validated classification once published.
 
 ---
 

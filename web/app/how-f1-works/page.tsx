@@ -80,7 +80,7 @@ export default function HowF1WorksPage() {
           {/* Thursday + Saturday */}
           <div className="grid gap-x-10 gap-y-12 sm:grid-cols-2">
             <Reveal direction="left"><Day day="THURSDAY" text="Media responsibilities & driver activities" /></Reveal>
-            <Reveal direction="right"><Day day="SATURDAY" text="Free Practice 3 + Qualifying: one last practice, then qualifying sets the starting grid. Fastest lap earns the front spot." /></Reveal>
+            <Reveal direction="right"><Day day="SATURDAY" text="Free Practice 3 + Qualifying: one last practice, then the qualifying classification is set. Penalties can still change race-start positions." /></Reveal>
           </div>
 
           {/* Animated road */}

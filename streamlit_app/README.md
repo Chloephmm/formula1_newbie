@@ -1,7 +1,7 @@
 # F1 Race Predictor — Streamlit
 
-Dark "Pit Wall" prediction dashboard. Pick an as-of date and the model finds the
-next Grand Prix, then predicts qualifying and the podium.
+Dark, read-only "Pit Wall" prediction dashboard. It polls the published prediction
+feed every 60 seconds and switches from estimated to actual qualifying automatically.
 
 ## Run
 
@@ -12,20 +12,26 @@ streamlit run app.py
 ```
 
 ## Files
-- `app.py` — the whole app (data, styles, layout).
+- `app.py` — polling UI, status display, race archive selector, and layout.
+- `prediction_feed.py` — HTTP/local feed loading and schema validation.
 - `assets/bg-sunset2.png` — the background photo (loaded inline as base64).
-- `requirements.txt` — just Streamlit.
+- `requirements.txt` — Streamlit and the short-timeout HTTP client.
 
-## How it works
-- `CALENDAR` / `TEAMS` / `DRIVERS` hold the sample 2026 data. Swap these for your
-  model's output — `resolve()` picks the next race where `race date >= as-of`.
-- **Mode** flips automatically: if the as-of date is on/after the race's quali date
-  *and* a `real` grid exists, it shows the green "real grid" view (with predicted-vs-actual
-  deltas + the Compare expander). Otherwise it's the yellow "pre-qualifying estimate".
-- The visual styling is injected via one `st.markdown` CSS block; cards are built as
-  HTML strings so the look matches the prototype exactly.
+## Feed configuration
 
-## Wiring in a real model
-Replace the static lists with your predictions. Each grid row is
-`(driver_code, team_code, gap_seconds)` sorted P1→Pn; each podium row is
-`(driver_code, team_code, probability_pct)`. Keep `gap == 0` for pole.
+The deployed app defaults to `https://formula1-newbie.vercel.app/data`. Set
+`PREDICTION_FEED_BASE_URL` only to override that endpoint. Localhost and private-network
+development read `web/public/data` from this repository.
+Malformed or unavailable polling responses do not replace the last valid in-session snapshot.
+
+The browser never fetches Jolpica or runs a model. GitHub Actions publishes the feed.
+
+Archived races offer a View dropdown below the race selector: Prediction Result
+shows the immutable saved forecast; Actual Race Result shows recorded finishing
+positions, points, status, and the actual podium. Completed results are published
+separately as `predictions/{season}-{round}-results.json` by the hourly publisher
+from the raw data refreshed on Monday. Missing results show an unavailable message;
+polling failures retain the last valid result. Switching views never runs a model.
+
+Country flags use SVG images (embedded from `web/public/images/flags` where present,
+otherwise loaded from FlagCDN) so Windows displays flags instead of letter pairs.

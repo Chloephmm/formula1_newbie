@@ -10,6 +10,8 @@ Run nothing here directly — these functions are called by the caching layer
 from __future__ import annotations
 
 import time
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 import requests
@@ -23,6 +25,31 @@ TIMEOUT = 30
 _session = requests.Session()
 _session.headers.update({"User-Agent": "f1-guidebook/0.1 (portfolio project)"})
 _last_call = [0.0]       # monotonic timestamp of the previous request
+
+
+@dataclass(frozen=True)
+class PaginationMetadata:
+    """Evidence that every page reported by Jolpica was collected."""
+
+    reported_total: int
+    fetched_count: int
+    pages_fetched: int
+    offsets: tuple[int, ...]
+    limits: tuple[int, ...]
+    complete: bool
+
+
+@dataclass(frozen=True)
+class QualifyingFetchResult:
+    """Round-scoped qualifying rows plus the pagination evidence."""
+
+    data: pd.DataFrame
+    pagination: PaginationMetadata
+
+    @property
+    def rows(self) -> pd.DataFrame:
+        """Compatibility-friendly alias for callers that think in rows."""
+        return self.data
 
 
 def _throttle() -> None:
@@ -57,9 +84,22 @@ def _iter_pages(path: str, params: dict | None = None):
     while True:
         params.update(limit=PAGE_SIZE, offset=offset)
         mrdata = _get(path, params)["MRData"]
-        yield mrdata
         total = int(mrdata.get("total", 0))
-        offset += PAGE_SIZE
+        returned_offset = int(mrdata.get("offset", offset))
+        if returned_offset != offset:
+            raise ValueError(
+                f"pagination returned offset {returned_offset}, expected {offset}"
+            )
+        raw_limit = mrdata.get("limit", params["limit"])
+        try:
+            returned_limit = int(raw_limit)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid page limit: {raw_limit!r}") from exc
+        if returned_limit <= 0:
+            raise ValueError(f"page limit must be positive, got {returned_limit}")
+
+        yield mrdata
+        offset = returned_offset + returned_limit
         if offset >= total:
             break
 
@@ -69,6 +109,24 @@ def _coerce_numeric(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
     return df
+
+
+def _as_utc_iso(value: datetime) -> str:
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _utc_now_iso() -> str:
+    return _as_utc_iso(datetime.now(timezone.utc).replace(microsecond=0))
+
+
+def _event_timestamp(date_text: str | None, time_text: str | None) -> str | None:
+    """Combine Jolpica's separate date/time values into a UTC ISO timestamp."""
+    if not date_text or not time_text:
+        return None
+    parsed = datetime.fromisoformat(f"{date_text}T{time_text.replace('Z', '+00:00')}")
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return _as_utc_iso(parsed)
 
 
 def get_race_results(season: int) -> pd.DataFrame:
@@ -124,6 +182,65 @@ def get_qualifying(season: int) -> pd.DataFrame:
     return _coerce_numeric(pd.DataFrame(rows), ["quali_position"])
 
 
+def get_qualifying_round(season: int, round_number: int) -> QualifyingFetchResult:
+    """Fetch one round's qualifying classification and retain pagination evidence."""
+    rows = []
+    totals = []
+    offsets = []
+    limits = []
+    for mr in _iter_pages(f"{season}/{round_number}/qualifying"):
+        totals.append(int(mr.get("total", 0)))
+        offsets.append(int(mr.get("offset", 0)))
+        limits.append(int(mr.get("limit", PAGE_SIZE)))
+        for race in mr.get("RaceTable", {}).get("Races", []):
+            meta = {
+                "season": int(race["season"]),
+                "round": int(race["round"]),
+                "race_name": race["raceName"],
+                "circuit_id": race["Circuit"]["circuitId"],
+            }
+            for q in race.get("QualifyingResults", []):
+                drv, con = q["Driver"], q["Constructor"]
+                rows.append({
+                    **meta,
+                    "driver_id": drv["driverId"],
+                    "code": drv.get("code"),
+                    "driver_name": " ".join(
+                        part for part in (drv.get("givenName"), drv.get("familyName")) if part
+                    ) or drv["driverId"],
+                    "constructor_id": con["constructorId"],
+                    "constructor_name": con.get("name") or con["constructorId"],
+                    "quali_position": q.get("position"),
+                    "q1": q.get("Q1"),
+                    "q2": q.get("Q2"),
+                    "q3": q.get("Q3"),
+                })
+
+    data = _coerce_numeric(pd.DataFrame(rows), ["quali_position"])
+    reported_total = totals[0] if totals else 0
+    consistent_total = all(total == reported_total for total in totals)
+    expected_offset = 0
+    offsets_complete = True
+    for offset, limit in zip(offsets, limits):
+        if offset != expected_offset or limit <= 0:
+            offsets_complete = False
+            break
+        expected_offset += limit
+    offsets_complete = offsets_complete and expected_offset >= reported_total
+    pagination = PaginationMetadata(
+        reported_total=reported_total,
+        fetched_count=len(data),
+        pages_fetched=len(totals),
+        offsets=tuple(offsets),
+        limits=tuple(limits),
+        complete=consistent_total and offsets_complete and len(data) == reported_total,
+    )
+    return QualifyingFetchResult(data=data, pagination=pagination)
+
+
+get_round_qualifying = get_qualifying_round
+
+
 def get_driver_standings(season: int) -> pd.DataFrame:
     """End-of-season driver standings: position, points, wins, team."""
     rows = []
@@ -168,9 +285,19 @@ def get_constructor_standings(season: int) -> pd.DataFrame:
 def get_schedule(season: int) -> pd.DataFrame:
     """The season calendar: round, race name, circuit, date, location."""
     rows = []
+    schedule_updated_at = _utc_now_iso()
     for mr in _iter_pages(f"{season}"):
         for race in mr["RaceTable"]["Races"]:
             loc = race["Circuit"].get("Location", {})
+            qualifying = race.get("Qualifying", {})
+            qualifying_start_at = _event_timestamp(
+                qualifying.get("date"), qualifying.get("time")
+            )
+            race_start_at = _event_timestamp(race.get("date"), race.get("time"))
+            qualifying_end_at = None
+            if qualifying_start_at:
+                start = datetime.fromisoformat(qualifying_start_at.replace("Z", "+00:00"))
+                qualifying_end_at = _as_utc_iso(start + timedelta(minutes=180))
             rows.append({
                 "season": int(race["season"]),
                 "round": int(race["round"]),
@@ -180,6 +307,11 @@ def get_schedule(season: int) -> pd.DataFrame:
                 "country": loc.get("country"),
                 "locality": loc.get("locality"),
                 "date": race.get("date"),
+                "qualifying_start_at": qualifying_start_at,
+                "qualifying_end_at": qualifying_end_at,
+                "end_time_estimated": True,
+                "race_start_at": race_start_at,
+                "schedule_updated_at": schedule_updated_at,
             })
     return pd.DataFrame(rows)
 

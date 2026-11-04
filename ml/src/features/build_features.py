@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 from src.data.jolpica import laptime_to_seconds
+from src.features.common import is_finished as _is_finished, sort_race_rows
 
 ML_DIR = Path(__file__).resolve().parents[2]
 RAW = ML_DIR / "data" / "raw"
@@ -42,13 +43,7 @@ def _load(table: str) -> pd.DataFrame:
         raise FileNotFoundError(
             f"No cached {table}_*.parquet in {RAW}. Run scripts/fetch_data.py first."
         )
-    return pd.concat([pd.read_parquet(f) for f in files], ignore_index=True)
-
-
-def _is_finished(status: pd.Series) -> pd.Series:
-    """A driver is classified as finished if 'Finished' or lapped ('+N Lap(s)')."""
-    s = status.astype(str)
-    return (s == "Finished") | s.str.startswith("+")
+    return sort_race_rows(pd.concat([pd.read_parquet(f) for f in files], ignore_index=True))
 
 
 def _quali_gap(qua: pd.DataFrame) -> pd.DataFrame:
@@ -67,7 +62,7 @@ def build_feature_table() -> pd.DataFrame:
     qua = _load("qualifying")
 
     # Chronological order is the backbone of every leakage-safe feature.
-    df = res.sort_values(["season", "round", "driver_id"]).reset_index(drop=True)
+    df = sort_race_rows(res)
 
     # --- target ---
     df["podium"] = (df["position"] <= 3).astype(int)
@@ -77,7 +72,11 @@ def build_feature_table() -> pd.DataFrame:
 
     # --- grid: 0 means pit-lane start -> treat as back of the grid ---
     df["grid_position"] = df["grid"].replace(0, np.nan)
-    df["grid_position"] = df["grid_position"].fillna(df["grid_position"].max())
+    # Never let a later season's larger field change an earlier training row.
+    race_grid = df.groupby(["season", "round"])["grid_position"]
+    race_max = race_grid.transform("max")
+    race_size = df.groupby(["season", "round"])["driver_id"].transform("nunique")
+    df["grid_position"] = df["grid_position"].fillna(race_max).fillna(race_size)
 
     # --- driver rolling features (one row per driver per race; shift(1) = exclude current) ---
     by_driver = df.groupby("driver_id")
@@ -116,7 +115,7 @@ def build_feature_table() -> pd.DataFrame:
 
     keep = ["season", "round", "race_name", "circuit_id", "date", "driver_id", "code",
             "driver_name", "constructor_id", "constructor_name", "position", "podium"] + FEATURES
-    return df[keep].copy()
+    return sort_race_rows(df[keep])
 
 
 def main() -> None:

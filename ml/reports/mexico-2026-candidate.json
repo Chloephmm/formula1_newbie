@@ -1,0 +1,752 @@
+{
+  "schema_version": 2,
+  "race_id": "2026-19",
+  "race": {
+    "name": "Mexico City Grand Prix",
+    "season": 2026,
+    "round": 19,
+    "country": "Mexico",
+    "date": "2026-11-01",
+    "raceStartAt": "2026-11-01T20:00:00Z",
+    "qualifyingStartAt": "2026-10-31T21:00:00Z"
+  },
+  "forecast": {
+    "error": null,
+    "asof": "2026-10-30",
+    "race": {
+      "name": "Mexico City Grand Prix",
+      "season": 2026,
+      "round": 19,
+      "country": "Mexico",
+      "date": "2026-11-01",
+      "raceStartAt": "2026-11-01T20:00:00Z",
+      "qualifyingStartAt": "2026-10-31T21:00:00Z"
+    },
+    "predictedQualifying": [
+      {
+        "position": 1,
+        "code": "VER",
+        "driverName": "Max Verstappen",
+        "team": "Red Bull",
+        "teamId": "red_bull",
+        "gap": 0.0
+      },
+      {
+        "position": 2,
+        "code": "LEC",
+        "driverName": "Charles Leclerc",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "gap": 0.084
+      },
+      {
+        "position": 3,
+        "code": "HAM",
+        "driverName": "Lewis Hamilton",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "gap": 0.176
+      },
+      {
+        "position": 4,
+        "code": "RUS",
+        "driverName": "George Russell",
+        "team": "Mercedes",
+        "teamId": "mercedes",
+        "gap": 0.34
+      },
+      {
+        "position": 5,
+        "code": "ANT",
+        "driverName": "Andrea Kimi Antonelli",
+        "team": "Mercedes",
+        "teamId": "mercedes",
+        "gap": 0.354
+      },
+      {
+        "position": 6,
+        "code": "PIA",
+        "driverName": "Oscar Piastri",
+        "team": "McLaren",
+        "teamId": "mclaren",
+        "gap": 0.362
+      },
+      {
+        "position": 7,
+        "code": "NOR",
+        "driverName": "Lando Norris",
+        "team": "McLaren",
+        "teamId": "mclaren",
+        "gap": 0.381
+      },
+      {
+        "position": 8,
+        "code": "HAD",
+        "driverName": "Isack Hadjar",
+        "team": "Red Bull",
+        "teamId": "red_bull",
+        "gap": 0.393
+      },
+      {
+        "position": 9,
+        "code": "GAS",
+        "driverName": "Pierre Gasly",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "gap": 1.397
+      },
+      {
+        "position": 10,
+        "code": "COL",
+        "driverName": "Franco Colapinto",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "gap": 1.457
+      },
+      {
+        "position": 11,
+        "code": "LAW",
+        "driverName": "Liam Lawson",
+        "team": "RB F1 Team",
+        "teamId": "rb",
+        "gap": 1.49
+      },
+      {
+        "position": 12,
+        "code": "SAI",
+        "driverName": "Carlos Sainz",
+        "team": "Williams",
+        "teamId": "williams",
+        "gap": 1.512
+      },
+      {
+        "position": 13,
+        "code": "LIN",
+        "driverName": "Arvid Lindblad",
+        "team": "RB F1 Team",
+        "teamId": "rb",
+        "gap": 1.552
+      },
+      {
+        "position": 14,
+        "code": "BEA",
+        "driverName": "Oliver Bearman",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "gap": 1.738
+      },
+      {
+        "position": 15,
+        "code": "ALB",
+        "driverName": "Alexander Albon",
+        "team": "Williams",
+        "teamId": "williams",
+        "gap": 2.038
+      },
+      {
+        "position": 16,
+        "code": "HUL",
+        "driverName": "Nico Hülkenberg",
+        "team": "Audi",
+        "teamId": "audi",
+        "gap": 2.18
+      },
+      {
+        "position": 17,
+        "code": "BOR",
+        "driverName": "Gabriel Bortoleto",
+        "team": "Audi",
+        "teamId": "audi",
+        "gap": 2.184
+      },
+      {
+        "position": 18,
+        "code": "OCO",
+        "driverName": "Esteban Ocon",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "gap": 2.484
+      },
+      {
+        "position": 19,
+        "code": "BOT",
+        "driverName": "Valtteri Bottas",
+        "team": "Cadillac F1 Team",
+        "teamId": "cadillac",
+        "gap": 2.733
+      },
+      {
+        "position": 20,
+        "code": "PER",
+        "driverName": "Sergio Pérez",
+        "team": "Cadillac F1 Team",
+        "teamId": "cadillac",
+        "gap": 3.081
+      },
+      {
+        "position": 21,
+        "code": "ALO",
+        "driverName": "Fernando Alonso",
+        "team": "Aston Martin",
+        "teamId": "aston_martin",
+        "gap": 3.354
+      },
+      {
+        "position": 22,
+        "code": "STR",
+        "driverName": "Lance Stroll",
+        "team": "Aston Martin",
+        "teamId": "aston_martin",
+        "gap": 3.811
+      }
+    ],
+    "preQualifyingPodium": [
+      {
+        "code": "VER",
+        "driverName": "Max Verstappen",
+        "team": "Red Bull",
+        "teamId": "red_bull",
+        "podiumProbability": 0.7467
+      },
+      {
+        "code": "LEC",
+        "driverName": "Charles Leclerc",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "podiumProbability": 0.6363
+      },
+      {
+        "code": "HAM",
+        "driverName": "Lewis Hamilton",
+        "team": "Ferrari",
+        "teamId": "ferrari",
+        "podiumProbability": 0.5338
+      },
+      {
+        "code": "ANT",
+        "driverName": "Andrea Kimi Antonelli",
+        "team": "Mercedes",
+        "teamId": "mercedes",
+        "podiumProbability": 0.3492
+      },
+      {
+        "code": "RUS",
+        "driverName": "George Russell",
+        "team": "Mercedes",
+        "teamId": "mercedes",
+        "podiumProbability": 0.2131
+      },
+      {
+        "code": "HAD",
+        "driverName": "Isack Hadjar",
+        "team": "Red Bull",
+        "teamId": "red_bull",
+        "podiumProbability": 0.0577
+      },
+      {
+        "code": "NOR",
+        "driverName": "Lando Norris",
+        "team": "McLaren",
+        "teamId": "mclaren",
+        "podiumProbability": 0.0477
+      },
+      {
+        "code": "PIA",
+        "driverName": "Oscar Piastri",
+        "team": "McLaren",
+        "teamId": "mclaren",
+        "podiumProbability": 0.0445
+      },
+      {
+        "code": "LAW",
+        "driverName": "Liam Lawson",
+        "team": "RB F1 Team",
+        "teamId": "rb",
+        "podiumProbability": 0.0268
+      },
+      {
+        "code": "LIN",
+        "driverName": "Arvid Lindblad",
+        "team": "RB F1 Team",
+        "teamId": "rb",
+        "podiumProbability": 0.0267
+      },
+      {
+        "code": "BEA",
+        "driverName": "Oliver Bearman",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "podiumProbability": 0.0267
+      },
+      {
+        "code": "GAS",
+        "driverName": "Pierre Gasly",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "podiumProbability": 0.0266
+      },
+      {
+        "code": "PER",
+        "driverName": "Sergio Pérez",
+        "team": "Cadillac F1 Team",
+        "teamId": "cadillac",
+        "podiumProbability": 0.0265
+      },
+      {
+        "code": "SAI",
+        "driverName": "Carlos Sainz",
+        "team": "Williams",
+        "teamId": "williams",
+        "podiumProbability": 0.0265
+      },
+      {
+        "code": "COL",
+        "driverName": "Franco Colapinto",
+        "team": "Alpine F1 Team",
+        "teamId": "alpine",
+        "podiumProbability": 0.0265
+      },
+      {
+        "code": "BOR",
+        "driverName": "Gabriel Bortoleto",
+        "team": "Audi",
+        "teamId": "audi",
+        "podiumProbability": 0.0264
+      },
+      {
+        "code": "HUL",
+        "driverName": "Nico Hülkenberg",
+        "team": "Audi",
+        "teamId": "audi",
+        "podiumProbability": 0.0264
+      },
+      {
+        "code": "OCO",
+        "driverName": "Esteban Ocon",
+        "team": "Haas F1 Team",
+        "teamId": "haas",
+        "podiumProbability": 0.0264
+      },
+      {
+        "code": "STR",
+        "driverName": "Lance Stroll",
+        "team": "Aston Martin",
+        "teamId": "aston_martin",
+        "podiumProbability": 0.0264
+      },
+      {
+        "code": "BOT",
+        "driverName": "Valtteri Bottas",
+        "team": "Cadillac F1 Team",
+        "teamId": "cadillac",
+        "podiumProbability": 0.0264
+      },
+      {
+        "code": "ALB",
+        "driverName": "Alexander Albon",
+        "team": "Williams",
+        "teamId": "williams",
+        "podiumProbability": 0.0264
+      },
+      {
+        "code": "ALO",
+        "driverName": "Fernando Alonso",
+        "team": "Aston Martin",
+        "teamId": "aston_martin",
+        "podiumProbability": 0.0263
+      }
+    ],
+    "inputMode": "estimated_qualifying",
+    "hasActualQualifying": false,
+    "actualQualifyingPodium": null,
+    "actualQualifying": null,
+    "training_metadata": {
+      "stage1": {
+        "training_cutoff": {
+          "season": 2026,
+          "round_exclusive": 19
+        },
+        "row_count": 5422,
+        "race_count": 270,
+        "training_data_sha256": "803bee57f5a000ddebfeec5ad320098d32a1be2ba3b0feea771d1515a1ab8bac",
+        "input_data_sha256": {
+          "results": {
+            "results_2014.parquet": "448863076c8b8f8f091f2cbeede04cbcde809af43c8e85d8054be5345a56542a",
+            "results_2015.parquet": "9e567372e35bd3c638ff5abcb1d246d23e6a771d0d468c93a97378fbcdc594dc",
+            "results_2016.parquet": "1a4faf28692ca2ebdb768795084ab76932c9a4227ba5cf7551ca33ce47ffd503",
+            "results_2017.parquet": "78d668c323b548429ab91c17f0407aa428794ed7e9dfa9e4330dc203beca61b7",
+            "results_2018.parquet": "f3b37ee02ea3f0b3fa6375491fc420617af80f909fe2644f2b982a174b1ee34e",
+            "results_2019.parquet": "0a398569b556d862bebbe4e7e0db7c3de1586845012b8d3697812e4c73395e17",
+            "results_2020.parquet": "b2a660a5f077632baa19527c9ba5cedd78a19851107e73c17b4d2242bdefdd26",
+            "results_2021.parquet": "32b69fe832920810ad0bf7e52625c5ae4e4208fe50e0ff2bec15e3319fa25fd2",
+            "results_2022.parquet": "3b0e42cf387d93e94b388a6e4312c923728ff7d1d6185bfc79a68774d49f0b04",
+            "results_2023.parquet": "3f8d92c8cbb75138968b7c4810de47296915edc77282d2d1c51f80081148d484",
+            "results_2024.parquet": "299e59fdbde0359ad0863019b252428130815a5964e804aaf9f9a2471452e50d",
+            "results_2025.parquet": "9eed76fb9e185725b4cbf6f90d19c4d1f01e41363acf563b9cf20466d293aba0",
+            "results_2026.parquet": "526bb16baa9d792d879a9897f613afe4750464e0c7916c2a4a297c44781fcae2"
+          },
+          "qualifying": {
+            "qualifying_2014.parquet": "173d6c5f5c70115aed37d1e1d5c6f9880080ba6fc118d29b36df0301b6746749",
+            "qualifying_2015.parquet": "7750fa6ad024287f0c2dc75112038c3948cd65a0258b5c13cc0e868405db2d95",
+            "qualifying_2016.parquet": "0b6e1f0b7f3d1a173d624c7f08e6ae999a3911b1e96eac5af7508eda239f64e4",
+            "qualifying_2017.parquet": "23b07b56afe730e39d4a8007850650c4e6e2f5950e1f55d668ad2118897a8ad9",
+            "qualifying_2018.parquet": "d5ed7775410768ab81d317686d7f4bc6d9fecd7fe872f19a79078fc019bb0d34",
+            "qualifying_2019.parquet": "738668e589145da74a6287d376fde1828f4e6e0e949dd40ec0cced968714d4e7",
+            "qualifying_2020.parquet": "44c21430046f5ab3fd8103b4804c96a86ce994ddb30c68225d050087e2523f25",
+            "qualifying_2021.parquet": "fe00f725d75480a81921226cba0f837d239473a66f22a9a21a44edde5e54ea00",
+            "qualifying_2022.parquet": "8a1f5dab90e0d297438dce47e9935e7bb84af68d8b567127731980fba16f91bd",
+            "qualifying_2023.parquet": "59a1f01d4b425db4ccd8a92d1bca8a4a75e779ff6f639a3f4d117009b7be2b86",
+            "qualifying_2024.parquet": "bd79ede41e52ac10ccf9991b2c7ab80a9bf5f4c47b28fae0cf622931917c328e",
+            "qualifying_2025.parquet": "29e4fa96a1b227cd70279dd2802ee08bbcf171fa1dd886fc35fa10d6dc7a4187",
+            "qualifying_2026.parquet": "030256547e83da64abb5a84d286fd2143fa1a52f78a3fd91073243943c5a0854"
+          }
+        },
+        "dependency_lock_sha256": "831607e972731ec0e21df5b19619a66021660230727877f3f29104c12425ca8a",
+        "git_revision": "5ef00cb63b55ea65611b94a4d644123eef571496",
+        "code_dirty": true,
+        "code_sha256": "f76637e572cfb4896b4d67bf73389487e787e7b18f2f3d0cccfbcb0027b5e06a",
+        "runtime": {
+          "python": "3.11.14",
+          "platform": "Windows-10-10.0.26200-SP0",
+          "libraries": {
+            "lightgbm": "4.6.0",
+            "numpy": "2.4.2",
+            "pandas": "2.3.3",
+            "scikit-learn": "1.8.0",
+            "pyarrow": "23.0.0",
+            "scipy": "1.17.0",
+            "joblib": "1.5.3",
+            "threadpoolctl": "3.6.0"
+          }
+        },
+        "model_params": {
+          "boosting_type": "gbdt",
+          "class_weight": null,
+          "colsample_bytree": 0.8,
+          "importance_type": "split",
+          "learning_rate": 0.05,
+          "max_depth": 4,
+          "min_child_samples": 40,
+          "min_child_weight": 0.001,
+          "min_split_gain": 0.0,
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "num_leaves": 15,
+          "objective": null,
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "subsample": 0.8,
+          "subsample_for_bin": 200000,
+          "subsample_freq": 0,
+          "verbosity": -1,
+          "device_type": "cpu",
+          "deterministic": true,
+          "force_col_wise": true
+        },
+        "calibration": null,
+        "features": [
+          "recent_quali_gap",
+          "recent_quali_pos",
+          "quali_track_hist",
+          "team_quali_strength"
+        ],
+        "generated_at": "2026-10-30T18:00:43.047443+00:00"
+      },
+      "stage2": {
+        "training_cutoff": {
+          "date_exclusive": "2026-11-01"
+        },
+        "row_count": 5501,
+        "race_count": 270,
+        "training_data_sha256": "a92b6a07993f5d9ed840f6ea8138f6e635b022d30413f3105431b8124ab84698",
+        "input_data_sha256": {
+          "results": {
+            "results_2014.parquet": "448863076c8b8f8f091f2cbeede04cbcde809af43c8e85d8054be5345a56542a",
+            "results_2015.parquet": "9e567372e35bd3c638ff5abcb1d246d23e6a771d0d468c93a97378fbcdc594dc",
+            "results_2016.parquet": "1a4faf28692ca2ebdb768795084ab76932c9a4227ba5cf7551ca33ce47ffd503",
+            "results_2017.parquet": "78d668c323b548429ab91c17f0407aa428794ed7e9dfa9e4330dc203beca61b7",
+            "results_2018.parquet": "f3b37ee02ea3f0b3fa6375491fc420617af80f909fe2644f2b982a174b1ee34e",
+            "results_2019.parquet": "0a398569b556d862bebbe4e7e0db7c3de1586845012b8d3697812e4c73395e17",
+            "results_2020.parquet": "b2a660a5f077632baa19527c9ba5cedd78a19851107e73c17b4d2242bdefdd26",
+            "results_2021.parquet": "32b69fe832920810ad0bf7e52625c5ae4e4208fe50e0ff2bec15e3319fa25fd2",
+            "results_2022.parquet": "3b0e42cf387d93e94b388a6e4312c923728ff7d1d6185bfc79a68774d49f0b04",
+            "results_2023.parquet": "3f8d92c8cbb75138968b7c4810de47296915edc77282d2d1c51f80081148d484",
+            "results_2024.parquet": "299e59fdbde0359ad0863019b252428130815a5964e804aaf9f9a2471452e50d",
+            "results_2025.parquet": "9eed76fb9e185725b4cbf6f90d19c4d1f01e41363acf563b9cf20466d293aba0",
+            "results_2026.parquet": "526bb16baa9d792d879a9897f613afe4750464e0c7916c2a4a297c44781fcae2"
+          },
+          "qualifying": {
+            "qualifying_2014.parquet": "173d6c5f5c70115aed37d1e1d5c6f9880080ba6fc118d29b36df0301b6746749",
+            "qualifying_2015.parquet": "7750fa6ad024287f0c2dc75112038c3948cd65a0258b5c13cc0e868405db2d95",
+            "qualifying_2016.parquet": "0b6e1f0b7f3d1a173d624c7f08e6ae999a3911b1e96eac5af7508eda239f64e4",
+            "qualifying_2017.parquet": "23b07b56afe730e39d4a8007850650c4e6e2f5950e1f55d668ad2118897a8ad9",
+            "qualifying_2018.parquet": "d5ed7775410768ab81d317686d7f4bc6d9fecd7fe872f19a79078fc019bb0d34",
+            "qualifying_2019.parquet": "738668e589145da74a6287d376fde1828f4e6e0e949dd40ec0cced968714d4e7",
+            "qualifying_2020.parquet": "44c21430046f5ab3fd8103b4804c96a86ce994ddb30c68225d050087e2523f25",
+            "qualifying_2021.parquet": "fe00f725d75480a81921226cba0f837d239473a66f22a9a21a44edde5e54ea00",
+            "qualifying_2022.parquet": "8a1f5dab90e0d297438dce47e9935e7bb84af68d8b567127731980fba16f91bd",
+            "qualifying_2023.parquet": "59a1f01d4b425db4ccd8a92d1bca8a4a75e779ff6f639a3f4d117009b7be2b86",
+            "qualifying_2024.parquet": "bd79ede41e52ac10ccf9991b2c7ab80a9bf5f4c47b28fae0cf622931917c328e",
+            "qualifying_2025.parquet": "29e4fa96a1b227cd70279dd2802ee08bbcf171fa1dd886fc35fa10d6dc7a4187",
+            "qualifying_2026.parquet": "030256547e83da64abb5a84d286fd2143fa1a52f78a3fd91073243943c5a0854"
+          }
+        },
+        "dependency_lock_sha256": "831607e972731ec0e21df5b19619a66021660230727877f3f29104c12425ca8a",
+        "git_revision": "5ef00cb63b55ea65611b94a4d644123eef571496",
+        "code_dirty": true,
+        "code_sha256": "f76637e572cfb4896b4d67bf73389487e787e7b18f2f3d0cccfbcb0027b5e06a",
+        "runtime": {
+          "python": "3.11.14",
+          "platform": "Windows-10-10.0.26200-SP0",
+          "libraries": {
+            "lightgbm": "4.6.0",
+            "numpy": "2.4.2",
+            "pandas": "2.3.3",
+            "scikit-learn": "1.8.0",
+            "pyarrow": "23.0.0",
+            "scipy": "1.17.0",
+            "joblib": "1.5.3",
+            "threadpoolctl": "3.6.0"
+          }
+        },
+        "model_params": {
+          "boosting_type": "gbdt",
+          "class_weight": null,
+          "colsample_bytree": 0.8,
+          "importance_type": "split",
+          "learning_rate": 0.05,
+          "max_depth": 4,
+          "min_child_samples": 40,
+          "min_child_weight": 0.001,
+          "min_split_gain": 0.0,
+          "n_estimators": 200,
+          "n_jobs": 1,
+          "num_leaves": 15,
+          "objective": null,
+          "random_state": 42,
+          "reg_alpha": 0.0,
+          "reg_lambda": 1.0,
+          "subsample": 0.8,
+          "subsample_for_bin": 200000,
+          "subsample_freq": 0,
+          "verbosity": -1,
+          "device_type": "cpu",
+          "deterministic": true,
+          "force_col_wise": true
+        },
+        "calibration": {
+          "method": "sigmoid",
+          "cv": 5
+        },
+        "features": [
+          "grid_position",
+          "quali_time_gap_to_pole",
+          "recent_form",
+          "recent_points",
+          "team_strength",
+          "track_history",
+          "dnf_rate"
+        ],
+        "generated_at": "2026-10-30T18:00:42.397371+00:00"
+      }
+    }
+  },
+  "input_mode": "estimated_qualifying",
+  "prediction_updated_at": "2026-10-30T18:00:43Z",
+  "qualifying_input_hash": null,
+  "publication_cutoff_at": "2026-11-01T18:00:00Z",
+  "frozen_at": null,
+  "status_reason": "actual_qualifying_not_checked_yet",
+  "training_metadata": {
+    "stage1": {
+      "training_cutoff": {
+        "season": 2026,
+        "round_exclusive": 19
+      },
+      "row_count": 5422,
+      "race_count": 270,
+      "training_data_sha256": "803bee57f5a000ddebfeec5ad320098d32a1be2ba3b0feea771d1515a1ab8bac",
+      "input_data_sha256": {
+        "results": {
+          "results_2014.parquet": "448863076c8b8f8f091f2cbeede04cbcde809af43c8e85d8054be5345a56542a",
+          "results_2015.parquet": "9e567372e35bd3c638ff5abcb1d246d23e6a771d0d468c93a97378fbcdc594dc",
+          "results_2016.parquet": "1a4faf28692ca2ebdb768795084ab76932c9a4227ba5cf7551ca33ce47ffd503",
+          "results_2017.parquet": "78d668c323b548429ab91c17f0407aa428794ed7e9dfa9e4330dc203beca61b7",
+          "results_2018.parquet": "f3b37ee02ea3f0b3fa6375491fc420617af80f909fe2644f2b982a174b1ee34e",
+          "results_2019.parquet": "0a398569b556d862bebbe4e7e0db7c3de1586845012b8d3697812e4c73395e17",
+          "results_2020.parquet": "b2a660a5f077632baa19527c9ba5cedd78a19851107e73c17b4d2242bdefdd26",
+          "results_2021.parquet": "32b69fe832920810ad0bf7e52625c5ae4e4208fe50e0ff2bec15e3319fa25fd2",
+          "results_2022.parquet": "3b0e42cf387d93e94b388a6e4312c923728ff7d1d6185bfc79a68774d49f0b04",
+          "results_2023.parquet": "3f8d92c8cbb75138968b7c4810de47296915edc77282d2d1c51f80081148d484",
+          "results_2024.parquet": "299e59fdbde0359ad0863019b252428130815a5964e804aaf9f9a2471452e50d",
+          "results_2025.parquet": "9eed76fb9e185725b4cbf6f90d19c4d1f01e41363acf563b9cf20466d293aba0",
+          "results_2026.parquet": "526bb16baa9d792d879a9897f613afe4750464e0c7916c2a4a297c44781fcae2"
+        },
+        "qualifying": {
+          "qualifying_2014.parquet": "173d6c5f5c70115aed37d1e1d5c6f9880080ba6fc118d29b36df0301b6746749",
+          "qualifying_2015.parquet": "7750fa6ad024287f0c2dc75112038c3948cd65a0258b5c13cc0e868405db2d95",
+          "qualifying_2016.parquet": "0b6e1f0b7f3d1a173d624c7f08e6ae999a3911b1e96eac5af7508eda239f64e4",
+          "qualifying_2017.parquet": "23b07b56afe730e39d4a8007850650c4e6e2f5950e1f55d668ad2118897a8ad9",
+          "qualifying_2018.parquet": "d5ed7775410768ab81d317686d7f4bc6d9fecd7fe872f19a79078fc019bb0d34",
+          "qualifying_2019.parquet": "738668e589145da74a6287d376fde1828f4e6e0e949dd40ec0cced968714d4e7",
+          "qualifying_2020.parquet": "44c21430046f5ab3fd8103b4804c96a86ce994ddb30c68225d050087e2523f25",
+          "qualifying_2021.parquet": "fe00f725d75480a81921226cba0f837d239473a66f22a9a21a44edde5e54ea00",
+          "qualifying_2022.parquet": "8a1f5dab90e0d297438dce47e9935e7bb84af68d8b567127731980fba16f91bd",
+          "qualifying_2023.parquet": "59a1f01d4b425db4ccd8a92d1bca8a4a75e779ff6f639a3f4d117009b7be2b86",
+          "qualifying_2024.parquet": "bd79ede41e52ac10ccf9991b2c7ab80a9bf5f4c47b28fae0cf622931917c328e",
+          "qualifying_2025.parquet": "29e4fa96a1b227cd70279dd2802ee08bbcf171fa1dd886fc35fa10d6dc7a4187",
+          "qualifying_2026.parquet": "030256547e83da64abb5a84d286fd2143fa1a52f78a3fd91073243943c5a0854"
+        }
+      },
+      "dependency_lock_sha256": "831607e972731ec0e21df5b19619a66021660230727877f3f29104c12425ca8a",
+      "git_revision": "5ef00cb63b55ea65611b94a4d644123eef571496",
+      "code_dirty": true,
+      "code_sha256": "f76637e572cfb4896b4d67bf73389487e787e7b18f2f3d0cccfbcb0027b5e06a",
+      "runtime": {
+        "python": "3.11.14",
+        "platform": "Windows-10-10.0.26200-SP0",
+        "libraries": {
+          "lightgbm": "4.6.0",
+          "numpy": "2.4.2",
+          "pandas": "2.3.3",
+          "scikit-learn": "1.8.0",
+          "pyarrow": "23.0.0",
+          "scipy": "1.17.0",
+          "joblib": "1.5.3",
+          "threadpoolctl": "3.6.0"
+        }
+      },
+      "model_params": {
+        "boosting_type": "gbdt",
+        "class_weight": null,
+        "colsample_bytree": 0.8,
+        "importance_type": "split",
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "min_child_samples": 40,
+        "min_child_weight": 0.001,
+        "min_split_gain": 0.0,
+        "n_estimators": 200,
+        "n_jobs": 1,
+        "num_leaves": 15,
+        "objective": null,
+        "random_state": 42,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "subsample": 0.8,
+        "subsample_for_bin": 200000,
+        "subsample_freq": 0,
+        "verbosity": -1,
+        "device_type": "cpu",
+        "deterministic": true,
+        "force_col_wise": true
+      },
+      "calibration": null,
+      "features": [
+        "recent_quali_gap",
+        "recent_quali_pos",
+        "quali_track_hist",
+        "team_quali_strength"
+      ],
+      "generated_at": "2026-10-30T18:00:43.047443+00:00"
+    },
+    "stage2": {
+      "training_cutoff": {
+        "date_exclusive": "2026-11-01"
+      },
+      "row_count": 5501,
+      "race_count": 270,
+      "training_data_sha256": "a92b6a07993f5d9ed840f6ea8138f6e635b022d30413f3105431b8124ab84698",
+      "input_data_sha256": {
+        "results": {
+          "results_2014.parquet": "448863076c8b8f8f091f2cbeede04cbcde809af43c8e85d8054be5345a56542a",
+          "results_2015.parquet": "9e567372e35bd3c638ff5abcb1d246d23e6a771d0d468c93a97378fbcdc594dc",
+          "results_2016.parquet": "1a4faf28692ca2ebdb768795084ab76932c9a4227ba5cf7551ca33ce47ffd503",
+          "results_2017.parquet": "78d668c323b548429ab91c17f0407aa428794ed7e9dfa9e4330dc203beca61b7",
+          "results_2018.parquet": "f3b37ee02ea3f0b3fa6375491fc420617af80f909fe2644f2b982a174b1ee34e",
+          "results_2019.parquet": "0a398569b556d862bebbe4e7e0db7c3de1586845012b8d3697812e4c73395e17",
+          "results_2020.parquet": "b2a660a5f077632baa19527c9ba5cedd78a19851107e73c17b4d2242bdefdd26",
+          "results_2021.parquet": "32b69fe832920810ad0bf7e52625c5ae4e4208fe50e0ff2bec15e3319fa25fd2",
+          "results_2022.parquet": "3b0e42cf387d93e94b388a6e4312c923728ff7d1d6185bfc79a68774d49f0b04",
+          "results_2023.parquet": "3f8d92c8cbb75138968b7c4810de47296915edc77282d2d1c51f80081148d484",
+          "results_2024.parquet": "299e59fdbde0359ad0863019b252428130815a5964e804aaf9f9a2471452e50d",
+          "results_2025.parquet": "9eed76fb9e185725b4cbf6f90d19c4d1f01e41363acf563b9cf20466d293aba0",
+          "results_2026.parquet": "526bb16baa9d792d879a9897f613afe4750464e0c7916c2a4a297c44781fcae2"
+        },
+        "qualifying": {
+          "qualifying_2014.parquet": "173d6c5f5c70115aed37d1e1d5c6f9880080ba6fc118d29b36df0301b6746749",
+          "qualifying_2015.parquet": "7750fa6ad024287f0c2dc75112038c3948cd65a0258b5c13cc0e868405db2d95",
+          "qualifying_2016.parquet": "0b6e1f0b7f3d1a173d624c7f08e6ae999a3911b1e96eac5af7508eda239f64e4",
+          "qualifying_2017.parquet": "23b07b56afe730e39d4a8007850650c4e6e2f5950e1f55d668ad2118897a8ad9",
+          "qualifying_2018.parquet": "d5ed7775410768ab81d317686d7f4bc6d9fecd7fe872f19a79078fc019bb0d34",
+          "qualifying_2019.parquet": "738668e589145da74a6287d376fde1828f4e6e0e949dd40ec0cced968714d4e7",
+          "qualifying_2020.parquet": "44c21430046f5ab3fd8103b4804c96a86ce994ddb30c68225d050087e2523f25",
+          "qualifying_2021.parquet": "fe00f725d75480a81921226cba0f837d239473a66f22a9a21a44edde5e54ea00",
+          "qualifying_2022.parquet": "8a1f5dab90e0d297438dce47e9935e7bb84af68d8b567127731980fba16f91bd",
+          "qualifying_2023.parquet": "59a1f01d4b425db4ccd8a92d1bca8a4a75e779ff6f639a3f4d117009b7be2b86",
+          "qualifying_2024.parquet": "bd79ede41e52ac10ccf9991b2c7ab80a9bf5f4c47b28fae0cf622931917c328e",
+          "qualifying_2025.parquet": "29e4fa96a1b227cd70279dd2802ee08bbcf171fa1dd886fc35fa10d6dc7a4187",
+          "qualifying_2026.parquet": "030256547e83da64abb5a84d286fd2143fa1a52f78a3fd91073243943c5a0854"
+        }
+      },
+      "dependency_lock_sha256": "831607e972731ec0e21df5b19619a66021660230727877f3f29104c12425ca8a",
+      "git_revision": "5ef00cb63b55ea65611b94a4d644123eef571496",
+      "code_dirty": true,
+      "code_sha256": "f76637e572cfb4896b4d67bf73389487e787e7b18f2f3d0cccfbcb0027b5e06a",
+      "runtime": {
+        "python": "3.11.14",
+        "platform": "Windows-10-10.0.26200-SP0",
+        "libraries": {
+          "lightgbm": "4.6.0",
+          "numpy": "2.4.2",
+          "pandas": "2.3.3",
+          "scikit-learn": "1.8.0",
+          "pyarrow": "23.0.0",
+          "scipy": "1.17.0",
+          "joblib": "1.5.3",
+          "threadpoolctl": "3.6.0"
+        }
+      },
+      "model_params": {
+        "boosting_type": "gbdt",
+        "class_weight": null,
+        "colsample_bytree": 0.8,
+        "importance_type": "split",
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "min_child_samples": 40,
+        "min_child_weight": 0.001,
+        "min_split_gain": 0.0,
+        "n_estimators": 200,
+        "n_jobs": 1,
+        "num_leaves": 15,
+        "objective": null,
+        "random_state": 42,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "subsample": 0.8,
+        "subsample_for_bin": 200000,
+        "subsample_freq": 0,
+        "verbosity": -1,
+        "device_type": "cpu",
+        "deterministic": true,
+        "force_col_wise": true
+      },
+      "calibration": {
+        "method": "sigmoid",
+        "cv": 5
+      },
+      "features": [
+        "grid_position",
+        "quali_time_gap_to_pole",
+        "recent_form",
+        "recent_points",
+        "team_strength",
+        "track_history",
+        "dnf_rate"
+      ],
+      "generated_at": "2026-10-30T18:00:42.397371+00:00"
+    }
+  }
+}

@@ -2,8 +2,10 @@
 
 Reproduces the comparison that justified the live retrain. For each race in a recent test
 window it trains two models — FROZEN (seasons ≤2022) and LIVE (every race strictly before
-that race) — predicts, and scores. Leakage-safe throughout. Podium ranking is invariant
-to calibration, so the base LightGBM is compared directly.
+that race) — predicts, and scores. Historical features exclude the target race.
+The podium comparison uses actual qualifying and uncalibrated LightGBM. It does not
+evaluate the full pre-qualifying Stage-1-to-Stage-2 pipeline or the production
+five-fold calibrated ensemble (whose rankings can differ from a single base fit).
 
 Run:
     # macOS: LightGBM needs libomp on the dyld path (see ml/scripts/fix_libomp_macos.sh)
@@ -27,15 +29,15 @@ sys.path.insert(0, str(ML_DIR))
 
 from src.features.build_features import FEATURES, build_feature_table  # noqa: E402
 from src.model.quali import QTARGET, QUALI_FEATURES, build_quali_features  # noqa: E402
+from src.features.common import sort_race_rows  # noqa: E402
+from src.model.config import LGBM_PARAMS  # noqa: E402
 
-_KW = dict(n_estimators=200, learning_rate=0.05, num_leaves=15, max_depth=4,
-           min_child_samples=40, subsample=0.8, colsample_bytree=0.8,
-           reg_lambda=1.0, random_state=42, verbosity=-1)
+_KW = LGBM_PARAMS
 WINDOWS = [("2024-2026", 2024), ("2025-2026", 2025), ("2026 only", 2026)]
 
 
 def _podium_backtest(df):
-    df = df.copy()
+    df = sort_race_rows(df)
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
     out = {}
     for label, y0 in WINDOWS:
@@ -50,7 +52,7 @@ def _podium_backtest(df):
             aw = aw.iloc[0]
             for tag, train in (("old", df[df.season <= 2022]), ("c", df[df["date"] < tr.date])):
                 m = lgb.LGBMClassifier(**_KW).fit(train[FEATURES], train["podium"])
-                r = race.assign(p=m.predict_proba(race[FEATURES])[:, 1]).sort_values("p", ascending=False)
+                r = race.assign(p=m.predict_proba(race[FEATURES])[:, 1]).sort_values("p", ascending=False, kind="stable")
                 hit = len(set(r["code"].head(3)) & actual3) / 3
                 win = int(r.iloc[0]["code"] == aw)
                 if tag == "old":
@@ -64,7 +66,7 @@ def _podium_backtest(df):
 
 
 def _quali_backtest():
-    q = build_quali_features().dropna(subset=[QTARGET, "quali_position"]).copy()
+    q = sort_race_rows(build_quali_features().dropna(subset=[QTARGET, "quali_position"]))
     q["ord"] = q.season * 100 + q["round"]
     out = {}
     for label, y0 in WINDOWS:
@@ -79,7 +81,7 @@ def _quali_backtest():
                 g = race.assign(pred=m.predict(race[QUALI_FEATURES]))
                 g = g.assign(pred_grid=g["pred"].rank(method="first"))
                 ge = (g["pred_grid"] - g["quali_position"]).abs().mean()
-                pole = int(g.sort_values("pred").iloc[0]["quali_position"] == 1)
+                pole = int(g.sort_values("pred", kind="stable").iloc[0]["quali_position"] == 1)
                 mae = float((g["pred"] - g[QTARGET]).abs().median())
                 if tag == "old":
                     o_ge += ge; o_pole += pole; o_mae += mae

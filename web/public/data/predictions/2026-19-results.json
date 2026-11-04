@@ -1,0 +1,251 @@
+{
+  "schema_version": 2,
+  "race_id": "2026-19",
+  "season": 2026,
+  "round": 19,
+  "source": "ml/data/raw/results_2026.parquet",
+  "results": [
+    {
+      "position": 1,
+      "driver_id": "max_verstappen",
+      "code": "VER",
+      "driver_name": "Max Verstappen",
+      "constructor_id": "red_bull",
+      "constructor_name": "Red Bull",
+      "points": 25,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 2,
+      "driver_id": "hamilton",
+      "code": "HAM",
+      "driver_name": "Lewis Hamilton",
+      "constructor_id": "ferrari",
+      "constructor_name": "Ferrari",
+      "points": 18,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 3,
+      "driver_id": "antonelli",
+      "code": "ANT",
+      "driver_name": "Andrea Kimi Antonelli",
+      "constructor_id": "mercedes",
+      "constructor_name": "Mercedes",
+      "points": 15,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 4,
+      "driver_id": "leclerc",
+      "code": "LEC",
+      "driver_name": "Charles Leclerc",
+      "constructor_id": "ferrari",
+      "constructor_name": "Ferrari",
+      "points": 12,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 5,
+      "driver_id": "norris",
+      "code": "NOR",
+      "driver_name": "Lando Norris",
+      "constructor_id": "mclaren",
+      "constructor_name": "McLaren",
+      "points": 10,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 6,
+      "driver_id": "russell",
+      "code": "RUS",
+      "driver_name": "George Russell",
+      "constructor_id": "mercedes",
+      "constructor_name": "Mercedes",
+      "points": 8,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 7,
+      "driver_id": "piastri",
+      "code": "PIA",
+      "driver_name": "Oscar Piastri",
+      "constructor_id": "mclaren",
+      "constructor_name": "McLaren",
+      "points": 6,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 8,
+      "driver_id": "colapinto",
+      "code": "COL",
+      "driver_name": "Franco Colapinto",
+      "constructor_id": "alpine",
+      "constructor_name": "Alpine F1 Team",
+      "points": 4,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 9,
+      "driver_id": "lawson",
+      "code": "LAW",
+      "driver_name": "Liam Lawson",
+      "constructor_id": "rb",
+      "constructor_name": "RB F1 Team",
+      "points": 2,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 10,
+      "driver_id": "gasly",
+      "code": "GAS",
+      "driver_name": "Pierre Gasly",
+      "constructor_id": "alpine",
+      "constructor_name": "Alpine F1 Team",
+      "points": 1,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 11,
+      "driver_id": "bortoleto",
+      "code": "BOR",
+      "driver_name": "Gabriel Bortoleto",
+      "constructor_id": "audi",
+      "constructor_name": "Audi",
+      "points": 0,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 12,
+      "driver_id": "hadjar",
+      "code": "HAD",
+      "driver_name": "Isack Hadjar",
+      "constructor_id": "red_bull",
+      "constructor_name": "Red Bull",
+      "points": 0,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 13,
+      "driver_id": "ryo_hirakawa",
+      "code": "HIR",
+      "driver_name": "Ryo Hirakawa",
+      "constructor_id": "haas",
+      "constructor_name": "Haas F1 Team",
+      "points": 0,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 14,
+      "driver_id": "albon",
+      "code": "ALB",
+      "driver_name": "Alexander Albon",
+      "constructor_id": "williams",
+      "constructor_name": "Williams",
+      "points": 0,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 15,
+      "driver_id": "sainz",
+      "code": "SAI",
+      "driver_name": "Carlos Sainz",
+      "constructor_id": "williams",
+      "constructor_name": "Williams",
+      "points": 0,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 16,
+      "driver_id": "hulkenberg",
+      "code": "HUL",
+      "driver_name": "Nico Hülkenberg",
+      "constructor_id": "audi",
+      "constructor_name": "Audi",
+      "points": 0,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 17,
+      "driver_id": "perez",
+      "code": "PER",
+      "driver_name": "Sergio Pérez",
+      "constructor_id": "cadillac",
+      "constructor_name": "Cadillac F1 Team",
+      "points": 0,
+      "laps": 71,
+      "status": "Finished"
+    },
+    {
+      "position": 18,
+      "driver_id": "arvid_lindblad",
+      "code": "LIN",
+      "driver_name": "Arvid Lindblad",
+      "constructor_id": "rb",
+      "constructor_name": "RB F1 Team",
+      "points": 0,
+      "laps": 58,
+      "status": "Retired"
+    },
+    {
+      "position": 19,
+      "driver_id": "bearman",
+      "code": "BEA",
+      "driver_name": "Oliver Bearman",
+      "constructor_id": "haas",
+      "constructor_name": "Haas F1 Team",
+      "points": 0,
+      "laps": 47,
+      "status": "Retired"
+    },
+    {
+      "position": 20,
+      "driver_id": "bottas",
+      "code": "BOT",
+      "driver_name": "Valtteri Bottas",
+      "constructor_id": "cadillac",
+      "constructor_name": "Cadillac F1 Team",
+      "points": 0,
+      "laps": 42,
+      "status": "Retired"
+    },
+    {
+      "position": 21,
+      "driver_id": "stroll",
+      "code": "STR",
+      "driver_name": "Lance Stroll",
+      "constructor_id": "aston_martin",
+      "constructor_name": "Aston Martin",
+      "points": 0,
+      "laps": 5,
+      "status": "Retired"
+    },
+    {
+      "position": 22,
+      "driver_id": "alonso",
+      "code": "ALO",
+      "driver_name": "Fernando Alonso",
+      "constructor_id": "aston_martin",
+      "constructor_name": "Aston Martin",
+      "points": 0,
+      "laps": 5,
+      "status": "Retired"
+    }
+  ]
+}
