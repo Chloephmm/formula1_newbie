@@ -1,22 +1,22 @@
 {
   "schema_version": 2,
-  "race_id": "2026-19",
-  "state": "estimated_waiting",
+  "race_id": "2026-20",
   "input_mode": "estimated_qualifying",
-  "prediction_updated_at": "2026-10-30T18:00:43Z",
-  "last_data_check_at": null,
-  "next_scheduled_check_at": "2026-11-01T05:17:00Z",
-  "final_verification_completed_at": null,
-  "publication_cutoff_at": "2026-11-01T18:00:00Z",
+  "prediction_updated_at": "2026-11-04T02:56:02Z",
+  "publication_cutoff_at": "2026-11-08T15:00:00Z",
   "schedule_updated_at": "2026-10-30T17:18:25Z",
-  "status_reason": "actual_qualifying_not_checked_yet",
   "schedule": {
     "season": 2026,
-    "round": 19,
-    "qualifying_start_at": "2026-10-31T21:00:00Z",
-    "qualifying_end_at": "2026-11-01T00:00:00Z",
+    "round": 20,
+    "qualifying_start_at": "2026-11-07T18:00:00Z",
+    "qualifying_end_at": "2026-11-07T21:00:00Z",
     "end_time_estimated": true,
-    "race_start_at": "2026-11-01T20:00:00Z",
+    "race_start_at": "2026-11-08T17:00:00Z",
     "schedule_updated_at": "2026-10-30T17:18:25Z"
-  }
+  },
+  "last_data_check_at": null,
+  "next_scheduled_check_at": "2026-11-08T02:17:00Z",
+  "final_verification_completed_at": null,
+  "status_reason": "actual_qualifying_not_checked_yet",
+  "state": "estimated_waiting"
 }
