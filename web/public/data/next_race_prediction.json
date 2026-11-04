@@ -402,8 +402,8 @@
           }
         },
         "dependency_lock_sha256": "47764ec524d82ca3cfcba3a8ec47b29b66e7cb7c8cf102d2c32a41399d148e3a",
-        "git_revision": "7af3f91cb2d94507006091c3957a1818e44a244f",
-        "code_dirty": true,
+        "git_revision": "a18b5f017b2cee90df7166bff28cc0b9be0cd472",
+        "code_dirty": false,
         "code_sha256": "0a4e9223e09557d3eb81e46c1e68f9145e11e04788c78b8a57b3d21fc677cba5",
         "runtime": {
           "python": "3.11.14",
@@ -451,7 +451,7 @@
           "quali_track_hist",
           "team_quali_strength"
         ],
-        "generated_at": "2026-11-04T02:52:13.463584+00:00"
+        "generated_at": "2026-11-04T02:56:01.914954+00:00"
       },
       "stage2": {
         "training_cutoff": {
@@ -493,8 +493,8 @@
           }
         },
         "dependency_lock_sha256": "47764ec524d82ca3cfcba3a8ec47b29b66e7cb7c8cf102d2c32a41399d148e3a",
-        "git_revision": "7af3f91cb2d94507006091c3957a1818e44a244f",
-        "code_dirty": true,
+        "git_revision": "a18b5f017b2cee90df7166bff28cc0b9be0cd472",
+        "code_dirty": false,
         "code_sha256": "0a4e9223e09557d3eb81e46c1e68f9145e11e04788c78b8a57b3d21fc677cba5",
         "runtime": {
           "python": "3.11.14",
@@ -548,12 +548,12 @@
           "track_history",
           "dnf_rate"
         ],
-        "generated_at": "2026-11-04T02:52:12.802095+00:00"
+        "generated_at": "2026-11-04T02:56:01.474294+00:00"
       }
     }
   },
   "input_mode": "estimated_qualifying",
-  "prediction_updated_at": "2026-11-04T02:52:13Z",
+  "prediction_updated_at": "2026-11-04T02:56:02Z",
   "qualifying_input_hash": null,
   "publication_cutoff_at": "2026-11-08T15:00:00Z",
   "frozen_at": null,
@@ -600,8 +600,8 @@
         }
       },
       "dependency_lock_sha256": "47764ec524d82ca3cfcba3a8ec47b29b66e7cb7c8cf102d2c32a41399d148e3a",
-      "git_revision": "7af3f91cb2d94507006091c3957a1818e44a244f",
-      "code_dirty": true,
+      "git_revision": "a18b5f017b2cee90df7166bff28cc0b9be0cd472",
+      "code_dirty": false,
       "code_sha256": "0a4e9223e09557d3eb81e46c1e68f9145e11e04788c78b8a57b3d21fc677cba5",
       "runtime": {
         "python": "3.11.14",
@@ -649,7 +649,7 @@
         "quali_track_hist",
         "team_quali_strength"
       ],
-      "generated_at": "2026-11-04T02:52:13.463584+00:00"
+      "generated_at": "2026-11-04T02:56:01.914954+00:00"
     },
     "stage2": {
       "training_cutoff": {
@@ -691,8 +691,8 @@
         }
       },
       "dependency_lock_sha256": "47764ec524d82ca3cfcba3a8ec47b29b66e7cb7c8cf102d2c32a41399d148e3a",
-      "git_revision": "7af3f91cb2d94507006091c3957a1818e44a244f",
-      "code_dirty": true,
+      "git_revision": "a18b5f017b2cee90df7166bff28cc0b9be0cd472",
+      "code_dirty": false,
       "code_sha256": "0a4e9223e09557d3eb81e46c1e68f9145e11e04788c78b8a57b3d21fc677cba5",
       "runtime": {
         "python": "3.11.14",
@@ -746,7 +746,7 @@
         "track_history",
         "dnf_rate"
       ],
-      "generated_at": "2026-11-04T02:52:12.802095+00:00"
+      "generated_at": "2026-11-04T02:56:01.474294+00:00"
     }
   }
 }
