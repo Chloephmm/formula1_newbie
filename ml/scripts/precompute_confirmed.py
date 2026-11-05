@@ -31,6 +31,7 @@ from check_qualifying import (  # noqa: E402
     _remote_reader,
     model_manifest,
 )
+from src.data import jolpica  # noqa: E402
 from src.features.build_features import FEATURES  # noqa: E402
 from src.model.event_forecast import (  # noqa: E402
     _forecast_prepared,
@@ -69,13 +70,26 @@ def _json_row(row: pd.Series) -> dict:
 
 
 def build_next_event(asof: str, *, observed_at: datetime) -> dict:
-    """Build exact event metadata from cached schedule and prior-race entries."""
+    """Build event metadata, refreshing legacy schedules without source evidence."""
 
     target = next_race(asof)
     if target is None:
         raise RuntimeError(f"No race on/after {asof} in cached schedule")
     schedule = _json_row(target)
     season, round_number = int(schedule["season"]), int(schedule["round"])
+    schedule_source = schedule.get("schedule_source")
+    if not isinstance(schedule_source, str) or not schedule_source.strip():
+        # Pre-migration parquet caches lack provenance. Obtain new evidence from
+        # Jolpica instead of relabeling old bytes or weakening the event contract.
+        refreshed = jolpica.get_schedule(season, fetched_at=observed_at)
+        if refreshed.empty or not {"season", "round"}.issubset(refreshed.columns):
+            raise ValueError("schedule refresh did not return the exact target event")
+        matching = refreshed.loc[
+            (refreshed["season"] == season) & (refreshed["round"] == round_number)
+        ]
+        if len(matching) != 1:
+            raise ValueError("schedule refresh did not return one exact target event")
+        schedule = _json_row(matching.iloc[0])
     history = _load_history()["results"]
     identities = history[["season", "round"]].drop_duplicates()
     prior = identities.loc[

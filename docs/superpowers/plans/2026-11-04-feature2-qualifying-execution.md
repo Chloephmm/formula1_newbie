@@ -90,3 +90,32 @@ Local review and automated checks were performed; independent review remains ope
 
 Until those checks are performed, this is a locally implemented pipeline, not a
 claim that GitHub automation or the deployed page is already running this version.
+
+## Post-merge bootstrap repair (2026-11-05)
+
+Hosted qualifying publisher run [41942994403](https://github.com/Chloephmm/formula1_newbie/actions/runs/41942994403)
+failed before training because the committed legacy schedule cache has no
+`schedule_source`. The existing public forecast was not replaced.
+
+The local `feature2` repair fetches a fresh Jolpica calendar when that provenance
+is missing or blank, requires exactly one matching season/round, and retains the
+normal event validation. It does not invent provenance or overwrite raw caches.
+API errors and ambiguous/missing target events fail before model execution.
+
+Verification for this repair:
+
+- Ten bootstrap regression cases: nine failed before the fix and all ten pass
+  afterward. Related targeted suites: 68 passed.
+- ML suite excluding the unchanged publication suite: 408 passed, 2 existing
+  skips for the absent generated processed-feature dataset. The publication
+  suite was not rerun for this repair.
+- A live-calendar, in-memory Brazil round 20 forecast passed artifact validation
+  using the round 19 prior-race roster. Both model stages ran; no output was
+  saved or published. Calendar observation: `2026-11-05T00:44:44Z`.
+- Focused independent inspection reported no correctness issue, but its
+  subsequent verification attempt was interrupted by the account usage limit;
+  it did not provide a completed review sign-off.
+
+This repair remains local and uncommitted on `feature2`. Commit/push and merge
+are user-controlled. A successful hosted bootstrap and published-feed check are
+still required after the repair reaches `main`.
