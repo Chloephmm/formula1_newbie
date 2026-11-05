@@ -1,75 +1,98 @@
 # F1 Prediction Publication Logic
 
-The predictor is a scheduled publication pipeline. A visitor only reads validated JSON;
-the Streamlit process does not fetch Jolpica data or run either model.
+The predictor is a scheduled publication pipeline. Visitors read saved, validated
+JSON; Streamlit never fetches Jolpica or trains a model.
 
-Code: `ml/scripts/precompute_next_race.py` (Monday estimate) ·
-`ml/scripts/publish_qualifying_prediction.py` (hourly publisher) ·
-`ml/src/publication/` (timing, validation, state machine) ·
-`streamlit_app/app.py` (polling viewer).
+Production entry points: `ml/scripts/precompute_confirmed.py` (initial forecast),
+`ml/scripts/check_qualifying.py` (monitor), `ml/src/pipeline/` (validation,
+state, immutable artifacts, publication), and `streamlit_app/confirmed_feed.py`
+(saved-feed adapter). Older publication scripts remain for compatibility and
+diagnostics; the three Actions do not invoke them.
 
-## Forecast stages
+## Workflow responsibilities
 
-1. Stage 1 estimates each entrant's gap to pole and qualifying classification from
-   prior form, team pace, and circuit history.
-2. Stage 2 combines qualifying position/gap with race-form features to estimate each
-   driver's calibrated podium probability.
-3. Before qualifying validation, Stage 2 receives Stage 1's estimates. After validation,
-   Stage 2 receives **actual qualifying results**.
+| Action | Trigger (UTC) | Input and responsibility |
+| --- | --- | --- |
+| Qualifying prediction publisher | Minute 7, 22, 37, 52 of every hour | Cheap due gate; exact-event Jolpica qualifying; Stage 2 only after valid changed input; confirmed publication and freeze |
+| Weekly refresh (data + accuracy bar) | Monday 06:00 | Refresh results, qualifying, both standings datasets and schedule; archive prior final; prepare next initial; update benchmark and saved-forecast metrics |
+| Sync F1 stats | Monday 06:00, March–December | Refresh website driver/team statistics through `npm run sync-stats`; does not train ML |
 
-The Stage 2 probabilities are normalized to total three podium places. All training data
-is strictly earlier than the target Grand Prix.
+All writers share `f1-data-writes`, `cancel-in-progress: false`, `queue: max`.
+Writes use fast-forward commits with conflict checks, never force pushes.
+Production workflow jobs and publishing entry points are guarded for the original
+repository's `main` branch. Work on `feature2` is not a live deployment.
 
-## Automated schedule
+## Race lifecycle
 
-```text
-Monday refresh
-  └─ publish estimated-qualifying forecast for the next Grand Prix
+| Window | Background work | Saved page |
+| --- | --- | --- |
+| Before qualifying | Stage 1 estimates qualifying; Stage 2 predicts podium; confirm immutable initial | Using estimated qualifying |
+| Qualifying end + 5 hours | First exact-event API check at the next monitor tick | Existing forecast remains |
+| Missing/incomplete results | Retry no earlier than one hour after the previous check started; no training | Existing forecast remains |
+| Valid results | Validate roster, classification and laps; run Stage 2; verify remote immutable bytes before cutoff | Using actual qualifying |
+| After successful publication | Pause qualifying retries; continue independent schedule refresh | Latest confirmed forecast |
+| Cutoff − 45 minutes | One final check for missing results or corrections | Update only on successful publication |
+| Cutoff − 15 minutes | Do not start new generation | Latest confirmed forecast |
+| Race start − 2 hours | Freeze the latest eligible confirmation receipt | Final saved prediction |
+| Monday | Preserve previous archive and prepare next event | Roll forward |
 
-qualifying_end_at + 5 hours
-  └─ first Jolpica qualifying check at the next hourly :17 tick
-       ├─ missing/invalid → update status only; retry hourly
-       └─ valid → train Stage 2, validate artifact, publish actual-qualifying forecast
+Schedule timestamps, not hard-coded weekday assumptions, control the lifecycle.
+If no observed end exists, qualifying end is explicitly estimated as start + 90
+minutes. Evidence-backed observed ends and entrant exceptions belong in
+`ml/config/event_overrides.json`. Schedule refresh is hourly within 72 hours of
+qualifying until cutoff, otherwise daily. It is also rechecked after generation.
+GitHub scheduling and queues can be delayed: ticks are opportunities, not exact
+wall-clock guarantees. No delayed run may publish a new eligible forecast after
+the deadline.
 
-race_start_at - 2h30m
-  └─ latest safe processing start; the final :17 tick occurs on/before this point
+## Data input and model safeguards
 
-race_start_at - 2h
-  └─ publication cutoff; freeze the latest valid race artifact
-```
+- Fetch the exact season/round qualifying endpoint, including every validated page.
+- Require event identity, unique drivers/positions, complete expected roster and
+  valid lap strings. Missing Q2/Q3 is normal; evidence-backed no-lap cases retain
+  their official values and carry explicit model-input fallbacks.
+- Derive provisional entrants from the previous completed race. Substitutions,
+  exclusions and withdrawals require documented overrides; unknown entrants fail closed.
+- Filter raw historical results and qualifying before constructing rolling features.
+  Target/future results never enter the training snapshot.
+- Actual mode never retrains Stage 1. Unavailable and semantically unchanged
+  qualifying results never retrain either model.
+- Keep feature2's deterministic model settings and record code, dependency, training,
+  feature, roster, schedule and qualifying hashes in each artifact.
+- Probabilities are normalized estimates totaling three podium places. Qualifying
+  classification is not a penalty-adjusted starting grid.
 
-All decisions use UTC timestamps from the current Jolpica schedule. Qualifying end is
-estimated as qualifying start plus 180 minutes. The schedule is fetched on each publisher
-run so postponements move the first check and cutoff. There is no assumption that
-qualifying occurs one calendar day before the race.
+## Publication and reader contract
 
-## Qualifying validation
+`web/public/data/prediction_feed.json` is the atomic current-event revision,
+containing event metadata, prediction, status and publication receipt together.
+Per-event files live under `prediction_snapshots/{season}-{round}/`:
+`event.json`, `status.json`, immutable `initial.json`, `versions/`,
+`sources/`, `publications/`, `checks/`, `feed.json` and terminal `final.json`.
+`predictions/index.json` supplies archive navigation only.
+`next_race_prediction.json` remains a compatibility output.
 
-The publisher accepts a classification only when:
+A commit/push alone is not publication proof. The publisher reads exact immutable
+bytes from GitHub's raw origin and records the actual successful readback time.
+Only confirmation before the deadline qualifies; feed delivery may finish later.
+Freeze uses confirmation receipts, never generation time or a reconstructed forecast.
+If a selected receipt's original prediction context is missing, publication fails
+closed instead of inventing a replacement.
 
-- season, round, race, and circuit match the scheduled event;
-- pagination metadata proves every response page was fetched;
-- driver IDs and positive classification positions are unique;
-- entrants match the latest completed race after documented withdrawals, exclusions,
-  and substitutions from `ml/config/qualifying_exceptions.v1.json`;
-- every supplied lap string parses to a positive finite duration and at least one valid
-  lap exists.
+Streamlit polls every 60 seconds with a process-shared ETag cache. Failed/corrupt
+reads retain the same event's last good display. Deployed default origin is
+`raw.githubusercontent.com/Chloephmm/formula1_newbie/main/web/public/data`.
+`PREDICTION_FEED_URL` can select another origin ending in
+`prediction_feed.json`. Legacy archives remain viewable but explicitly unconfirmed.
 
-Missing Q2/Q3 values are normal. A classified driver without a lap receives the slowest
-valid qualifying gap for Stage 2. Normalized inputs are hashed; unchanged results do not
-retrain, while corrected results can trigger one final republish.
+## Accuracy and rollout
 
-## Published feed
+`ml/models/live_metrics.json` remains the reconstruction benchmark, not proof of
+live prediction accuracy. `ml/models/saved_forecast_metrics.json` separately
+scores confirmed saved initial and frozen final forecasts. Unevidenced legacy
+snapshots are excluded; no retrospective prediction is called an original.
 
-- `next_race_prediction.json` — active compatibility snapshot
-- `prediction_status.json` — mutable check/publication state
-- `predictions/index.json` — active race plus archive entries
-- `predictions/{season}-{round}.json` — race artifact, immutable after freezing
-
-Streamlit polls this feed every 60 seconds. It retains the last valid in-session snapshot
-on HTTP or schema failure and preserves a visitor's selected historical race.
-
-## Model accuracy
-
-The Monday job retains the existing walk-forward backtest. Its output is
-`ml/models/live_metrics.json`; it does not run in the hourly qualifying publisher.
+Before merging/deploying, inspect the implementation and test report in
+[feature2 execution notes](../superpowers/plans/2026-11-04-feature2-qualifying-execution.md).
+Hosted Actions and an already-open deployed browser still require acceptance
+verification after an authorized merge/deployment.

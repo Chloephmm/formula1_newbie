@@ -5,7 +5,11 @@
 Both ML Actions use Ubuntu 24.04, CPython 3.11.14 and `ml/requirements-lock.txt`.
 The lock pins all resolved runtime dependencies. `requirements-constraints.txt`
 preserves the audited core ML versions when deliberately regenerating the lock.
-Neither the Monday schedules nor their commit allowlists have changed.
+The Monday schedules are unchanged. The coordinated publisher additionally saves
+confirmed archive state and separate saved-forecast metrics. See
+[prediction logic](specs/prediction-logic.md) for the current production entry points;
+the diagnostic commands below target the older compatibility artifacts, not the
+confirmed feed.
 
 Windows setup from the repository root (does not alter the Streamlit environment):
 

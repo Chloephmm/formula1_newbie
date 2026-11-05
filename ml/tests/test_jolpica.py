@@ -47,11 +47,11 @@ def test_schedule_uses_nested_qualifying_and_race_timestamps(monkeypatch):
         raising=False,
     )
 
-    row = jolpica.get_schedule(2026).iloc[0]
+    row = jolpica.get_schedule(2026, fetched_at="2026-01-02T03:04:05Z").iloc[0]
 
     assert row["date"] == "2026-03-08"
     assert row["qualifying_start_at"] == "2026-03-07T15:00:00Z"
-    assert row["qualifying_end_at"] == "2026-03-07T18:00:00Z"
+    assert row["qualifying_end_at"] == "2026-03-07T16:30:00Z"
     assert row["end_time_estimated"] == True
     assert row["race_start_at"] == "2026-03-08T04:00:00Z"
     assert row["schedule_updated_at"] == "2026-01-02T03:04:05Z"
@@ -69,7 +69,7 @@ def test_schedule_reflects_postponed_qualifying_instead_of_inferring_from_race(m
 
     assert original["qualifying_start_at"] == "2026-03-07T15:00:00Z"
     assert postponed["qualifying_start_at"] == "2026-03-08T01:30:00Z"
-    assert postponed["qualifying_end_at"] == "2026-03-08T04:30:00Z"
+    assert postponed["qualifying_end_at"] == "2026-03-08T03:00:00Z"
     assert postponed["race_start_at"] == original["race_start_at"]
 
 

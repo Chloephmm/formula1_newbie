@@ -46,8 +46,8 @@ def _fetch(seasons) -> None:
 
 
 def _precompute(asof: str) -> None:
-    import precompute_next_race  # sibling script
-    precompute_next_race.main(asof)
+    import precompute_confirmed  # sibling script
+    precompute_confirmed.main(asof)
 
 
 def _backtest() -> None:
@@ -57,6 +57,76 @@ def _backtest() -> None:
     out = ML_DIR / "models" / "live_metrics.json"
     out.write_text(json.dumps(payload, indent=2))
     print(f"  wrote {out.relative_to(ML_DIR.parent)}")
+    _saved_evaluation()
+
+
+def _saved_evaluation() -> None:
+    from check_qualifying import _load_history
+    from src.pipeline.evaluation import evaluate_saved
+    from src.publication.race_results import export_race_results
+    data_root = ML_DIR.parent / 'web/public/data'
+    metrics = evaluate_saved(data_root, _load_history()['results'])
+    (ML_DIR / 'models/saved_forecast_metrics.json').write_text(json.dumps(metrics, indent=2))
+    index_path = data_root / 'predictions/index.json'
+    if index_path.exists():
+        export_race_results(ML_DIR / 'data/raw', data_root,
+                            json.loads(index_path.read_text(encoding='utf-8')), dry_run=False)
+
+
+def run_refresh(
+    *,
+    asof: str,
+    seasons,
+    no_fetch: bool,
+    no_snapshot: bool,
+    backtest: bool,
+    fetch_step=_fetch,
+    precompute_step=_precompute,
+    backtest_step=_backtest,
+) -> None:
+    """Run every Monday responsibility, preserving completed independent work.
+
+    Snapshot generation is intentionally isolated from the accuracy backtest. If it
+    fails, the backtest still runs and the caller receives the original failure only
+    after all independent work has completed. The workflow's always-run publisher
+    then saves fetched data and metrics before re-reporting the job failure.
+    """
+
+    failures: list[tuple[str, BaseException]] = []
+    if no_fetch:
+        print("[1/3] Skipping fetch (--no-fetch).")
+    else:
+        print(f"[1/3] Fetching {seasons} from Jolpica …")
+        try:
+            fetch_step(seasons)
+        except BaseException as exc:
+            failures.append(("fetch", exc))
+            print(f"  fetch failed: {exc}")
+
+    if no_snapshot:
+        print("[2/3] Skipping next-race snapshot (--no-snapshot).")
+    else:
+        print("[2/3] Precomputing next-race snapshot …")
+        try:
+            precompute_step(asof)
+        except BaseException as exc:
+            failures.append(("snapshot", exc))
+            print(f"  snapshot failed: {exc}")
+
+    if backtest:
+        print("[3/3] Regenerating accuracy backtest (a few minutes) …")
+        try:
+            backtest_step()
+        except BaseException as exc:
+            failures.append(("backtest", exc))
+            print(f"  backtest failed: {exc}")
+    else:
+        print("[3/3] Skipping backtest (pass --backtest to refresh the accuracy bar).")
+
+    if failures:
+        summary = "; ".join(f"{name}: {exc}" for name, exc in failures)
+        raise RuntimeError(f"Monday refresh completed with failures: {summary}")
+    print("Done.")
 
 
 def main() -> None:
@@ -72,25 +142,13 @@ def main() -> None:
                     help="also regenerate live_metrics.json for the accuracy bar (slow)")
     args = ap.parse_args()
 
-    if args.no_fetch:
-        print("[1/3] Skipping fetch (--no-fetch).")
-    else:
-        print(f"[1/3] Fetching {args.seasons} from Jolpica …")
-        _fetch(args.seasons)
-
-    if args.no_snapshot:
-        print("[2/3] Skipping next-race snapshot (--no-snapshot).")
-    else:
-        print("[2/3] Precomputing next-race snapshot …")
-        _precompute(args.asof)
-
-    if args.backtest:
-        print("[3/3] Regenerating accuracy backtest (a few minutes) …")
-        _backtest()
-    else:
-        print("[3/3] Skipping backtest (pass --backtest to refresh the accuracy bar).")
-
-    print("Done.")
+    run_refresh(
+        asof=args.asof,
+        seasons=args.seasons,
+        no_fetch=args.no_fetch,
+        no_snapshot=args.no_snapshot,
+        backtest=args.backtest,
+    )
 
 
 if __name__ == "__main__":

@@ -282,10 +282,15 @@ def get_constructor_standings(season: int) -> pd.DataFrame:
     return _coerce_numeric(pd.DataFrame(rows), ["position", "points", "wins"])
 
 
-def get_schedule(season: int) -> pd.DataFrame:
+def get_schedule(season: int, *, fetched_at=None) -> pd.DataFrame:
     """The season calendar: round, race name, circuit, date, location."""
     rows = []
-    schedule_updated_at = _utc_now_iso()
+    fetched = fetched_at or datetime.now(timezone.utc)
+    if isinstance(fetched, str):
+        fetched = datetime.fromisoformat(fetched.replace("Z", "+00:00"))
+    if fetched.tzinfo is None:
+        raise ValueError("fetched_at must include a timezone")
+    schedule_updated_at = _as_utc_iso(fetched.replace(microsecond=0))
     for mr in _iter_pages(f"{season}"):
         for race in mr["RaceTable"]["Races"]:
             loc = race["Circuit"].get("Location", {})
@@ -297,7 +302,7 @@ def get_schedule(season: int) -> pd.DataFrame:
             qualifying_end_at = None
             if qualifying_start_at:
                 start = datetime.fromisoformat(qualifying_start_at.replace("Z", "+00:00"))
-                qualifying_end_at = _as_utc_iso(start + timedelta(minutes=180))
+                qualifying_end_at = _as_utc_iso(start + timedelta(minutes=90))
             rows.append({
                 "season": int(race["season"]),
                 "round": int(race["round"]),
@@ -312,6 +317,7 @@ def get_schedule(season: int) -> pd.DataFrame:
                 "end_time_estimated": True,
                 "race_start_at": race_start_at,
                 "schedule_updated_at": schedule_updated_at,
+                "schedule_source": "jolpica",
             })
     return pd.DataFrame(rows)
 

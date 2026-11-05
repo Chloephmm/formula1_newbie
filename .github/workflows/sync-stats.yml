@@ -6,15 +6,23 @@ on:
     - cron: "0 6 * 3-12 1"
   workflow_dispatch: {} # manual, available year-round
 
+env:
+  GIT_AUTHOR_NAME: github-actions[bot]
+  GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+  GIT_COMMITTER_NAME: github-actions[bot]
+  GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+
 permissions:
   contents: write
 
 concurrency:
-  group: f1-main-writes
+  group: f1-data-writes
   cancel-in-progress: false
+  queue: max
 
 jobs:
   sync:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -36,15 +44,5 @@ jobs:
         working-directory: web
         run: npm run sync-stats
 
-      - name: Commit if changed
-        run: |
-          git config user.name "f1-stats-bot"
-          git config user.email "actions@github.com"
-          git add web/public/data/stats.json
-          if git diff --cached --quiet; then
-            echo "No stats changes — nothing to commit."
-          else
-            git commit -m "chore: refresh F1 stats"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+      - name: Publish the coordinated stats refresh
+        run: python ml/scripts/publish_refresh.py --kind stats
