@@ -2,6 +2,7 @@
 # Install with:  pip install -r requirements-dev.txt
 # (run the project itself with requirements.txt)
 
--r requirements.txt   # dev env also needs the runtime deps
+-r requirements-lock.txt
 
-pytest                # unit tests in ml/tests/
+pytest==9.0.2
+streamlit==1.66.1      # saved-output dashboard AppTest coverage

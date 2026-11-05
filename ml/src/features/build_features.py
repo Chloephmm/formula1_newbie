@@ -57,9 +57,12 @@ def _quali_gap(qua: pd.DataFrame) -> pd.DataFrame:
     return q[["season", "round", "driver_id", "quali_time_gap_to_pole"]]
 
 
-def build_feature_table() -> pd.DataFrame:
-    res = _load("results")
-    qua = _load("qualifying")
+def build_feature_table(results=None, qualifying=None) -> pd.DataFrame:
+    """Build from cache or an already cutoff-filtered raw snapshot."""
+    if (results is None) != (qualifying is None):
+        raise ValueError("results and qualifying must be supplied together")
+    res = _load("results") if results is None else results.copy(deep=True)
+    qua = _load("qualifying") if qualifying is None else qualifying.copy(deep=True)
 
     # Chronological order is the backbone of every leakage-safe feature.
     df = sort_race_rows(res)
@@ -110,6 +113,7 @@ def build_feature_table() -> pd.DataFrame:
     df["dnf_rate"] = df["dnf_rate"].fillna(0.1)
     df["team_strength"] = df["team_strength"].fillna(MIDFIELD)
     df["track_history"] = df["track_history"].fillna(df["recent_form"])
+    df["quali_time_gap_to_pole"] = pd.to_numeric(df["quali_time_gap_to_pole"], errors="coerce")
     race_max_gap = df.groupby(["season", "round"])["quali_time_gap_to_pole"].transform("max")
     df["quali_time_gap_to_pole"] = df["quali_time_gap_to_pole"].fillna(race_max_gap).fillna(3.0)
 

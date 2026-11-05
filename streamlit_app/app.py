@@ -14,12 +14,13 @@ from urllib.parse import urlparse
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from streamlit_app.prediction_feed import FeedError, choose_race, load_bundle, load_index, load_race_results
+from streamlit_app.prediction_feed import FeedError, choose_race, load_race_results
+from streamlit_app.confirmed_feed import load_bundle, load_index, retain_latest_bundle
 
 APP_DIR = Path(__file__).resolve().parent
 REPO_ROOT = APP_DIR.parent
 DATA_ROOT = REPO_ROOT / "web" / "public" / "data"
-DEPLOYED_FEED_BASE_URL = "https://formula1-newbie.vercel.app/data"
+DEPLOYED_FEED_BASE_URL = "https://raw.githubusercontent.com/Chloephmm/formula1_newbie/main/web/public/data"
 
 st.set_page_config(page_title="F1 Race Predictor", page_icon="🏁", layout="wide")
 
@@ -64,7 +65,10 @@ BAR_STOPS = ["#ff3b30", "#ff5b42", "#ff7a3c", "#ff9a2e", "#ffb020", "#e8a93a", "
 
 
 def _feed_base_url() -> str | None:
-    """Use Vercel in deployment and repository JSON during local development."""
+    """Use the confirmation origin in deployment and local JSON in development."""
+    feed_url = os.getenv("PREDICTION_FEED_URL", "").strip()
+    if feed_url:
+        return feed_url.removesuffix('/prediction_feed.json')
     configured = os.getenv("PREDICTION_FEED_BASE_URL", "").strip()
     if configured:
         return configured
@@ -135,7 +139,9 @@ def _race_view(artifact: dict) -> tuple[dict, bool]:
         for row in (rows or [])[:limit]:
             code = row.get("code", "")
             _reg_driver(code, row.get("driverName", ""))
-            result.append((code, _team_code(row.get("teamId"), row.get("team")), float(row.get("gap", 0))))
+            gap = row.get("gap")
+            result.append((code, _team_code(row.get("teamId"), row.get("team")),
+                           None if gap is None else float(gap)))
         return result
 
     def podium(rows: list[dict] | None, limit: int = 8) -> list[tuple[str, str, int]]:
@@ -162,6 +168,8 @@ def _race_view(artifact: dict) -> tuple[dict, bool]:
     }
     if actual:
         race["real"] = grid(forecast.get("actualQualifying"))
+        race['official_positions'] = {row.get('code', ''): row.get('position')
+                                      for row in forecast.get('actualQualifying') or []}
         race["podium_real"] = podium(forecast.get("actualQualifyingPodium"))
     return race, actual
 
@@ -327,7 +335,7 @@ def status_html(artifact: dict, status: dict | None, historical: bool) -> str:
     frozen = bool(artifact.get("frozen_at"))
     label = "Using Actual Qualifying Result." if actual else "Using Predicted Qualifying Result."
     if historical or frozen:
-        detail = f"Prediction published: {_utc(artifact.get('prediction_updated_at'))}"
+        detail = f"Prediction published: {_utc(artifact.get('publication_confirmed_at') or artifact.get('prediction_updated_at'))}"
         timing = f"Publication cutoff: {_utc(artifact.get('publication_cutoff_at'))}"
     elif actual:
         detail = f"Prediction updated: {_utc(artifact.get('prediction_updated_at'))}"
@@ -391,18 +399,19 @@ def quali_html(race: dict, actual: bool) -> str:
     rows = ""
     for index, (code, team, gap) in enumerate(grid):
         team_name, team_color = TEAMS[team]
+        position = race.get('official_positions', {}).get(code, index + 1) if actual else index + 1
         delta = ""
-        if actual and code in pred_index:
-            movement = pred_index[code] - index
+        if actual and position is not None and code in pred_index:
+            movement = pred_index[code] + 1 - position
             if movement:
                 delta_class = "up" if movement > 0 else "down"
                 arrow = "▲" if movement > 0 else "▼"
                 delta = f'<span class="delta {delta_class}">{arrow}{abs(movement)}</span>'
-        gap_text = "POLE" if gap == 0 else f"+{gap:.2f}"
+        gap_text = "No time" if gap is None else "REF" if gap == 0 else f"+{gap:.2f}"
         gap_class = " zero" if gap == 0 else ""
         rows += f"""
-        <div class="qrow{' p1' if index == 0 else ''}">
-          <span class="pos">{index + 1}</span>
+        <div class="qrow{' p1' if position == 1 else ''}">
+          <span class="pos">{position if position is not None else '—'}</span>
           <span class="drv"><span class="teambar" style="background:{team_color}"></span>
             <span class="code">{code}</span><span class="full">{DRIVERS.get(code, '')}</span>{delta}</span>
           <span class="team">{team_name}</span>
@@ -512,7 +521,7 @@ def _render_dashboard(artifact: dict) -> None:
     st.html(race_strip_html(race))
     st.html(mode_html(actual, bool(artifact.get("frozen_at"))))
     st.html(f'<div class="results">{quali_html(race, actual)}{podium_html(race, actual)}</div>')
-    if actual:
+    if actual and race['pred']:
         with st.expander("Compare: estimated vs actual qualifying results", expanded=True):
             st.html(compare_html(race))
     elif artifact.get("frozen_at"):
@@ -520,6 +529,14 @@ def _render_dashboard(artifact: dict) -> None:
     else:
         st.caption("Compare: estimated vs actual qualifying results — unlocks after qualifying.")
     st.html(accuracy_html())
+    st.caption('Accuracy bar: historical reconstruction benchmark, not archived live forecast accuracy. '
+               'Podium values are normalized estimates. Qualifying positions are not the penalty-adjusted starting grid.')
+    if artifact.get('publication_confirmed'):
+        st.caption(f"Saved prediction ID: {artifact['prediction_id']} · "
+                   f"Publication confirmed: {_utc(artifact.get('publication_confirmed_at'))} · "
+                   f"Feed updated: {_utc(artifact.get('feed_updated_at'))}")
+    else:
+        st.caption('Legacy saved forecast: publication confirmation was not recorded; excluded from confirmed live evaluation.')
     st.caption("📈 The model is retrained by scheduled background jobs. The figures above are its "
                "2024–26 walk-forward backtest, with each race scored only on earlier data.")
     st.html(DISCLAIMER_HTML)
@@ -610,6 +627,7 @@ def prediction_dashboard() -> None:
     cache_key = f"prediction_bundle:{race_id}"
     try:
         bundle = load_bundle(DATA_ROOT, base_url=feed_base_url, race_id=race_id, index=index)
+        bundle = retain_latest_bundle(st.session_state.get(cache_key), bundle)
         st.session_state[cache_key] = bundle
     except FeedError as exc:
         bundle = st.session_state.get(cache_key)
