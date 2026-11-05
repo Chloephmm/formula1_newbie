@@ -4,7 +4,7 @@
   "input_mode": "estimated_qualifying",
   "prediction_updated_at": "2026-11-04T02:56:02Z",
   "publication_cutoff_at": "2026-11-08T15:00:00Z",
-  "schedule_updated_at": "2026-11-04T18:41:40Z",
+  "schedule_updated_at": "2026-11-05T00:25:07Z",
   "schedule": {
     "season": 2026,
     "round": 20,
@@ -12,7 +12,7 @@
     "qualifying_end_at": "2026-11-07T21:00:00Z",
     "end_time_estimated": true,
     "race_start_at": "2026-11-08T17:00:00Z",
-    "schedule_updated_at": "2026-11-04T18:41:40Z"
+    "schedule_updated_at": "2026-11-05T00:25:07Z"
   },
   "last_data_check_at": null,
   "next_scheduled_check_at": "2026-11-08T02:17:00Z",
