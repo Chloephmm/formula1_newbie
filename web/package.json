@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:chatbot": "node --import tsx --test tests/chatbot.test.ts",
     "sync-stats": "tsx scripts/sync-stats.ts"
   },
   "dependencies": {

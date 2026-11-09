@@ -1,2 +1,3 @@
 streamlit==1.66.1
 requests
+./chatbot_app/vendor/f1buddy_ai-0.2.0-py3-none-any.whl
