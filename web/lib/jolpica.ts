@@ -7,6 +7,7 @@ import type {
   ErgastResponse,
   SeasonDriverStat,
   DriverCareer,
+  RaceSessionResults,
 } from "./types";
 
 const BASE = "https://api.jolpi.ca/ergast/f1";
@@ -256,5 +257,38 @@ export async function getSchedule(
           date: r.date,
         })),
     };
+  }
+}
+
+export async function getSessionResults(
+  season: number,
+  round: number,
+  session: "results" | "qualifying"
+): Promise<{ data: RaceSessionResults | null; live: boolean }> {
+  try {
+    const json = await jget(`${season}/${round}/${session}/`);
+    const race = json.MRData.RaceTable?.Races?.[0];
+    if (!race) throw new Error("empty");
+
+    const rows = session === "results" ? race.Results ?? [] : race.QualifyingResults ?? [];
+    if (!rows.length) throw new Error("empty");
+
+    return {
+      live: true,
+      data: {
+        raceName: race.raceName,
+        season: Number(race.season),
+        round: Number(race.round),
+        results: rows.map((result) => ({
+          position: Number(result.position),
+          driverId: result.Driver.driverId,
+          code: result.Driver.code ?? "",
+          driverName: `${result.Driver.givenName} ${result.Driver.familyName}`,
+          constructorName: result.Constructor.name,
+        })),
+      },
+    };
+  } catch {
+    return { data: null, live: false };
   }
 }
