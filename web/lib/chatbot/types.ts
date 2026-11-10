@@ -35,6 +35,7 @@ export interface ChatReply {
   sections: ChatSection[];
   quickReplies: QuickReply[];
   sourceUpdatedAt?: string;
+  image?: { src: string; alt: string };
 }
 
 export interface ChatRequest {

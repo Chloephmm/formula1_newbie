@@ -137,6 +137,7 @@ export function parseQuestion(message: string): ParsedQuestion {
       "forecasts",
       "probability",
       "probabilities",
+      "accuracy",
     ]) ||
     (hasTerm(normalized, ["podium"]) && !driver)
   ) {
