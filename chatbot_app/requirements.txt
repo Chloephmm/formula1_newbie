@@ -1,2 +1,0 @@
-# Install from the repository root (also the Streamlit Community Cloud cwd).
-./chatbot_app/vendor/f1buddy_ai-0.2.1-py3-none-any.whl
