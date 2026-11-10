@@ -47,3 +47,11 @@ test("prediction language wins over generic race language", () => {
     "predictions",
   );
 });
+
+test("prediction filler words are not mistaken for a race identity", () => {
+  assert.equal(
+    parseQuestion("Show the latest F1 Buddy prediction").searchTerm,
+    undefined,
+  );
+  assert.equal(parseQuestion("Show the Mexico prediction").searchTerm, "mexico");
+});

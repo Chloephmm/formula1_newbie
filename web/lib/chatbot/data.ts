@@ -237,6 +237,15 @@ export async function getNextRaceSnapshot(
   return fallback ? scheduleRaceSnapshot(fallback) : null;
 }
 
+export function getPreviousRaceSnapshot(now = new Date()): RaceSnapshot | null {
+  const nowTime = now.getTime();
+  const previous = races
+    .map((race) => ({ ...race }))
+    .filter((race) => new Date(`${race.date}T23:59:59Z`).getTime() < nowTime)
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+  return previous ?? null;
+}
+
 function scheduleRaceSnapshot(race: ScheduleRace): RaceSnapshot {
   return { ...race };
 }

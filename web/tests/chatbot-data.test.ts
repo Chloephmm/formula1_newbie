@@ -7,6 +7,7 @@ import {
   findTeamSnapshot,
   getModelMetricsSnapshot,
   getNextRaceSnapshot,
+  getPreviousRaceSnapshot,
   getPublishedPrediction,
   getStandingsSnapshot,
 } from "../lib/chatbot/data";
@@ -66,6 +67,13 @@ test("next-race lookup uses saved races before a schedule fallback", async () =>
 
   assert.equal(race?.name, "Miami Grand Prix");
   assert.equal(fallbackCalls, 0);
+});
+
+test("previous-race lookup is deterministic from saved dates", () => {
+  const race = getPreviousRaceSnapshot(new Date("2026-04-01T00:00:00Z"));
+
+  assert.equal(race?.name, "Japanese Grand Prix");
+  assert.equal(race?.round, 3);
 });
 
 test("published prediction exposes only validated detailed output", () => {
