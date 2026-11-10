@@ -49,12 +49,23 @@ function findTeam(normalized: string): string | undefined {
 }
 
 function resultKind(normalized: string): ResultKind | undefined {
+  const asksForResult = hasTerm(normalized, [
+    "result",
+    "results",
+    "winner",
+    "finish",
+    "finished",
+  ]);
+  if (
+    hasTerm(normalized, ["schedule", "date", "time", "when"]) &&
+    !asksForResult
+  ) {
+    return "schedule";
+  }
   if (hasTerm(normalized, ["qualifying", "quali", "grid", "pole"])) {
     return "qualifying";
   }
-  if (
-    hasTerm(normalized, ["result", "results", "winner", "finish", "finished"])
-  ) {
+  if (asksForResult) {
     return "race";
   }
   if (
@@ -70,6 +81,8 @@ const RACE_STOP_WORDS = new Set([
   "tell",
   "me",
   "about",
+  "for",
+  "details",
   "the",
   "a",
   "an",

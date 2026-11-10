@@ -55,3 +55,13 @@ test("prediction filler words are not mistaken for a race identity", () => {
   );
   assert.equal(parseQuestion("Show the Mexico prediction").searchTerm, "mexico");
 });
+
+test("qualifying schedule wording stays a schedule request", () => {
+  const parsed = parseQuestion(
+    "Show the qualifying schedule for Mexico City Grand Prix 2026",
+  );
+
+  assert.equal(parsed.intent, "race");
+  assert.equal(parsed.resultKind, "schedule");
+  assert.equal(parsed.searchTerm, "mexico city");
+});

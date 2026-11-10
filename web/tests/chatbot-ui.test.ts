@@ -10,6 +10,7 @@ import F1BuddyLauncher from "../components/f1-buddy/F1BuddyLauncher";
 import F1BuddyPanel from "../components/f1-buddy/F1BuddyPanel";
 import QuickReplies from "../components/f1-buddy/QuickReplies";
 import TopicCards from "../components/f1-buddy/TopicCards";
+import F1Buddy from "../components/F1Buddy";
 import type { ChatReply } from "../lib/chatbot/types";
 
 const noop = () => undefined;
@@ -128,4 +129,22 @@ test("quick reply buttons expose labels and submit their complete prompts", () =
   assert.match(html, />Circuit Details</);
   assert.match(html, /data-prompt="Miami 2026 circuit details"/);
   assert.match(html, /<button/);
+});
+
+test("global shell uses native components and never embeds Streamlit", () => {
+  const source = readFileSync(
+    new URL("../components/F1Buddy.tsx", import.meta.url),
+    "utf8",
+  );
+  const html = renderToStaticMarkup(createElement(F1Buddy));
+
+  assert.doesNotMatch(source, /iframe|NEXT_PUBLIC_F1BUDDY_URL|getChatbotUrl|streamlit/i);
+  assert.match(source, /F1BuddyLauncher/);
+  assert.match(source, /F1BuddyPanel/);
+  assert.match(source, /chatReducer/);
+  assert.match(source, /fetch\("\/api\/f1-buddy"/);
+  assert.doesNotMatch(source, /addEventListener\(["']click/);
+  assert.match(html, /f1-buddy-car\.jpg/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.doesNotMatch(html, /<iframe/);
 });
