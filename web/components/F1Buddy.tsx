@@ -47,17 +47,9 @@ export default function F1Buddy() {
             </button>
           </header>
           {url ? (
-            <>
-              <p className="shrink-0 border-b border-border px-4 py-2 text-xs text-muted">
-                Saved outputs, not live model runs. If the app is sleeping or blank, {" "}
-                <a href={url} target="_blank" rel="noopener noreferrer" className="text-fg underline">
-                  open chatbot in a new tab
-                </a> to wake it, then reopen this panel. Chats are separate from the prediction dashboard.
-              </p>
-              <iframe src={url} title="F1 Buddy chat" className="block min-h-0 w-full flex-1 border-0 bg-bg"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-                referrerPolicy="no-referrer" />
-            </>
+            <iframe src={url} title="F1 Buddy chat" className="block min-h-0 w-full flex-1 border-0 bg-bg"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+              referrerPolicy="no-referrer" />
           ) : (
             <p className="p-5 text-sm leading-relaxed text-muted">
               F1 Buddy is not connected yet. The site owner needs to deploy the chatbot-only Streamlit app,

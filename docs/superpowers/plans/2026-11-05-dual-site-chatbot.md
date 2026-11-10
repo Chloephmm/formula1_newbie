@@ -14,7 +14,7 @@ The user approved the embedded approach and requested implementation on 2026-11-
 
 The standalone app must call a new public render_chatbot_panel(data_dir=...) entrypoint. Both UI modes reuse one conversation renderer. It uses today's date for race/history context; current-prediction questions in saved-only mode return an explicitly dated saved forecast. Never pretend that a previous race's snapshot is the current prediction. Existing native popup behavior remains unchanged.
 
-The Next.js panel uses NEXT_PUBLIC_F1BUDDY_URL, accepts a public HTTPS *.streamlit.app origin and localhost HTTP only for development, adds embed=true, and mounts the iframe only after opening. Without a valid configuration it shows deployment/setup guidance, not a fabricated live URL. Provide an accessible close button, parent-page Escape handling, focus return, mobile sizing, and a persistent direct-open fallback for sleeping/blocked embeds. Escape inside the cross-origin Streamlit frame cannot reach the parent; retain normal keyboard navigation and visible Close/launcher controls. Do not claim iframe load means the remote app is healthy.
+The Next.js panel uses NEXT_PUBLIC_F1BUDDY_URL, accepts a public HTTPS *.streamlit.app origin and localhost HTTP only for development, adds embed=true, and mounts the iframe only after opening. Without a valid configuration it shows deployment/setup guidance, not a fabricated live URL. Provide an accessible close button, parent-page Escape handling, focus return, and mobile sizing. Escape inside the cross-origin Streamlit frame cannot reach the parent; retain normal keyboard navigation and visible Close/launcher controls. Do not claim iframe load means the remote app is healthy.
 
 ## Task 1 — Vercel launcher (delegated)
 
@@ -62,7 +62,7 @@ render_chatbot_panel(data_dir=Path(__file__).resolve().parents[1] / "web" / "pub
 
 ## Acceptance checks
 
-The launcher is visible on every Vercel route and works on narrow screens; the iframe does not load until requested; the standalone chat has no extra popup; existing Streamlit tests still pass; predictions are never regenerated; source files remain unchanged; unavailable deployment or sleeping app has actionable fallback; no unapproved production merge/publication occurs.
+The launcher is visible on every Vercel route and works on narrow screens; the iframe does not load until requested; the standalone chat has no extra popup; existing Streamlit tests still pass; predictions are never regenerated; source files remain unchanged; unavailable deployment shows setup guidance; no unapproved production merge/publication occurs.
 
 ## Execution record — 2026-11-09
 
@@ -101,5 +101,8 @@ Remaining rollout checks (not implementation claims):
   No push, merge, new public repository or production deployment was performed.
   Follow `chatbot_app/README.md` to deploy and configure the actual URL, rebuild
   Vercel, redeploy the native prediction app and verify both hosted sites.
+- On 2026-11-10 the user requested removal of the website saved-output/wake-up
+  notice and the standalone Streamlit read-only caption. Version 0.2.1 removes
+  both; the website iframe now starts directly below the F1 Buddy header.
 - Preserve the unrelated automatic-qualifying-refresh plan. Commit only this
   integration's files; do not stage or alter that earlier plan.

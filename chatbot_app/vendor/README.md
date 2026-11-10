@@ -1,16 +1,16 @@
 # F1 Buddy deployment artifact
 
-- Artifact: `f1buddy_ai-0.2.0-py3-none-any.whl` (pure Python).
+- Artifact: `f1buddy_ai-0.2.1-py3-none-any.whl` (pure Python).
 - Source: sibling `f1buddy-ai` repository, branch `feature2`.
-- Source commit: `c351d19d77540e3ff962db5e6606fea7028e7821`.
-- Built: 2026-11-09, Python 3.12, Hatchling via pip.
-- SHA-256: `47ec81a93f7da109eb2dc6d7c570c10abea2a962c9d7f90d31d34a46ccbd417f`.
+- Source commit: `c7262ecb52be73ef89bf0185b132191d3912b6c1`.
+- Built: 2026-11-10, Python 3.12, Hatchling via pip.
+- SHA-256: `8d7d50d6f7b6b0c845682d578e6a409f29e8af14cf9eb024130f900c5533aca1`.
 
 From the Formula1 repository root:
 
 ```powershell
 ..\f1buddy-ai\.venv\Scripts\python.exe -B -m pip wheel --no-cache-dir --no-deps --no-build-isolation ../f1buddy-ai --wheel-dir chatbot_app/vendor
-Get-FileHash chatbot_app/vendor/f1buddy_ai-0.2.0-py3-none-any.whl -Algorithm SHA256
+Get-FileHash chatbot_app/vendor/f1buddy_ai-0.2.1-py3-none-any.whl -Algorithm SHA256
 ```
 
 Both Streamlit requirements reference this exact wheel. It contains the chatbot

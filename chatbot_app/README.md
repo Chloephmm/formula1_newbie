@@ -52,7 +52,7 @@ test this chatbot-only app.
    `streamlit_app/requirements.txt`, which installs the identical wheel. Its
    existing `streamlit_app/app.py` entrypoint and ML behavior are unchanged.
 6. Verify both hosted sites: launcher, saved prediction date/mode, historical
-   question, close/reopen, and direct-open fallback. Do not mark rollout complete
+   question, and close/reopen behavior. Do not mark rollout complete
    solely because the local preview or an iframe load event succeeds.
 
 Official embedding reference:
@@ -79,9 +79,8 @@ Official embedding reference:
   closes the panel while focus is on the parent website. Browsers do not pass
   keyboard events out of a cross-origin iframe; use Close or tab out when typing
   inside Streamlit. This is a non-modal panel and does not trap keyboard focus.
-- Small screens scroll inside the embedded app. A direct-open link remains
-  available for sleeping apps, third-party embedding restrictions, or more space.
-  If waking the app does not recover the embed, refresh the website (resets chat).
+- Small screens scroll inside the embedded app. If a sleeping app or embedding
+  restriction leaves it blank, refresh the website after the app wakes (resets chat).
 
 ## Verification
 

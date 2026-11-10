@@ -4,6 +4,7 @@ import { getChatbotUrl } from "../lib/chatbot";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import F1Buddy from "../components/F1Buddy";
+import { readFileSync } from "node:fs";
 
 test("missing and malformed URLs never embed", () => {
   for (const value of [undefined, "", "  ", "not a url", "javascript:alert(1)", "//example.streamlit.app"]) {
@@ -43,4 +44,10 @@ test("launcher initially renders closed and never loads an iframe eagerly", () =
     if (previous === undefined) delete process.env.NEXT_PUBLIC_F1BUDDY_URL;
     else process.env.NEXT_PUBLIC_F1BUDDY_URL = previous;
   }
+});
+
+test("website panel omits the saved-output and wake-up notice", () => {
+  const source = readFileSync(new URL("../components/F1Buddy.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /Saved outputs, not live model runs/);
+  assert.doesNotMatch(source, /open chatbot in a new tab/);
 });
