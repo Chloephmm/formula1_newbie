@@ -17,11 +17,13 @@ import type { ChatReply, QuickReply } from "./types";
 export interface ResponderDependencies {
   now: () => Date;
   getSessionResults: typeof getSessionResults;
+  getNextRaceSnapshot: typeof getNextRaceSnapshot;
 }
 
 export const defaultResponderDependencies: ResponderDependencies = {
   now: () => new Date(),
   getSessionResults,
+  getNextRaceSnapshot,
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -88,9 +90,11 @@ async function answerRace(
     return resultReply(official.data, session, race, now);
   }
 
-  const race = parsed.searchTerm
+  let race = parsed.searchTerm
     ? findRaceSnapshot(parsed.searchTerm, parsed.season)
-    : await getNextRaceSnapshot(now);
+    : await dependencies.getNextRaceSnapshot(now);
+  const latestCompleted = !race && !parsed.searchTerm;
+  if (latestCompleted) race = getPreviousRaceSnapshot(now);
   if (!race) {
     return {
       intent: "race",
@@ -114,7 +118,9 @@ async function answerRace(
   return {
     intent: "race",
     heading: race.name,
-    body: `Round ${race.round} of the ${race.season} season.`,
+    body: latestCompleted
+      ? `No later event is available in the saved schedule, so this is the latest completed event: round ${race.round} of the ${race.season} season.`
+      : `Round ${race.round} of the ${race.season} season.`,
     sections: [{ kind: "facts", items: facts }],
     quickReplies: raceQuickReplies(race, now),
   };

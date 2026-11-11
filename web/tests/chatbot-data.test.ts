@@ -76,6 +76,13 @@ test("previous-race lookup is deterministic from saved dates", () => {
   assert.equal(race?.round, 3);
 });
 
+test("previous-race lookup includes the newer published prediction identity", () => {
+  const race = getPreviousRaceSnapshot(new Date("2026-11-10T00:00:00Z"));
+
+  assert.equal(race?.name, "Mexico City Grand Prix");
+  assert.equal(race?.round, 19);
+});
+
 test("published prediction exposes only validated detailed output", () => {
   const prediction = getPublishedPrediction("mexico", 2026);
 

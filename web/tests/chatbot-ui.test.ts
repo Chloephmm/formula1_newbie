@@ -29,6 +29,14 @@ test("launcher renders the approved car control and full tooltip", () => {
   assert.match(html, /Currently English only\./);
 });
 
+test("launcher tooltip does not cover the open chat panel", () => {
+  const html = renderToStaticMarkup(
+    createElement(F1BuddyLauncher, { open: true, onToggle: noop }),
+  );
+
+  assert.doesNotMatch(html, /Hello, F1 fan!/);
+});
+
 test("header exposes title, beta status, minimize, and close controls", () => {
   const html = renderToStaticMarkup(
     createElement(ChatHeader, { onMinimize: noop, onClose: noop }),

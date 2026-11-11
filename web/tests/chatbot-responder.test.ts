@@ -42,6 +42,18 @@ test("race details use the next saved race and approved follow-ups", async () =>
   assertReplyContract(reply);
 });
 
+test("race details fall back to the latest saved event after the schedule ends", async () => {
+  const reply = await answerF1Question("When is the next F1 race?", {
+    ...fixedDependencies,
+    now: () => new Date("2026-11-10T12:00:00Z"),
+    getNextRaceSnapshot: async () => null,
+  });
+
+  assert.equal(reply.heading, "Mexico City Grand Prix");
+  assert.match(reply.body, /latest completed event/i);
+  assert.match(textOf(reply), /November 1, 2026/);
+});
+
 test("current standings show the published top three drivers and constructors", async () => {
   const reply = await answerF1Question("Show current standings", fixedDependencies);
   const rankings = reply.sections.filter((section) => section.kind === "ranking");

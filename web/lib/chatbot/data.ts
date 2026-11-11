@@ -239,8 +239,7 @@ export async function getNextRaceSnapshot(
 
 export function getPreviousRaceSnapshot(now = new Date()): RaceSnapshot | null {
   const nowTime = now.getTime();
-  const previous = races
-    .map((race) => ({ ...race }))
+  const previous = [...races.map((race) => ({ ...race })), predictionRaceSnapshot()]
     .filter((race) => new Date(`${race.date}T23:59:59Z`).getTime() < nowTime)
     .sort((a, b) => b.date.localeCompare(a.date))[0];
   return previous ?? null;

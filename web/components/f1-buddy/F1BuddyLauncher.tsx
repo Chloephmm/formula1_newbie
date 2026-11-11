@@ -14,19 +14,21 @@ export default function F1BuddyLauncher({
 }: F1BuddyLauncherProps) {
   return (
     <div className="group relative ml-auto w-fit">
-      <div
-        role="tooltip"
-        className="pointer-events-none absolute right-0 bottom-[calc(100%+0.9rem)] w-72 translate-y-2 rounded-2xl border border-[#E8002D]/25 bg-white p-4 text-left text-[#111521] opacity-0 shadow-[0_18px_45px_rgba(0,0,0,.38)] transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:transform-none motion-reduce:transition-none"
-      >
-        <p className="font-nav text-base font-bold">Hello, F1 fan! 🏁</p>
-        <p className="mt-1.5 text-xs leading-5">
-          Need help with Formula 1? Ask me about races, drivers, standings, and predictions!
-        </p>
-        <p className="mt-2 text-[11px] font-semibold italic text-[#E8002D]">
-          Currently English only.
-        </p>
-        <span className="absolute -bottom-2 right-6 h-4 w-4 rotate-45 border-r border-b border-[#E8002D]/25 bg-white" />
-      </div>
+      {!open ? (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute right-0 bottom-[calc(100%+0.9rem)] w-72 translate-y-2 rounded-2xl border border-[#E8002D]/25 bg-white p-4 text-left text-[#111521] opacity-0 shadow-[0_18px_45px_rgba(0,0,0,.38)] transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:transform-none motion-reduce:transition-none"
+        >
+          <p className="font-nav text-base font-bold">Hello, F1 fan! 🏁</p>
+          <p className="mt-1.5 text-xs leading-5">
+            Need help with Formula 1? Ask me about races, drivers, standings, and predictions!
+          </p>
+          <p className="mt-2 text-[11px] font-semibold italic text-[#E8002D]">
+            Currently English only.
+          </p>
+          <span className="absolute -bottom-2 right-6 h-4 w-4 rotate-45 border-r border-b border-[#E8002D]/25 bg-white" />
+        </div>
+      ) : null}
 
       <button
         ref={buttonRef}
