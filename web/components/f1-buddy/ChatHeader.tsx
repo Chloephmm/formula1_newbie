@@ -1,12 +1,16 @@
 import type { Ref } from "react";
 
 interface ChatHeaderProps {
+  showBack?: boolean;
+  onBack?: () => void;
   onMinimize: () => void;
   onClose: () => void;
   closeButtonRef?: Ref<HTMLButtonElement>;
 }
 
 export default function ChatHeader({
+  showBack,
+  onBack,
   onMinimize,
   onClose,
   closeButtonRef,
@@ -14,6 +18,16 @@ export default function ChatHeader({
   return (
     <header className="flex shrink-0 items-center justify-between border-b border-[#343945] bg-[linear-gradient(180deg,#10131A_0%,#0B0D12_100%)] px-4 py-3">
       <div className="flex min-w-0 items-center gap-2.5">
+        {showBack && onBack ? (
+          <button
+            type="button"
+            aria-label="Back to F1 Buddy home"
+            onClick={onBack}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-lg text-[#F4F6F8] transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#E8002D]"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
+        ) : null}
         <span aria-hidden="true" className="font-display text-lg font-black italic text-[#E8002D]">
           F1
         </span>

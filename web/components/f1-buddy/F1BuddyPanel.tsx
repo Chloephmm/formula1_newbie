@@ -13,6 +13,7 @@ interface F1BuddyPanelProps {
   onDraftChange: (draft: string) => void;
   onSubmit: (question: string) => void;
   onQuickReply: (prompt: string) => void;
+  onBack?: () => void;
   onMinimize: () => void;
   onClose: () => void;
   inputRef?: Ref<HTMLInputElement>;
@@ -28,13 +29,15 @@ export default function F1BuddyPanel({
   onDraftChange,
   onSubmit,
   onQuickReply,
+  onBack,
   onMinimize,
   onClose,
   inputRef,
   closeButtonRef,
   messagesRef,
 }: F1BuddyPanelProps) {
-  const welcome = messages.length === 0 && !pending;
+  const showBack = Boolean(onBack) && (messages.length > 0 || pending || Boolean(error));
+  const welcome = !showBack;
   return (
     <section
       id="f1buddy-panel"
@@ -43,7 +46,13 @@ export default function F1BuddyPanel({
       aria-labelledby="f1buddy-heading"
       className="absolute right-0 bottom-[5.25rem] flex h-[min(550px,calc(100dvh-7rem))] w-[min(400px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[22px] border border-[#E8002D]/75 bg-[#0B0D12] shadow-[0_24px_80px_rgba(0,0,0,.62),0_0_28px_rgba(232,0,45,.18)]"
     >
-      <ChatHeader onMinimize={onMinimize} onClose={onClose} closeButtonRef={closeButtonRef} />
+      <ChatHeader
+        showBack={showBack}
+        onBack={onBack}
+        onMinimize={onMinimize}
+        onClose={onClose}
+        closeButtonRef={closeButtonRef}
+      />
       <div ref={messagesRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 [scrollbar-color:#4B5261_transparent]">
         {welcome ? (
           <div>

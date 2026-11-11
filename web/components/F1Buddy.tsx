@@ -86,6 +86,7 @@ export default function F1Buddy() {
           onDraftChange={(draft) => dispatch({ type: "SET_DRAFT", draft })}
           onSubmit={submit}
           onQuickReply={submit}
+          onBack={() => dispatch({ type: "RETURN_HOME" })}
           onMinimize={minimize}
           onClose={close}
           inputRef={inputRef}
