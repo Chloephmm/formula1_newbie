@@ -1,5 +1,6 @@
 import metricsData from "@/public/data/metrics.json";
 import predictionData from "@/public/data/next_race_prediction.json";
+import predictionsData from "@/public/data/predictions.json";
 import { driverPhoto } from "../assets";
 import { drivers, getDriversForTeam, getTeam, races, teams } from "../data";
 import { getSchedule } from "../jolpica";
@@ -18,6 +19,7 @@ import type {
   DriverCareer,
   DriverStanding,
   Race,
+  RaceSessionResults,
   ScheduleRace,
   SeasonDriverStat,
 } from "../types";
@@ -110,8 +112,9 @@ export type PublishedPrediction =
   | { available: false }
   | {
       available: true;
+      source: "next-race-snapshot" | "historical-estimate";
       asof: string;
-      generatedAt: string;
+      generatedAt?: string;
       race: PredictionRace;
       predictedQualifying: QualifyingRow[];
       podium: PodiumRow[];
@@ -120,6 +123,15 @@ export type PublishedPrediction =
     };
 
 const prediction = predictionData as PredictionFile;
+const historicalPredictions = predictionsData as Record<
+  string,
+  Array<{
+    driver: string;
+    driverName: string;
+    team: string;
+    podiumProbability: number;
+  }>
+>;
 const metrics = metricsData as MetricsFile;
 
 function includesSearch(value: string, search: string): boolean {
@@ -203,6 +215,10 @@ function predictionRaceSnapshot(): RaceSnapshot {
   return { ...prediction.race };
 }
 
+function utcDateKey(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
 export function findRaceSnapshot(search: string, season?: number): RaceSnapshot | null {
   const candidates: RaceSnapshot[] = [
     ...races.map((race: Race) => ({ ...race })),
@@ -219,20 +235,40 @@ export function findRaceSnapshot(search: string, season?: number): RaceSnapshot 
   );
 }
 
+export async function resolveRaceSnapshot(
+  search: string,
+  season?: number,
+  scheduleProvider: typeof getSchedule = getSchedule,
+): Promise<RaceSnapshot | null> {
+  const local = findRaceSnapshot(search, season);
+  if (local) return local;
+
+  const selectedSeason = season ?? new Date().getUTCFullYear();
+  const schedule = await scheduleProvider(String(selectedSeason));
+  const matches = schedule.data.filter(
+    (race) =>
+      race.season === selectedSeason &&
+      (includesSearch(race.name, search) ||
+        includesSearch(race.country ?? "", search) ||
+        includesSearch(race.circuit ?? "", search)),
+  );
+  return matches.length === 1 ? scheduleRaceSnapshot(matches[0]) : null;
+}
+
 export async function getNextRaceSnapshot(
   now = new Date(),
   scheduleProvider: typeof getSchedule = getSchedule,
 ): Promise<RaceSnapshot | null> {
   const nowTime = now.getTime();
-  const local = races
-    .map((race) => ({ ...race }))
-    .filter((race) => new Date(`${race.date}T23:59:59Z`).getTime() >= nowTime)
-    .sort((a, b) => a.date.localeCompare(b.date))[0];
-  if (local) return local;
+  const snapshot = predictionRaceSnapshot();
+  const snapshotIsCompatible =
+    prediction.asof === utcDateKey(now) &&
+    new Date(`${snapshot.date}T23:59:59Z`).getTime() >= nowTime;
+  if (snapshotIsCompatible) return snapshot;
 
-  const schedule = await scheduleProvider("current");
+  const schedule = await scheduleProvider(String(now.getUTCFullYear()));
   const fallback = [...schedule.data]
-    .filter((race) => new Date(`${race.date}T${race.time ?? "23:59:59Z"}`).getTime() >= nowTime)
+    .filter((race) => race.date >= utcDateKey(now))
     .sort((a, b) => a.date.localeCompare(b.date))[0];
   return fallback ? scheduleRaceSnapshot(fallback) : null;
 }
@@ -245,6 +281,46 @@ export function getPreviousRaceSnapshot(now = new Date()): RaceSnapshot | null {
   return previous ?? null;
 }
 
+export async function getPreviousRaceFromSchedule(
+  now = new Date(),
+  scheduleProvider: typeof getSchedule = getSchedule,
+): Promise<RaceSnapshot | null> {
+  const schedule = await scheduleProvider(String(now.getUTCFullYear()));
+  const previous = [...schedule.data]
+    .filter((race) => race.date < utcDateKey(now))
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+  return previous ? scheduleRaceSnapshot(previous) : getPreviousRaceSnapshot(now);
+}
+
+export function getSavedSessionResults(
+  race: RaceSnapshot,
+  session: "results" | "qualifying",
+  snapshot: PredictionFile = prediction,
+): RaceSessionResults | null {
+  if (
+    session !== "qualifying" ||
+    snapshot.race.season !== race.season ||
+    snapshot.race.round !== race.round ||
+    !snapshot.forecast.hasRealGrid ||
+    !snapshot.forecast.realQualifying?.length
+  ) {
+    return null;
+  }
+
+  return {
+    raceName: snapshot.race.name,
+    season: snapshot.race.season,
+    round: snapshot.race.round,
+    results: snapshot.forecast.realQualifying.map((row) => ({
+      position: row.position,
+      driverId: row.code.toLowerCase(),
+      code: row.code,
+      driverName: row.driverName,
+      constructorName: row.team,
+    })),
+  };
+}
+
 function scheduleRaceSnapshot(race: ScheduleRace): RaceSnapshot {
   return { ...race };
 }
@@ -252,17 +328,51 @@ function scheduleRaceSnapshot(race: ScheduleRace): RaceSnapshot {
 export function getPublishedPrediction(
   search?: string,
   season?: number,
+  now = new Date(),
+  allowHistoricalEstimate = true,
 ): PublishedPrediction {
   if (prediction.forecast.error) return { available: false };
-  if (season !== undefined && prediction.race.season !== season) {
+  if (!search && prediction.asof !== utcDateKey(now)) {
     return { available: false };
   }
-  if (
-    search &&
-    !includesSearch(prediction.race.name, search) &&
-    !includesSearch(prediction.race.country, search)
-  ) {
-    return { available: false };
+
+  const snapshotMatches =
+    (season === undefined || prediction.race.season === season) &&
+    (!search ||
+      includesSearch(prediction.race.name, search) ||
+      includesSearch(prediction.race.country, search));
+
+  if (!snapshotMatches) {
+    if (!search || season === undefined || !allowHistoricalEstimate) {
+      return { available: false };
+    }
+    const race = findRaceSnapshot(search, season);
+    if (!race) return { available: false };
+    const rows = historicalPredictions[`${season}-${race.round}`];
+    if (!rows?.length) return { available: false };
+    return {
+      available: true,
+      source: "historical-estimate",
+      asof: race.date,
+      race: {
+        name: race.name,
+        season: race.season,
+        round: race.round,
+        country: race.country ?? "",
+        date: race.date,
+        qualifyingDate: race.qualifyingDate ?? race.date,
+      },
+      predictedQualifying: [],
+      podium: rows.map((row) => ({
+        code: row.driver,
+        driverName: row.driverName,
+        team: row.team,
+        teamId: "",
+        podiumProbability: row.podiumProbability,
+      })),
+      qualifyingMode: "predicted",
+      predictionUrl: STREAMLIT_URL,
+    };
   }
 
   const useActual =
@@ -271,6 +381,7 @@ export function getPublishedPrediction(
     Boolean(prediction.forecast.realGridPodium?.length);
   return {
     available: true,
+    source: "next-race-snapshot",
     asof: prediction.asof,
     generatedAt: prediction.generatedAt,
     race: prediction.race,

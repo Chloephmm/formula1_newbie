@@ -65,3 +65,11 @@ test("qualifying schedule wording stays a schedule request", () => {
   assert.equal(parsed.resultKind, "schedule");
   assert.equal(parsed.searchTerm, "mexico city");
 });
+
+test("next-race question words are not treated as a race identity", () => {
+  const parsed = parseQuestion("What is the next F1 race?");
+
+  assert.equal(parsed.intent, "race");
+  assert.equal(parsed.resultKind, "schedule");
+  assert.equal(parsed.searchTerm, undefined);
+});

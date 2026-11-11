@@ -120,6 +120,7 @@ const RACE_STOP_WORDS = new Set([
   "probability",
   "probabilities",
   "when",
+  "what",
   "where",
   "is",
   "was",

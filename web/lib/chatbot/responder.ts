@@ -1,29 +1,64 @@
 import {
   findDriverSnapshot,
-  findRaceSnapshot,
   findTeamSnapshot,
   getModelMetricsSnapshot,
   getNextRaceSnapshot,
-  getPreviousRaceSnapshot,
+  getPreviousRaceFromSchedule,
   getPublishedPrediction,
+  getSavedSessionResults,
   getStandingsSnapshot,
+  resolveRaceSnapshot,
   type RaceSnapshot,
 } from "./data";
 import { parseQuestion } from "./intents";
-import { getSessionResults } from "../jolpica";
-import type { RaceSessionResults } from "../types";
+import {
+  getConstructorStandings as getLiveConstructorStandings,
+  getDriverStandings as getLiveDriverStandings,
+  getSessionResults,
+} from "../jolpica";
+import type {
+  ConstructorStanding,
+  DriverStanding,
+  RaceSessionResults,
+} from "../types";
 import type { ChatReply, QuickReply } from "./types";
 
 export interface ResponderDependencies {
   now: () => Date;
   getSessionResults: typeof getSessionResults;
   getNextRaceSnapshot: typeof getNextRaceSnapshot;
+  resolveRaceSnapshot: typeof resolveRaceSnapshot;
+  getSavedDriverStandings: () => DriverStandingsSnapshot;
+  getSavedConstructorStandings: () => ConstructorStandingsSnapshot;
+  getLiveDriverStandings: typeof getLiveDriverStandings;
+  getLiveConstructorStandings: typeof getLiveConstructorStandings;
+  getSavedSessionResults: typeof getSavedSessionResults;
+  getPreviousRaceFromSchedule: typeof getPreviousRaceFromSchedule;
 }
+
+type DriverStandingsSnapshot = {
+  kind: "drivers";
+  updatedAt: string;
+  entries: DriverStanding[];
+};
+
+type ConstructorStandingsSnapshot = {
+  kind: "constructors";
+  updatedAt: string;
+  entries: ConstructorStanding[];
+};
 
 export const defaultResponderDependencies: ResponderDependencies = {
   now: () => new Date(),
   getSessionResults,
   getNextRaceSnapshot,
+  resolveRaceSnapshot,
+  getSavedDriverStandings: () => getStandingsSnapshot("drivers"),
+  getSavedConstructorStandings: () => getStandingsSnapshot("constructors"),
+  getLiveDriverStandings,
+  getLiveConstructorStandings,
+  getSavedSessionResults,
+  getPreviousRaceFromSchedule,
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -39,8 +74,7 @@ function quick(label: string, prompt: string): QuickReply {
   return { label, prompt };
 }
 
-function raceQuickReplies(race: RaceSnapshot, now: Date): QuickReply[] {
-  const previous = getPreviousRaceSnapshot(now);
+function raceQuickReplies(race: RaceSnapshot): QuickReply[] {
   return [
     quick(
       "Qualifying Schedule",
@@ -49,9 +83,7 @@ function raceQuickReplies(race: RaceSnapshot, now: Date): QuickReply[] {
     quick("Circuit Details", `${race.name} ${race.season} circuit details`),
     quick(
       "Previous Race Results",
-      previous
-        ? `Show ${previous.name} ${previous.season} race results`
-        : "Show previous F1 race results",
+      "Show previous F1 race results",
     ),
   ];
 }
@@ -65,8 +97,8 @@ async function answerRace(
 
   if (parsed.resultKind === "race" || parsed.resultKind === "qualifying") {
     const race = parsed.searchTerm
-      ? findRaceSnapshot(parsed.searchTerm, parsed.season)
-      : getPreviousRaceSnapshot(now);
+      ? await dependencies.resolveRaceSnapshot(parsed.searchTerm, parsed.season)
+      : await dependencies.getPreviousRaceFromSchedule(now);
     if (!race) {
       return {
         intent: "race",
@@ -77,6 +109,10 @@ async function answerRace(
       };
     }
     const session = parsed.resultKind === "qualifying" ? "qualifying" : "results";
+    const saved = dependencies.getSavedSessionResults(race, session);
+    if (saved) {
+      return resultReply(saved, session, race, "saved");
+    }
     const official = await dependencies.getSessionResults(race.season, race.round, session);
     if (!official.data) {
       return {
@@ -84,17 +120,15 @@ async function answerRace(
         heading: `${race.name} ${session === "qualifying" ? "qualifying" : "results"}`,
         body: "The official results are temporarily unavailable. Please try again later.",
         sections: [],
-        quickReplies: raceQuickReplies(race, now),
+        quickReplies: raceQuickReplies(race),
       };
     }
-    return resultReply(official.data, session, race, now);
+    return resultReply(official.data, session, race, "jolpica");
   }
 
-  let race = parsed.searchTerm
-    ? findRaceSnapshot(parsed.searchTerm, parsed.season)
+  const race = parsed.searchTerm
+    ? await dependencies.resolveRaceSnapshot(parsed.searchTerm, parsed.season)
     : await dependencies.getNextRaceSnapshot(now);
-  const latestCompleted = !race && !parsed.searchTerm;
-  if (latestCompleted) race = getPreviousRaceSnapshot(now);
   if (!race) {
     return {
       intent: "race",
@@ -118,11 +152,9 @@ async function answerRace(
   return {
     intent: "race",
     heading: race.name,
-    body: latestCompleted
-      ? `No later event is available in the saved schedule, so this is the latest completed event: round ${race.round} of the ${race.season} season.`
-      : `Round ${race.round} of the ${race.season} season.`,
+    body: `Round ${race.round} of the ${race.season} season.`,
     sections: [{ kind: "facts", items: facts }],
-    quickReplies: raceQuickReplies(race, now),
+    quickReplies: raceQuickReplies(race),
   };
 }
 
@@ -130,13 +162,16 @@ function resultReply(
   data: RaceSessionResults,
   session: "results" | "qualifying",
   race: RaceSnapshot,
-  now: Date,
+  source: "saved" | "jolpica",
 ): ChatReply {
   const label = session === "qualifying" ? "Qualifying" : "Race result";
   return {
     intent: "race",
     heading: `${data.raceName} ${label.toLowerCase()}`,
-    body: `${label} for the ${data.season} event.`,
+    body:
+      source === "saved"
+        ? `${label} from the matching saved qualifying snapshot for the ${data.season} event.`
+        : `${label} from Jolpica for the ${data.season} event.`,
     sections: [
       {
         kind: "ranking",
@@ -148,11 +183,14 @@ function resultReply(
         })),
       },
     ],
-    quickReplies: raceQuickReplies(race, now),
+    quickReplies: raceQuickReplies(race),
   };
 }
 
-function answerStandings(message: string): ChatReply {
+async function answerStandings(
+  message: string,
+  dependencies: ResponderDependencies,
+): Promise<ChatReply> {
   const normalized = parseQuestion(message).normalized;
   if (normalized.includes("scoring")) {
     return {
@@ -169,17 +207,57 @@ function answerStandings(message: string): ChatReply {
     };
   }
 
-  const drivers = getStandingsSnapshot("drivers");
-  const constructors = getStandingsSnapshot("constructors");
+  let savedDrivers: DriverStandingsSnapshot | null = null;
+  let savedConstructors: ConstructorStandingsSnapshot | null = null;
+  try {
+    savedDrivers = dependencies.getSavedDriverStandings();
+  } catch {
+    savedDrivers = null;
+  }
+  try {
+    savedConstructors = dependencies.getSavedConstructorStandings();
+  } catch {
+    savedConstructors = null;
+  }
+
+  const season = String(dependencies.now().getUTCFullYear());
+  const liveDrivers = savedDrivers?.entries.length
+    ? null
+    : await dependencies.getLiveDriverStandings(season);
+  const liveConstructors = savedConstructors?.entries.length
+    ? null
+    : await dependencies.getLiveConstructorStandings(season);
+  const driverEntries = savedDrivers?.entries.length
+    ? savedDrivers.entries
+    : liveDrivers?.live
+      ? liveDrivers.data
+      : [];
+  const constructorEntries = savedConstructors?.entries.length
+    ? savedConstructors.entries
+    : liveConstructors?.live
+      ? liveConstructors.data
+      : [];
+  if (!driverEntries.length || !constructorEntries.length) {
+    return {
+      intent: "standings",
+      heading: "Championship standings",
+      body: "The saved standings are unavailable, and the Jolpica fallback could not provide them right now.",
+      sections: [],
+      quickReplies: standingsQuickReplies(),
+    };
+  }
+  const usedLive = Boolean(liveDrivers?.live || liveConstructors?.live);
   return {
     intent: "standings",
     heading: "Current championship standings",
-    body: "Here are the top three published driver and constructor standings.",
+    body: usedLive
+      ? "The saved standings were unavailable, so these standings use the Jolpica fallback."
+      : "Here are the top three latest saved driver and constructor standings.",
     sections: [
       {
         kind: "ranking",
         title: "Drivers",
-        items: drivers.entries.slice(0, 3).map((entry) => ({
+        items: driverEntries.slice(0, 3).map((entry) => ({
           rank: entry.position,
           label: `${entry.givenName} ${entry.familyName}`,
           value: `${entry.points} points`,
@@ -188,7 +266,7 @@ function answerStandings(message: string): ChatReply {
       {
         kind: "ranking",
         title: "Constructors",
-        items: constructors.entries.slice(0, 3).map((entry) => ({
+        items: constructorEntries.slice(0, 3).map((entry) => ({
           rank: entry.position,
           label: entry.name,
           value: `${entry.points} points`,
@@ -196,7 +274,7 @@ function answerStandings(message: string): ChatReply {
       },
     ],
     quickReplies: standingsQuickReplies(),
-    sourceUpdatedAt: drivers.updatedAt,
+    sourceUpdatedAt: usedLive ? undefined : savedDrivers?.updatedAt,
   };
 }
 
@@ -307,7 +385,10 @@ function predictionQuickReplies(): QuickReply[] {
   ];
 }
 
-function answerPrediction(message: string): ChatReply {
+async function answerPrediction(
+  message: string,
+  dependencies: ResponderDependencies,
+): Promise<ChatReply> {
   const parsed = parseQuestion(message);
   if (parsed.normalized.includes("accuracy")) {
     const metrics = getModelMetricsSnapshot();
@@ -344,45 +425,114 @@ function answerPrediction(message: string): ChatReply {
     };
   }
 
-  const prediction = getPublishedPrediction(parsed.searchTerm, parsed.season);
+  const explicitStage = /\b(qualifying|before|after|pre qualifying|post qualifying|real grid)\b/.test(
+    parsed.normalized,
+  );
+  const prediction = getPublishedPrediction(
+    parsed.searchTerm,
+    parsed.season,
+    dependencies.now(),
+    !explicitStage,
+  );
   if (!prediction.available) {
+    if (parsed.searchTerm) {
+      const race = await dependencies.resolveRaceSnapshot(
+        parsed.searchTerm,
+        parsed.season,
+      );
+      if (race) {
+        const session = parsed.normalized.includes("qualifying")
+          ? "qualifying"
+          : "results";
+        const official = await dependencies.getSessionResults(
+          race.season,
+          race.round,
+          session,
+        );
+        if (official.data) {
+          const label =
+            session === "qualifying"
+              ? "Actual qualifying classification"
+              : "Actual race result";
+          return {
+            intent: "predictions",
+            heading: "Prediction unavailable",
+            body: `No compatible saved prediction is available. The ${label.toLowerCase()} is shown separately and is not a replacement prediction.`,
+            sections: [
+              {
+                kind: "ranking",
+                title: label,
+                items: official.data.results.slice(0, 5).map((result) => ({
+                  rank: result.position,
+                  label: result.driverName,
+                  value: result.constructorName,
+                })),
+              },
+              ...(session === "qualifying"
+                ? [
+                    {
+                      kind: "paragraph" as const,
+                      text: "Qualifying classification may differ from the final starting grid after penalties.",
+                    },
+                  ]
+                : []),
+            ],
+            quickReplies: predictionQuickReplies(),
+          };
+        }
+      }
+    }
     return {
       intent: "predictions",
       heading: "Prediction unavailable",
-      body: "No saved prediction is available for that race. I will not substitute real results or create a new forecast.",
+      body: "No compatible saved prediction is available for that race and date. I will not substitute real results or create a new forecast.",
       sections: [],
       quickReplies: predictionQuickReplies(),
     };
   }
+  const sections: ChatReply["sections"] = [];
+  if (prediction.predictedQualifying.length) {
+    sections.push({
+      kind: "ranking",
+      title: "Qualifying",
+      items: prediction.predictedQualifying.slice(0, 3).map((row) => ({
+        rank: row.position,
+        label: row.driverName,
+        value: row.position === 1 ? "Pole" : `+${row.gap.toFixed(3)}s`,
+      })),
+    });
+  }
+  sections.push(
+    {
+      kind: "ranking",
+      title:
+        prediction.source === "historical-estimate"
+          ? "Saved historical model estimate"
+          : "Podium probabilities",
+      items: prediction.podium.slice(0, 3).map((row, index) => ({
+        rank: index + 1,
+        label: row.driverName,
+        value: `${(row.podiumProbability * 100).toFixed(1)}%`,
+      })),
+    },
+    {
+      kind: "paragraph",
+      text:
+        prediction.source === "historical-estimate"
+          ? "Qualifying stage and original forecast time not recorded. This saved estimate is not proof of a forecast published before the race."
+          : "Probabilities are not guarantees; race incidents and conditions can change the result.",
+    },
+    { kind: "link", label: "Open the full prediction", href: prediction.predictionUrl },
+  );
+
   return {
     intent: "predictions",
     heading: `${prediction.race.name} prediction`,
-    body: `Published ${prediction.generatedAt} using ${prediction.qualifyingMode} qualifying data.`,
-    sections: [
-      {
-        kind: "ranking",
-        title: "Qualifying",
-        items: prediction.predictedQualifying.slice(0, 3).map((row) => ({
-          rank: row.position,
-          label: row.driverName,
-          value: row.position === 1 ? "Pole" : `+${row.gap.toFixed(3)}s`,
-        })),
-      },
-      {
-        kind: "ranking",
-        title: "Podium probabilities",
-        items: prediction.podium.slice(0, 3).map((row, index) => ({
-          rank: index + 1,
-          label: row.driverName,
-          value: `${(row.podiumProbability * 100).toFixed(1)}%`,
-        })),
-      },
-      {
-        kind: "paragraph",
-        text: "Probabilities are not guarantees; race incidents and conditions can change the result.",
-      },
-      { kind: "link", label: "Open the full prediction", href: prediction.predictionUrl },
-    ],
+    body:
+      prediction.source === "historical-estimate"
+        ? "Saved historical model estimate — qualifying stage and original forecast time not recorded."
+        : `Published ${prediction.generatedAt} using ${prediction.qualifyingMode} qualifying data.`,
+    sections,
     quickReplies: predictionQuickReplies(),
     sourceUpdatedAt: prediction.generatedAt,
   };
@@ -416,13 +566,13 @@ export async function answerF1Question(
     case "race":
       return answerRace(message, dependencies);
     case "standings":
-      return answerStandings(message);
+      return answerStandings(message, dependencies);
     case "drivers":
       return answerDriver(message);
     case "teams":
       return answerTeam(message);
     case "predictions":
-      return answerPrediction(message);
+      return answerPrediction(message, dependencies);
     default:
       return unsupportedReply();
   }
