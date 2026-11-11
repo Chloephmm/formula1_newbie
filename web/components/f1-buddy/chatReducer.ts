@@ -18,6 +18,7 @@ export type ChatAction =
   | { type: "OPEN" }
   | { type: "RESTORE" }
   | { type: "MINIMIZE" }
+  | { type: "RETURN_HOME" }
   | { type: "CLOSE" }
   | { type: "SET_DRAFT"; draft: string }
   | { type: "SUBMIT"; id: string; text: string }
@@ -39,6 +40,8 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return { ...state, mode: "open" };
     case "MINIMIZE":
       return { ...state, mode: "minimized" };
+    case "RETURN_HOME":
+      return { ...initialChatState, mode: "open" };
     case "CLOSE":
       return { ...initialChatState, messages: [] };
     case "SET_DRAFT":
