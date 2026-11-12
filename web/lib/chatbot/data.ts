@@ -1,5 +1,9 @@
 import metricsData from "@/public/data/metrics.json";
 import predictionData from "@/public/data/next_race_prediction.json";
+import predictionArchive2026Round18 from "@/public/data/predictions/2026-18.json";
+import predictionArchive2026Round19 from "@/public/data/predictions/2026-19.json";
+import predictionArchive2026Round20 from "@/public/data/predictions/2026-20.json";
+import predictionIndexData from "@/public/data/predictions/index.json";
 import predictionsData from "@/public/data/predictions.json";
 import { driverPhoto } from "../assets";
 import { drivers, getDriversForTeam, getTeam, races, teams } from "../data";
@@ -65,6 +69,44 @@ interface PredictionFile {
   };
 }
 
+interface SchemaV2PredictionRace {
+  name: string;
+  season: number;
+  round: number;
+  country: string;
+  date: string;
+  raceStartAt?: string;
+  qualifyingStartAt?: string;
+}
+
+interface SchemaV2PredictionFile {
+  schema_version: number;
+  prediction_updated_at: string;
+  race: SchemaV2PredictionRace;
+  forecast: {
+    error: string | null;
+    asof: string;
+    race?: SchemaV2PredictionRace;
+    predictedQualifying: QualifyingRow[];
+    preQualifyingPodium: PodiumRow[];
+    hasActualQualifying: boolean;
+    actualQualifyingPodium: PodiumRow[] | null;
+    actualQualifying: QualifyingRow[] | null;
+  };
+}
+
+type PredictionInput = PredictionFile | SchemaV2PredictionFile;
+
+interface PredictionIndexFile {
+  races: Array<{
+    race_id: string;
+    season: number;
+    round: number;
+    race_name: string;
+    race_start_at: string;
+  }>;
+}
+
 interface MetricsFile {
   podium: {
     top1Accuracy: number;
@@ -122,7 +164,47 @@ export type PublishedPrediction =
       predictionUrl: string;
     };
 
-const prediction = predictionData as PredictionFile;
+function normalizePredictionFile(input: PredictionInput): PredictionFile {
+  if (!("schema_version" in input)) return input;
+
+  const sourceRace = input.forecast.race ?? input.race;
+  return {
+    asof: input.forecast.asof,
+    generatedAt: input.prediction_updated_at,
+    race: {
+      name: sourceRace.name,
+      season: sourceRace.season,
+      round: sourceRace.round,
+      country: sourceRace.country,
+      date: sourceRace.date,
+      qualifyingDate: sourceRace.qualifyingStartAt?.slice(0, 10) ?? sourceRace.date,
+    },
+    forecast: {
+      error: input.forecast.error,
+      predictedQualifying: input.forecast.predictedQualifying,
+      preQualifyingPodium: input.forecast.preQualifyingPodium,
+      hasRealGrid: input.forecast.hasActualQualifying,
+      realGridPodium: input.forecast.actualQualifyingPodium,
+      realQualifying: input.forecast.actualQualifying,
+    },
+  };
+}
+
+const prediction = normalizePredictionFile(predictionData as SchemaV2PredictionFile);
+const detailedPredictions = Array.from(
+  new Map(
+    [
+      prediction,
+      normalizePredictionFile(predictionArchive2026Round18 as SchemaV2PredictionFile),
+      normalizePredictionFile(predictionArchive2026Round19 as SchemaV2PredictionFile),
+      normalizePredictionFile(predictionArchive2026Round20 as SchemaV2PredictionFile),
+    ].map((snapshot) => [
+      `${snapshot.race.season}-${snapshot.race.round}`,
+      snapshot,
+    ]),
+  ).values(),
+).sort((a, b) => b.race.date.localeCompare(a.race.date));
+const predictionIndex = predictionIndexData as PredictionIndexFile;
 const historicalPredictions = predictionsData as Record<
   string,
   Array<{
@@ -215,14 +297,31 @@ function predictionRaceSnapshot(): RaceSnapshot {
   return { ...prediction.race };
 }
 
+function predictionIndexSnapshots(): RaceSnapshot[] {
+  return predictionIndex.races.map((race) => ({
+    season: race.season,
+    round: race.round,
+    name: race.race_name,
+    date: race.race_start_at.slice(0, 10),
+  }));
+}
+
+function detailedPredictionForRace(race: Pick<RaceSnapshot, "season" | "round">) {
+  return detailedPredictions.find(
+    (snapshot) =>
+      snapshot.race.season === race.season && snapshot.race.round === race.round,
+  );
+}
+
 function utcDateKey(value: Date): string {
   return value.toISOString().slice(0, 10);
 }
 
 export function findRaceSnapshot(search: string, season?: number): RaceSnapshot | null {
   const candidates: RaceSnapshot[] = [
+    ...detailedPredictions.map((snapshot) => ({ ...snapshot.race })),
+    ...predictionIndexSnapshots(),
     ...races.map((race: Race) => ({ ...race })),
-    predictionRaceSnapshot(),
   ];
   return (
     candidates.find(
@@ -240,10 +339,10 @@ export async function resolveRaceSnapshot(
   season?: number,
   scheduleProvider: typeof getSchedule = getSchedule,
 ): Promise<RaceSnapshot | null> {
-  const local = findRaceSnapshot(search, season);
+  const selectedSeason = season ?? new Date().getUTCFullYear();
+  const local = findRaceSnapshot(search, selectedSeason);
   if (local) return local;
 
-  const selectedSeason = season ?? new Date().getUTCFullYear();
   const schedule = await scheduleProvider(String(selectedSeason));
   const matches = schedule.data.filter(
     (race) =>
@@ -275,7 +374,11 @@ export async function getNextRaceSnapshot(
 
 export function getPreviousRaceSnapshot(now = new Date()): RaceSnapshot | null {
   const nowTime = now.getTime();
-  const previous = [...races.map((race) => ({ ...race })), predictionRaceSnapshot()]
+  const previous = [
+    ...races.map((race) => ({ ...race })),
+    ...predictionIndexSnapshots(),
+    ...detailedPredictions.map((snapshot) => ({ ...snapshot.race })),
+  ]
     .filter((race) => new Date(`${race.date}T23:59:59Z`).getTime() < nowTime)
     .sort((a, b) => b.date.localeCompare(a.date))[0];
   return previous ?? null;
@@ -295,23 +398,27 @@ export async function getPreviousRaceFromSchedule(
 export function getSavedSessionResults(
   race: RaceSnapshot,
   session: "results" | "qualifying",
-  snapshot: PredictionFile = prediction,
+  snapshot?: PredictionInput,
 ): RaceSessionResults | null {
+  const selectedSnapshot = snapshot
+    ? normalizePredictionFile(snapshot)
+    : detailedPredictionForRace(race);
   if (
+    !selectedSnapshot ||
     session !== "qualifying" ||
-    snapshot.race.season !== race.season ||
-    snapshot.race.round !== race.round ||
-    !snapshot.forecast.hasRealGrid ||
-    !snapshot.forecast.realQualifying?.length
+    selectedSnapshot.race.season !== race.season ||
+    selectedSnapshot.race.round !== race.round ||
+    !selectedSnapshot.forecast.hasRealGrid ||
+    !selectedSnapshot.forecast.realQualifying?.length
   ) {
     return null;
   }
 
   return {
-    raceName: snapshot.race.name,
-    season: snapshot.race.season,
-    round: snapshot.race.round,
-    results: snapshot.forecast.realQualifying.map((row) => ({
+    raceName: selectedSnapshot.race.name,
+    season: selectedSnapshot.race.season,
+    round: selectedSnapshot.race.round,
+    results: selectedSnapshot.forecast.realQualifying.map((row) => ({
       position: row.position,
       driverId: row.code.toLowerCase(),
       code: row.code,
@@ -331,18 +438,20 @@ export function getPublishedPrediction(
   now = new Date(),
   allowHistoricalEstimate = true,
 ): PublishedPrediction {
-  if (prediction.forecast.error) return { available: false };
   if (!search && prediction.asof !== utcDateKey(now)) {
     return { available: false };
   }
 
-  const snapshotMatches =
-    (season === undefined || prediction.race.season === season) &&
-    (!search ||
-      includesSearch(prediction.race.name, search) ||
-      includesSearch(prediction.race.country, search));
+  const selectedSnapshot = search
+    ? detailedPredictions.find(
+        (snapshot) =>
+          (season === undefined || snapshot.race.season === season) &&
+          (includesSearch(snapshot.race.name, search) ||
+            includesSearch(snapshot.race.country, search)),
+      )
+    : prediction;
 
-  if (!snapshotMatches) {
+  if (!selectedSnapshot) {
     if (!search || season === undefined || !allowHistoricalEstimate) {
       return { available: false };
     }
@@ -375,22 +484,24 @@ export function getPublishedPrediction(
     };
   }
 
+  if (selectedSnapshot.forecast.error) return { available: false };
+
   const useActual =
-    prediction.forecast.hasRealGrid &&
-    Boolean(prediction.forecast.realQualifying?.length) &&
-    Boolean(prediction.forecast.realGridPodium?.length);
+    selectedSnapshot.forecast.hasRealGrid &&
+    Boolean(selectedSnapshot.forecast.realQualifying?.length) &&
+    Boolean(selectedSnapshot.forecast.realGridPodium?.length);
   return {
     available: true,
     source: "next-race-snapshot",
-    asof: prediction.asof,
-    generatedAt: prediction.generatedAt,
-    race: prediction.race,
+    asof: selectedSnapshot.asof,
+    generatedAt: selectedSnapshot.generatedAt,
+    race: selectedSnapshot.race,
     predictedQualifying: useActual
-      ? prediction.forecast.realQualifying ?? []
-      : prediction.forecast.predictedQualifying,
+      ? selectedSnapshot.forecast.realQualifying ?? []
+      : selectedSnapshot.forecast.predictedQualifying,
     podium: useActual
-      ? prediction.forecast.realGridPodium ?? []
-      : prediction.forecast.preQualifyingPodium,
+      ? selectedSnapshot.forecast.realGridPodium ?? []
+      : selectedSnapshot.forecast.preQualifyingPodium,
     qualifyingMode: useActual ? "actual" : "predicted",
     predictionUrl: STREAMLIT_URL,
   };

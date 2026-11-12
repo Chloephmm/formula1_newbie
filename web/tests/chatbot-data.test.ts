@@ -22,8 +22,8 @@ test("driver snapshots reuse saved standings, stats, career, and assets", () => 
   assert.equal(driver.name, "Lewis Hamilton");
   assert.equal(driver.team.name, "Ferrari");
   assert.equal(driver.standing?.position, 3);
-  assert.equal(driver.standing?.points, 241);
-  assert.equal(driver.seasonStats?.podiums, 6);
+  assert.equal(driver.standing?.points, 259);
+  assert.equal(driver.seasonStats?.podiums, 7);
   assert.equal(driver.career?.wins, 106);
   assert.equal(driver.image, "/images/assets/ferrari/hamilton_ferrari.png");
 });
@@ -88,12 +88,12 @@ test("named race lookup falls back to the selected season's Jolpica schedule", a
 
 test("next-race lookup uses a compatible prediction snapshot before Jolpica", async () => {
   let fallbackCalls = 0;
-  const race = await getNextRaceSnapshot(new Date("2026-10-26T00:00:00Z"), async () => {
+  const race = await getNextRaceSnapshot(new Date("2026-11-03T12:00:00Z"), async () => {
     fallbackCalls += 1;
     return { data: [], live: false };
   });
 
-  assert.equal(race?.name, "Mexico City Grand Prix");
+  assert.equal(race?.name, "Brazilian Grand Prix");
   assert.equal(fallbackCalls, 0);
 });
 
@@ -154,8 +154,8 @@ test("previous-race lookup is deterministic from saved dates", () => {
 test("previous-race lookup includes the newer published prediction identity", () => {
   const race = getPreviousRaceSnapshot(new Date("2026-11-10T00:00:00Z"));
 
-  assert.equal(race?.name, "Mexico City Grand Prix");
-  assert.equal(race?.round, 19);
+  assert.equal(race?.name, "Brazilian Grand Prix");
+  assert.equal(race?.round, 20);
 });
 
 test("previous-race schedule lookup selects the latest completed event", async () => {
@@ -184,7 +184,62 @@ test("published prediction exposes only validated detailed output", () => {
   assert.equal(prediction.predictedQualifying[0].driverName, "Max Verstappen");
   assert.equal(prediction.podium[0].driverName, "Max Verstappen");
   assert.equal(prediction.qualifyingMode, "predicted");
-  assert.equal(prediction.generatedAt, "2026-10-26");
+  assert.equal(prediction.generatedAt, "2026-10-30T18:00:43Z");
+});
+
+test("schema-v2 saved qualifying is normalized without changing published data", () => {
+  const saved = getSavedSessionResults(
+    {
+      season: 2026,
+      round: 21,
+      name: "Las Vegas Grand Prix",
+      date: "2026-11-22",
+    },
+    "qualifying",
+    {
+      schema_version: 2,
+      prediction_updated_at: "2026-11-21T12:00:00Z",
+      race: {
+        name: "Las Vegas Grand Prix",
+        season: 2026,
+        round: 21,
+        country: "USA",
+        date: "2026-11-22",
+        raceStartAt: "2026-11-22T04:00:00Z",
+        qualifyingStartAt: "2026-11-21T04:00:00Z",
+      },
+      forecast: {
+        error: null,
+        asof: "2026-11-21",
+        race: {
+          name: "Las Vegas Grand Prix",
+          season: 2026,
+          round: 21,
+          country: "USA",
+          date: "2026-11-22",
+          raceStartAt: "2026-11-22T04:00:00Z",
+          qualifyingStartAt: "2026-11-21T04:00:00Z",
+        },
+        predictedQualifying: [],
+        preQualifyingPodium: [],
+        hasActualQualifying: true,
+        actualQualifyingPodium: [],
+        actualQualifying: [
+          {
+            position: 1,
+            code: "NOR",
+            driverName: "Lando Norris",
+            team: "McLaren",
+            teamId: "mclaren",
+            gap: 0,
+          },
+        ],
+      },
+    },
+  );
+
+  assert.equal(saved?.raceName, "Las Vegas Grand Prix");
+  assert.equal(saved?.results[0].driverName, "Lando Norris");
 });
 
 test("generic current prediction rejects a snapshot from a different as-of date", () => {

@@ -182,16 +182,16 @@ test("latest prediction exposes only published values and a disclaimer", async (
     "Show the latest F1 Buddy prediction",
     {
       ...fixedDependencies,
-      now: () => new Date("2026-10-26T12:00:00Z"),
+      now: () => new Date("2026-11-03T12:00:00Z"),
     },
   );
 
   assert.equal(reply.intent, "predictions");
-  assert.equal(reply.heading, "Mexico City Grand Prix prediction");
+  assert.equal(reply.heading, "Brazilian Grand Prix prediction");
   assert.match(textOf(reply), /Max Verstappen/);
-  assert.match(textOf(reply), /71\.7%/);
+  assert.match(textOf(reply), /81\.4%/);
   assert.match(textOf(reply), /not guarantees/i);
-  assert.match(textOf(reply), /2026-10-26/);
+  assert.match(textOf(reply), /2026-11-04/);
   assert.ok(reply.sections.some((section) => section.kind === "link"));
   assert.deepEqual(
     reply.quickReplies.map((item) => item.label),
