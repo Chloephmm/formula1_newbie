@@ -11,6 +11,7 @@ import F1BuddyPanel from "../components/f1-buddy/F1BuddyPanel";
 import QuickReplies from "../components/f1-buddy/QuickReplies";
 import TopicCards from "../components/f1-buddy/TopicCards";
 import F1Buddy from "../components/F1Buddy";
+import Reveal from "../components/Reveal";
 import type { ChatReply } from "../lib/chatbot/types";
 
 const noop = () => undefined;
@@ -155,4 +156,13 @@ test("global shell uses native components and never embeds Streamlit", () => {
   assert.match(html, /f1-buddy-car\.jpg/);
   assert.match(html, /aria-expanded="false"/);
   assert.doesNotMatch(html, /<iframe/);
+});
+
+test("reveal content is visible before browser animation APIs run", () => {
+  const html = renderToStaticMarkup(
+    createElement(Reveal, null, "Visible content"),
+  );
+
+  assert.match(html, /Visible content/);
+  assert.doesNotMatch(html, /opacity:0/);
 });
