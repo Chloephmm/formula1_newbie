@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -73,4 +74,19 @@ test("panel derives Back visibility from conversation state", () => {
 
   assert.doesNotMatch(welcome, /Back to F1 Buddy home/);
   assert.match(active, /Back to F1 Buddy home/);
+});
+
+test("top-level return home invalidates pending work before reset", () => {
+  const source = readFileSync(
+    new URL("../components/F1Buddy.tsx", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf("function returnHome()");
+  const end = source.indexOf("async function submit", start);
+  const block = source.slice(start, end);
+
+  assert.ok(start >= 0, "returnHome controller must exist");
+  assert.match(block, /requestVersion\.current \+= 1/);
+  assert.match(block, /dispatch\(\{ type: "RETURN_HOME" \}\)/);
+  assert.match(block, /inputRef\.current\?\.focus\(\)/);
 });

@@ -31,6 +31,12 @@ export default function F1Buddy() {
     window.setTimeout(() => launcherRef.current?.focus(), 0);
   }
 
+  function returnHome() {
+    requestVersion.current += 1;
+    dispatch({ type: "RETURN_HOME" });
+    window.setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
   async function submit(question: string) {
     const text = question.trim();
     if (!text || state.pending) return;
@@ -86,7 +92,7 @@ export default function F1Buddy() {
           onDraftChange={(draft) => dispatch({ type: "SET_DRAFT", draft })}
           onSubmit={submit}
           onQuickReply={submit}
-          onBack={() => dispatch({ type: "RETURN_HOME" })}
+          onBack={returnHome}
           onMinimize={minimize}
           onClose={close}
           inputRef={inputRef}
