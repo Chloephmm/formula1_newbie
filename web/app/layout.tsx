@@ -3,6 +3,7 @@ import "./globals.css";
 import { horizon, holiday, jetbrainsMono, mokoto, cooperHewitt, plexMono } from "./fonts";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import F1Buddy from "@/components/F1Buddy";
 
 export const metadata: Metadata = {
   title: "F1 Guidebook",
@@ -24,6 +25,7 @@ export default function RootLayout({
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
+        <F1Buddy />
       </body>
     </html>
   );

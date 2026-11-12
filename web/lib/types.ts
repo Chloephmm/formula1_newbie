@@ -96,6 +96,7 @@ export interface ErgastResult {
 export interface ErgastQualifying {
   position: string;
   Driver: ErgastDriver;
+  Constructor: ErgastConstructor;
 }
 export interface ErgastRace {
   season: string;
@@ -136,4 +137,19 @@ export interface DriverCareer {
   podiums: number;
   poles: number;
   fastestLaps: number;
+}
+
+export interface SessionResult {
+  position: number;
+  driverId: string;
+  code: string;
+  driverName: string;
+  constructorName: string;
+}
+
+export interface RaceSessionResults {
+  raceName: string;
+  season: number;
+  round: number;
+  results: SessionResult[];
 }
