@@ -4,12 +4,12 @@ import {
   getModelMetricsSnapshot,
   getNextRaceSnapshot,
   getPreviousRaceFromSchedule,
-  getPublishedPrediction,
   getSavedSessionResults,
   getStandingsSnapshot,
   resolveRaceSnapshot,
   type RaceSnapshot,
 } from "./data";
+import { getPublishedPrediction, type PublishedPrediction } from "./published-predictions";
 import { parseQuestion } from "./intents";
 import {
   getConstructorStandings as getLiveConstructorStandings,
@@ -34,6 +34,11 @@ export interface ResponderDependencies {
   getLiveConstructorStandings: typeof getLiveConstructorStandings;
   getSavedSessionResults: typeof getSavedSessionResults;
   getPreviousRaceFromSchedule: typeof getPreviousRaceFromSchedule;
+  getPublishedPrediction: (
+    search?: string,
+    season?: number,
+    now?: Date,
+  ) => Promise<PublishedPrediction>;
 }
 
 type DriverStandingsSnapshot = {
@@ -59,6 +64,7 @@ export const defaultResponderDependencies: ResponderDependencies = {
   getLiveConstructorStandings,
   getSavedSessionResults,
   getPreviousRaceFromSchedule,
+  getPublishedPrediction,
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -425,14 +431,10 @@ async function answerPrediction(
     };
   }
 
-  const explicitStage = /\b(qualifying|before|after|pre qualifying|post qualifying|real grid)\b/.test(
-    parsed.normalized,
-  );
-  const prediction = getPublishedPrediction(
+  const prediction = await dependencies.getPublishedPrediction(
     parsed.searchTerm,
     parsed.season,
     dependencies.now(),
-    !explicitStage,
   );
   if (!prediction.available) {
     if (parsed.searchTerm) {
@@ -498,17 +500,14 @@ async function answerPrediction(
       items: prediction.predictedQualifying.slice(0, 3).map((row) => ({
         rank: row.position,
         label: row.driverName,
-        value: row.position === 1 ? "Pole" : `+${row.gap.toFixed(3)}s`,
+        value: row.position === 1 ? "Pole" : row.gap === null ? "Gap unavailable" : `+${row.gap.toFixed(3)}s`,
       })),
     });
   }
   sections.push(
     {
       kind: "ranking",
-      title:
-        prediction.source === "historical-estimate"
-          ? "Saved historical model estimate"
-          : "Podium probabilities",
+      title: "Podium probabilities",
       items: prediction.podium.slice(0, 3).map((row, index) => ({
         rank: index + 1,
         label: row.driverName,
@@ -517,10 +516,7 @@ async function answerPrediction(
     },
     {
       kind: "paragraph",
-      text:
-        prediction.source === "historical-estimate"
-          ? "Qualifying stage and original forecast time not recorded. This saved estimate is not proof of a forecast published before the race."
-          : "Probabilities are not guarantees; race incidents and conditions can change the result.",
+      text: "Probabilities are not guarantees; race incidents and conditions can change the result.",
     },
     { kind: "link", label: "Open the full prediction", href: prediction.predictionUrl },
   );
@@ -528,10 +524,7 @@ async function answerPrediction(
   return {
     intent: "predictions",
     heading: `${prediction.race.name} prediction`,
-    body:
-      prediction.source === "historical-estimate"
-        ? "Saved historical model estimate — qualifying stage and original forecast time not recorded."
-        : `Published ${prediction.generatedAt} using ${prediction.qualifyingMode} qualifying data.`,
+    body: `${prediction.source === "dashboard-archive" ? "Saved Streamlit dashboard archive. " : ""}${prediction.cached ? "Using the last validated cached publication. " : ""}${prediction.publishedAt ? `Published ${prediction.publishedAt}; ` : ""}generated ${prediction.generatedAt} using ${prediction.qualifyingMode === "actual" ? "post-qualifying" : "predicted qualifying"} data.`,
     sections,
     quickReplies: predictionQuickReplies(),
     sourceUpdatedAt: prediction.generatedAt,

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:chatbot": "node --import tsx --test tests/chatbot-contract.test.ts tests/chatbot-back-home.test.ts tests/chatbot-data.test.ts tests/chatbot-disconnection.test.ts tests/chatbot-intents.test.ts tests/chatbot-responder.test.ts tests/chatbot-route.test.ts tests/chatbot-state.test.ts tests/chatbot-ui.test.ts",
+    "test:chatbot": "node --import tsx --test tests/chatbot-contract.test.ts tests/chatbot-back-home.test.ts tests/chatbot-data.test.ts tests/chatbot-disconnection.test.ts tests/chatbot-intents.test.ts tests/chatbot-prediction-feed.test.ts tests/chatbot-published-predictions.test.ts tests/chatbot-responder.test.ts tests/chatbot-route.test.ts tests/chatbot-state.test.ts tests/chatbot-ui.test.ts",
     "sync-stats": "tsx scripts/sync-stats.ts"
   },
   "dependencies": {

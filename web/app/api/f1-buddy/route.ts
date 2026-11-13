@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { answerF1Question } from "@/lib/chatbot/responder";
 
 const BAD_REQUEST = "Please ask a Formula 1 question using 500 characters or fewer.";
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   let body: unknown;

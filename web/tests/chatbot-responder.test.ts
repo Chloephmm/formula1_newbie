@@ -5,10 +5,25 @@ import {
   defaultResponderDependencies,
 } from "../lib/chatbot/responder";
 import type { ChatReply } from "../lib/chatbot/types";
+import type { PublishedPrediction } from "../lib/chatbot/published-predictions";
+
+const publishedPrediction = {
+  available: true,
+  source: "confirmed-feed",
+  cached: false,
+  generatedAt: "2026-11-09T15:42:59Z",
+  publishedAt: "2026-11-09T15:43:03Z",
+  race: { name: "Las Vegas Grand Prix", season: 2026, round: 21, country: "USA", date: "2026-11-22" },
+  predictedQualifying: [{ position: 1, driverName: "Charles Leclerc", gap: 0 }],
+  podium: [{ driverName: "Max Verstappen", podiumProbability: 0.766389 }],
+  qualifyingMode: "predicted",
+  predictionUrl: "https://f1forecast.streamlit.app/",
+} satisfies PublishedPrediction;
 
 const fixedDependencies = {
   ...defaultResponderDependencies,
   now: () => new Date("2026-04-01T12:00:00Z"),
+  getPublishedPrediction: async () => ({ available: false as const }),
 };
 
 function textOf(reply: ChatReply): string {
@@ -182,7 +197,8 @@ test("latest prediction exposes only published values and a disclaimer", async (
     "Show the latest F1 Buddy prediction",
     {
       ...fixedDependencies,
-      now: () => new Date("2026-11-09T12:00:00Z"),
+      now: () => new Date("2026-11-13T12:00:00Z"),
+      getPublishedPrediction: async () => publishedPrediction,
     },
   );
 
@@ -201,26 +217,26 @@ test("latest prediction exposes only published values and a disclaimer", async (
   assertReplyContract(reply);
 });
 
-test("latest prediction rejects a stale saved snapshot", async () => {
+test("cached confirmed prediction remains clearly labelled", async () => {
   const reply = await answerF1Question("Show the latest F1 Buddy prediction", {
     ...fixedDependencies,
-    now: () => new Date("2026-11-11T12:00:00Z"),
+    now: () => new Date("2026-11-13T12:00:00Z"),
+    getPublishedPrediction: async () => ({ ...publishedPrediction, cached: true }),
   });
 
-  assert.equal(reply.heading, "Prediction unavailable");
-  assert.match(reply.body, /No compatible saved prediction/i);
-  assert.doesNotMatch(textOf(reply), /Mexico City Grand Prix prediction/);
+  assert.equal(reply.heading, "Las Vegas Grand Prix prediction");
+  assert.match(reply.body, /last validated cached publication/i);
+  assert.match(reply.body, /2026-11-09T15:43:03Z/);
 });
 
-test("historical prediction uses a labelled unqualified saved estimate", async () => {
+test("historical prediction without a Streamlit publication is unavailable", async () => {
   const reply = await answerF1Question(
     "Show the Monaco 2025 prediction",
-    fixedDependencies,
+    { ...fixedDependencies, getSessionResults: async () => ({ data: null, live: false }) },
   );
 
-  assert.match(reply.body, /qualifying stage and original forecast time not recorded/i);
-  assert.match(textOf(reply), /Lando Norris/);
-  assert.match(textOf(reply), /75\.7%/);
+  assert.equal(reply.heading, "Prediction unavailable");
+  assert.doesNotMatch(textOf(reply), /75\.7%/);
 });
 
 test("explicit historical qualifying prediction does not use an unqualified estimate", async () => {

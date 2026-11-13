@@ -4,11 +4,9 @@ import predictionArchive2026Round18 from "@/public/data/predictions/2026-18.json
 import predictionArchive2026Round19 from "@/public/data/predictions/2026-19.json";
 import predictionArchive2026Round20 from "@/public/data/predictions/2026-20.json";
 import predictionIndexData from "@/public/data/predictions/index.json";
-import predictionsData from "@/public/data/predictions.json";
 import { driverPhoto } from "../assets";
 import { drivers, getDriversForTeam, getTeam, races, teams } from "../data";
 import { getSchedule } from "../jolpica";
-import { STREAMLIT_URL } from "../links";
 import {
   career,
   getConstructorStandings,
@@ -150,20 +148,6 @@ export interface RaceSnapshot {
   qualifyingDate?: string;
 }
 
-export type PublishedPrediction =
-  | { available: false }
-  | {
-      available: true;
-      source: "next-race-snapshot" | "historical-estimate";
-      asof: string;
-      generatedAt?: string;
-      race: PredictionRace;
-      predictedQualifying: QualifyingRow[];
-      podium: PodiumRow[];
-      qualifyingMode: "predicted" | "actual";
-      predictionUrl: string;
-    };
-
 function normalizePredictionFile(input: PredictionInput): PredictionFile {
   if (!("schema_version" in input)) return input;
 
@@ -207,15 +191,6 @@ const detailedPredictions = Array.from(
   ).values(),
 ).sort((a, b) => b.race.date.localeCompare(a.race.date));
 const predictionIndex = predictionIndexData as PredictionIndexFile;
-const historicalPredictions = predictionsData as Record<
-  string,
-  Array<{
-    driver: string;
-    driverName: string;
-    team: string;
-    podiumProbability: number;
-  }>
->;
 const metrics = metricsData as MetricsFile;
 
 function includesSearch(value: string, search: string): boolean {
@@ -432,81 +407,6 @@ export function getSavedSessionResults(
 
 function scheduleRaceSnapshot(race: ScheduleRace): RaceSnapshot {
   return { ...race };
-}
-
-export function getPublishedPrediction(
-  search?: string,
-  season?: number,
-  now = new Date(),
-  allowHistoricalEstimate = true,
-): PublishedPrediction {
-  if (!search && prediction.asof !== utcDateKey(now)) {
-    return { available: false };
-  }
-
-  const selectedSnapshot = search
-    ? detailedPredictions.find(
-        (snapshot) =>
-          (season === undefined || snapshot.race.season === season) &&
-          (includesSearch(snapshot.race.name, search) ||
-            includesSearch(snapshot.race.country, search)),
-      )
-    : prediction;
-
-  if (!selectedSnapshot) {
-    if (!search || season === undefined || !allowHistoricalEstimate) {
-      return { available: false };
-    }
-    const race = findRaceSnapshot(search, season);
-    if (!race) return { available: false };
-    const rows = historicalPredictions[`${season}-${race.round}`];
-    if (!rows?.length) return { available: false };
-    return {
-      available: true,
-      source: "historical-estimate",
-      asof: race.date,
-      race: {
-        name: race.name,
-        season: race.season,
-        round: race.round,
-        country: race.country ?? "",
-        date: race.date,
-        qualifyingDate: race.qualifyingDate ?? race.date,
-      },
-      predictedQualifying: [],
-      podium: rows.map((row) => ({
-        code: row.driver,
-        driverName: row.driverName,
-        team: row.team,
-        teamId: "",
-        podiumProbability: row.podiumProbability,
-      })),
-      qualifyingMode: "predicted",
-      predictionUrl: STREAMLIT_URL,
-    };
-  }
-
-  if (selectedSnapshot.forecast.error) return { available: false };
-
-  const useActual =
-    selectedSnapshot.forecast.hasRealGrid &&
-    Boolean(selectedSnapshot.forecast.realQualifying?.length) &&
-    Boolean(selectedSnapshot.forecast.realGridPodium?.length);
-  return {
-    available: true,
-    source: "next-race-snapshot",
-    asof: selectedSnapshot.asof,
-    generatedAt: selectedSnapshot.generatedAt,
-    race: selectedSnapshot.race,
-    predictedQualifying: useActual
-      ? selectedSnapshot.forecast.realQualifying ?? []
-      : selectedSnapshot.forecast.predictedQualifying,
-    podium: useActual
-      ? selectedSnapshot.forecast.realGridPodium ?? []
-      : selectedSnapshot.forecast.preQualifyingPodium,
-    qualifyingMode: useActual ? "actual" : "predicted",
-    predictionUrl: STREAMLIT_URL,
-  };
 }
 
 export function getModelMetricsSnapshot() {

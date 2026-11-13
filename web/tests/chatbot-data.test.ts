@@ -9,7 +9,6 @@ import {
   getNextRaceSnapshot,
   getPreviousRaceSnapshot,
   getPreviousRaceFromSchedule,
-  getPublishedPrediction,
   getSavedSessionResults,
   resolveRaceSnapshot,
   getStandingsSnapshot,
@@ -175,18 +174,6 @@ test("previous-race schedule lookup selects the latest completed event", async (
   assert.equal(race?.round, 20);
 });
 
-test("published prediction exposes only validated detailed output", () => {
-  const prediction = getPublishedPrediction("mexico", 2026);
-
-  assert.equal(prediction.available, true);
-  if (!prediction.available) return;
-  assert.equal(prediction.race.name, "Mexico City Grand Prix");
-  assert.equal(prediction.predictedQualifying[0].driverName, "Max Verstappen");
-  assert.equal(prediction.podium[0].driverName, "Max Verstappen");
-  assert.equal(prediction.qualifyingMode, "predicted");
-  assert.equal(prediction.generatedAt, "2026-10-30T18:00:43Z");
-});
-
 test("schema-v2 saved qualifying is normalized without changing published data", () => {
   const saved = getSavedSessionResults(
     {
@@ -240,50 +227,6 @@ test("schema-v2 saved qualifying is normalized without changing published data",
 
   assert.equal(saved?.raceName, "Las Vegas Grand Prix");
   assert.equal(saved?.results[0].driverName, "Lando Norris");
-});
-
-test("generic current prediction rejects a snapshot from a different as-of date", () => {
-  assert.deepEqual(
-    getPublishedPrediction(undefined, undefined, new Date("2026-11-11T12:00:00Z")),
-    { available: false },
-  );
-  assert.deepEqual(
-    getPublishedPrediction(undefined, 2026, new Date("2026-11-11T12:00:00Z")),
-    { available: false },
-  );
-});
-
-test("missing historical prediction is explicit and never synthesized", () => {
-  assert.deepEqual(getPublishedPrediction("unavailable race", 2026), {
-    available: false,
-  });
-});
-
-test("named historical prediction can use the unqualified saved estimate", () => {
-  const prediction = getPublishedPrediction(
-    "monaco",
-    2025,
-    new Date("2026-11-11T12:00:00Z"),
-  );
-
-  assert.equal(prediction.available, true);
-  if (!prediction.available) return;
-  assert.equal(prediction.source, "historical-estimate");
-  assert.equal(prediction.race.name, "Monaco Grand Prix");
-  assert.equal(prediction.podium[0].driverName, "Lando Norris");
-  assert.equal(prediction.predictedQualifying.length, 0);
-});
-
-test("unqualified historical estimate cannot satisfy an explicit stage request", () => {
-  assert.deepEqual(
-    getPublishedPrediction(
-      "monaco",
-      2025,
-      new Date("2026-11-11T12:00:00Z"),
-      false,
-    ),
-    { available: false },
-  );
 });
 
 test("model metrics are read from the published metrics snapshot", () => {
