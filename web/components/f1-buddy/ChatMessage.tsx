@@ -18,6 +18,8 @@ export default function ChatMessage({ message, onQuickReply }: ChatMessageProps)
   }
 
   const { reply } = message;
+  const isTeamLogo = reply.image?.src.startsWith("/images/teams/") ?? false;
+  const isMercedesLogo = reply.image?.src === "/images/teams/mercedes.jpg";
   return (
     <div className="flex items-start gap-2.5">
       <div className="mt-1 h-8 w-8 shrink-0 overflow-hidden rounded-full border border-[#E8002D] bg-white">
@@ -27,8 +29,22 @@ export default function ChatMessage({ message, onQuickReply }: ChatMessageProps)
         <article className="rounded-2xl rounded-tl-md bg-[#F4F6F8] px-4 py-3 text-[#171B24] shadow-[0_12px_30px_rgba(0,0,0,.22)]">
           {reply.image ? (
             <div className="mb-3 flex items-center gap-3 border-b border-black/10 pb-3">
-              <Image src={reply.image.src} alt={reply.image.alt} width={64} height={64} className="h-12 w-12 rounded-full bg-white object-contain" />
-              <h3 className="font-nav text-base font-bold">{reply.heading}</h3>
+              {isTeamLogo ? (
+                <span className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-black/10">
+                  <Image
+                    src={reply.image.src}
+                    alt={reply.image.alt}
+                    width={128}
+                    height={128}
+                    className={isMercedesLogo
+                      ? "h-full w-full scale-[2.1] object-cover object-[50%_35%]"
+                      : "h-full w-full object-cover"}
+                  />
+                </span>
+              ) : (
+                <Image src={reply.image.src} alt={reply.image.alt} width={64} height={64} className="h-12 w-12 shrink-0 rounded-full bg-white object-contain" />
+              )}
+              <h3 className="min-w-0 font-nav text-base font-bold">{reply.heading}</h3>
             </div>
           ) : (
             <h3 className="font-nav text-base font-bold">{reply.heading}</h3>
