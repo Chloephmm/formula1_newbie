@@ -190,7 +190,9 @@ function normalizePredictionFile(input: PredictionInput): PredictionFile {
   };
 }
 
-const prediction = normalizePredictionFile(predictionData as SchemaV2PredictionFile);
+const prediction = normalizePredictionFile(
+  predictionData as unknown as PredictionInput,
+);
 const detailedPredictions = Array.from(
   new Map(
     [
