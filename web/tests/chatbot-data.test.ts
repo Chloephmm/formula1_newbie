@@ -21,8 +21,8 @@ test("driver snapshots reuse saved standings, stats, career, and assets", () => 
   assert.ok(driver);
   assert.equal(driver.name, "Lewis Hamilton");
   assert.equal(driver.team.name, "Ferrari");
-  assert.equal(driver.standing?.position, 3);
-  assert.equal(driver.standing?.points, 259);
+  assert.equal(driver.standing?.position, 4);
+  assert.equal(driver.standing?.points, 261);
   assert.equal(driver.seasonStats?.podiums, 7);
   assert.equal(driver.career?.wins, 106);
   assert.equal(driver.image, "/images/assets/ferrari/hamilton_ferrari.png");
@@ -63,37 +63,37 @@ test("race lookup can use the detailed published prediction identity", () => {
 
 test("named race lookup falls back to the selected season's Jolpica schedule", async () => {
   const requestedSeasons: string[] = [];
-  const race = await resolveRaceSnapshot("las vegas", 2026, async (season) => {
+  const race = await resolveRaceSnapshot("abu dhabi", 2026, async (season) => {
     requestedSeasons.push(season ?? "");
     return {
       live: true,
       data: [
         {
           season: 2026,
-          round: 21,
-          name: "Las Vegas Grand Prix",
-          circuit: "Las Vegas Strip Street Circuit",
-          locality: "Las Vegas",
-          country: "USA",
-          date: "2026-11-22",
+          round: 22,
+          name: "Abu Dhabi Grand Prix",
+          circuit: "Yas Marina Circuit",
+          locality: "Abu Dhabi",
+          country: "UAE",
+          date: "2026-12-06",
         },
       ],
     };
   });
 
   assert.deepEqual(requestedSeasons, ["2026"]);
-  assert.equal(race?.name, "Las Vegas Grand Prix");
-  assert.equal(race?.round, 21);
+  assert.equal(race?.name, "Abu Dhabi Grand Prix");
+  assert.equal(race?.round, 22);
 });
 
 test("next-race lookup uses a compatible prediction snapshot before Jolpica", async () => {
   let fallbackCalls = 0;
-  const race = await getNextRaceSnapshot(new Date("2026-11-03T12:00:00Z"), async () => {
+  const race = await getNextRaceSnapshot(new Date("2026-11-09T12:00:00Z"), async () => {
     fallbackCalls += 1;
     return { data: [], live: false };
   });
 
-  assert.equal(race?.name, "Brazilian Grand Prix");
+  assert.equal(race?.name, "Las Vegas Grand Prix");
   assert.equal(fallbackCalls, 0);
 });
 
