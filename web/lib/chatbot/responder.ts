@@ -10,7 +10,7 @@ import {
   type RaceSnapshot,
 } from "./data";
 import { getPublishedPrediction, type PublishedPrediction } from "./published-predictions";
-import { parseQuestion } from "./intents";
+import { normalizeQuestion, parseQuestion } from "./intents";
 import {
   getConstructorStandings as getLiveConstructorStandings,
   getDriverStandings as getLiveDriverStandings,
@@ -21,7 +21,7 @@ import type {
   DriverStanding,
   RaceSessionResults,
 } from "../types";
-import type { ChatReply, QuickReply } from "./types";
+import type { ChatReply, PredictionContext, QuickReply } from "./types";
 
 export interface ResponderDependencies {
   now: () => Date;
@@ -383,19 +383,22 @@ function answerTeam(message: string): ChatReply {
   };
 }
 
-function predictionQuickReplies(): QuickReply[] {
+function predictionQuickReplies(prediction?: PublishedPrediction): QuickReply[] {
   return [
     quick("Model Accuracy", "Show F1 prediction model accuracy"),
     quick("How Predictions Work", "How do F1 Buddy predictions work?"),
-    quick("Qualifying Predictions", "Show the latest qualifying predictions"),
+    quick("Qualifying Predictions", prediction?.available
+      ? `Show ${prediction.race.name} ${prediction.race.season} qualifying prediction`
+      : "Show the latest qualifying predictions"),
   ];
 }
 
 async function answerPrediction(
   message: string,
   dependencies: ResponderDependencies,
+  context?: PredictionContext,
 ): Promise<ChatReply> {
-  const parsed = parseQuestion(message);
+  const parsed = parseQuestion(message, context);
   if (parsed.normalized.includes("accuracy")) {
     const metrics = getModelMetricsSnapshot();
     return {
@@ -487,47 +490,94 @@ async function answerPrediction(
     return {
       intent: "predictions",
       heading: "Prediction unavailable",
-      body: "No compatible saved prediction is available for that race and date. I will not substitute real results or create a new forecast.",
+      body: {
+        "not-published": "A confirmed Streamlit prediction has not been published for the next race yet.",
+        "invalid-publication": "The published prediction failed validation, so I cannot show it. Please check the Streamlit publication.",
+        "past-event": "The latest confirmed prediction belongs to a race that has already started. No next-race forecast has been published yet.",
+        "source-unavailable": "The published prediction source is temporarily unavailable, and no validated cached publication is available.",
+        "not-found": "No compatible saved prediction is available for that race and date. I will not substitute real results or create a new forecast.",
+      }[prediction.reason ?? "not-found"],
       sections: [],
       quickReplies: predictionQuickReplies(),
     };
   }
+  const aspect = parsed.predictionAspect ?? "summary";
   const sections: ChatReply["sections"] = [];
-  if (prediction.predictedQualifying.length) {
+  const qualifying = {
+    kind: "ranking" as const,
+    title: prediction.qualifyingMode === "actual" ? "Actual qualifying" : "Predicted qualifying",
+    items: prediction.predictedQualifying.slice(0, aspect === "summary" ? 3 : 5).map((row) => ({
+      rank: row.position,
+      label: row.driverName,
+      value: row.position === 1 ? "Pole" : row.gap === null ? "Gap unavailable" : `+${row.gap.toFixed(3)}s`,
+    })),
+  };
+  const podium = {
+    kind: "ranking" as const,
+    title: "Podium probabilities",
+    items: prediction.podium.slice(0, aspect === "summary" ? 3 : 5).map((row, index) => ({
+      rank: index + 1,
+      label: row.driverName,
+      value: `${(row.podiumProbability * 100).toFixed(1)}%`,
+    })),
+  };
+  const disclaimer = {
+    kind: "paragraph" as const,
+    text: "Probabilities are not guarantees; race incidents and conditions can change the result.",
+  };
+  const sourceBody = `${prediction.source === "dashboard-archive" ? "Saved Streamlit dashboard archive. " : ""}${prediction.cached ? "Using the last validated cached publication. " : ""}${prediction.publishedAt ? `Published ${prediction.publishedAt}; ` : ""}generated ${prediction.generatedAt} using ${prediction.qualifyingMode === "actual" ? "post-qualifying" : "predicted qualifying"} data.`;
+  let body = sourceBody;
+
+  if (aspect === "updated") {
     sections.push({
-      kind: "ranking",
-      title: "Qualifying",
-      items: prediction.predictedQualifying.slice(0, 3).map((row) => ({
-        rank: row.position,
-        label: row.driverName,
-        value: row.position === 1 ? "Pole" : row.gap === null ? "Gap unavailable" : `+${row.gap.toFixed(3)}s`,
-      })),
+      kind: "facts",
+      items: [
+        { label: "Race", value: `${prediction.race.name} ${prediction.race.season}` },
+        { label: "Generated", value: prediction.generatedAt },
+        ...(prediction.publishedAt ? [{ label: "Published", value: prediction.publishedAt }] : []),
+        { label: "Source", value: prediction.source === "dashboard-archive" ? "Streamlit dashboard archive" : "Confirmed Streamlit publication" },
+      ],
     });
+  } else if (aspect === "winner") {
+    body = `A winner probability is not published for ${prediction.race.name}. The model publishes podium probabilities, which are not the same as a chance of winning. ${sourceBody}`;
+  } else if (aspect === "driver") {
+    const driver = parsed.predictionDriverId ? findDriverSnapshot(parsed.predictionDriverId) : null;
+    const podiumRow = driver
+      ? prediction.podium.find((row) => normalizeQuestion(row.driverName) === normalizeQuestion(driver.name))
+      : undefined;
+    const qualifyingRow = driver
+      ? prediction.predictedQualifying.find((row) => normalizeQuestion(row.driverName) === normalizeQuestion(driver.name))
+      : undefined;
+    body = podiumRow
+      ? `${driver?.name} has a published ${(podiumRow.podiumProbability * 100).toFixed(1)}% podium probability for ${prediction.race.name}. ${sourceBody}`
+      : `No podium probability for ${driver?.name ?? "that driver"} is included in the published ${prediction.race.name} forecast. ${sourceBody}`;
+    if (driver) {
+      sections.push({
+        kind: "facts",
+        items: [
+          ...(podiumRow ? [{ label: "Podium chance", value: `${(podiumRow.podiumProbability * 100).toFixed(1)}%` }] : []),
+          ...(qualifyingRow ? [{ label: prediction.qualifyingMode === "actual" ? "Actual qualifying" : "Predicted qualifying", value: `P${qualifyingRow.position}` }] : []),
+        ],
+      });
+    }
+    sections.push(disclaimer);
+  } else {
+    if (qualifying.items.length && (aspect === "summary" || aspect === "qualifying")) sections.push(qualifying);
+    if (aspect === "summary" || aspect === "podium") sections.push(podium, disclaimer);
+    if (aspect === "qualifying" && prediction.qualifyingMode === "actual") {
+      sections.push({ kind: "paragraph", text: "This is the published actual qualifying classification, not a predicted qualifying order." });
+    }
   }
-  sections.push(
-    {
-      kind: "ranking",
-      title: "Podium probabilities",
-      items: prediction.podium.slice(0, 3).map((row, index) => ({
-        rank: index + 1,
-        label: row.driverName,
-        value: `${(row.podiumProbability * 100).toFixed(1)}%`,
-      })),
-    },
-    {
-      kind: "paragraph",
-      text: "Probabilities are not guarantees; race incidents and conditions can change the result.",
-    },
-    { kind: "link", label: "Open the full prediction", href: prediction.predictionUrl },
-  );
+  sections.push({ kind: "link", label: "Open the full prediction", href: prediction.predictionUrl });
 
   return {
     intent: "predictions",
     heading: `${prediction.race.name} prediction`,
-    body: `${prediction.source === "dashboard-archive" ? "Saved Streamlit dashboard archive. " : ""}${prediction.cached ? "Using the last validated cached publication. " : ""}${prediction.publishedAt ? `Published ${prediction.publishedAt}; ` : ""}generated ${prediction.generatedAt} using ${prediction.qualifyingMode === "actual" ? "post-qualifying" : "predicted qualifying"} data.`,
+    body,
     sections,
-    quickReplies: predictionQuickReplies(),
+    quickReplies: predictionQuickReplies(prediction),
     sourceUpdatedAt: prediction.generatedAt,
+    context: { raceName: prediction.race.name, season: prediction.race.season },
   };
 }
 
@@ -553,8 +603,9 @@ function unsupportedReply(): ChatReply {
 export async function answerF1Question(
   message: string,
   dependencies: ResponderDependencies = defaultResponderDependencies,
+  context?: PredictionContext,
 ): Promise<ChatReply> {
-  const parsed = parseQuestion(message);
+  const parsed = parseQuestion(message, context);
   switch (parsed.intent) {
     case "race":
       return answerRace(message, dependencies);
@@ -565,7 +616,7 @@ export async function answerF1Question(
     case "teams":
       return answerTeam(message);
     case "predictions":
-      return answerPrediction(message, dependencies);
+      return answerPrediction(message, dependencies, context);
     default:
       return unsupportedReply();
   }

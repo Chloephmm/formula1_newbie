@@ -5,7 +5,7 @@ import { createFeedReader, type ConfirmedFeed } from "./prediction-feed";
 type RecordValue = Record<string, unknown>;
 type FeedReader = ReturnType<typeof createFeedReader>;
 export type PublishedPrediction =
-  | { available: false }
+  | { available: false; reason: "not-published" | "invalid-publication" | "past-event" | "source-unavailable" | "not-found" }
   | {
       available: true;
       source: "confirmed-feed" | "dashboard-archive";
@@ -19,7 +19,9 @@ export type PublishedPrediction =
       predictionUrl: string;
     };
 
-const unavailable: PublishedPrediction = { available: false };
+function unavailable(reason: Extract<PublishedPrediction, { available: false }>["reason"]): PublishedPrediction {
+  return { available: false, reason };
+}
 function record(value: unknown): RecordValue {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid dashboard prediction");
   return value as RecordValue;
@@ -55,7 +57,7 @@ function rows(forecast: RecordValue, mode: "predicted" | "actual") {
 }
 
 function fromConfirmed(feed: ConfirmedFeed, cached: boolean): PublishedPrediction {
-  if (!feed.current) return unavailable;
+  if (!feed.current) return unavailable("not-published");
   const event = record(feed.event);
   const prediction = record(feed.current.prediction);
   const forecast = record(prediction.forecast);
@@ -107,36 +109,43 @@ export function createPublishedPredictionProvider(reader: FeedReader = createFee
   return async (search?: string, season?: number, now = new Date()): Promise<PublishedPrediction> => {
     const current = await reader.readCurrent();
     if (!search) {
-      if (!current.available || !current.feed.current) return unavailable;
-      const start = Date.parse(string(current.feed.event.race_start_at));
-      if (!Number.isFinite(start) || start <= now.getTime()) return unavailable;
-      try { return fromConfirmed(current.feed, current.cached); } catch { return unavailable; }
+      if (!current.available) return unavailable(current.reason);
+      if (!current.feed.current) return unavailable("not-published");
+      if (season !== undefined && current.feed.event.season !== season) return unavailable("not-found");
+      let start: number;
+      try { start = Date.parse(string(current.feed.event.race_start_at)); }
+      catch { return unavailable("invalid-publication"); }
+      if (!Number.isFinite(start)) return unavailable("invalid-publication");
+      if (start <= now.getTime()) return unavailable("past-event");
+      try { return fromConfirmed(current.feed, current.cached); } catch { return unavailable("invalid-publication"); }
     }
     if (current.available && current.feed.current &&
         (season === undefined || season === current.feed.event.season) &&
         (matches(string(current.feed.event.race_name), search) || matches(string(current.feed.event.country), search))) {
-      try { return fromConfirmed(current.feed, current.cached); } catch { return unavailable; }
+      try { return fromConfirmed(current.feed, current.cached); } catch { return unavailable("invalid-publication"); }
     }
+    let indexValue: unknown;
+    try { indexValue = await reader.readArchiveIndex(); } catch { return unavailable("source-unavailable"); }
     try {
-      const index = record(await reader.readArchiveIndex());
-      if (index.schema_version !== 2 || !Array.isArray(index.races)) return unavailable;
+      const index = record(indexValue);
+      if (index.schema_version !== 2 || !Array.isArray(index.races)) return unavailable("invalid-publication");
       const matchesIndex = index.races.map(record).filter((entry) =>
         (season === undefined || entry.season === season) &&
         (matches(string(entry.race_name), search) || matches(string(entry.race_id), search)));
-      if (matchesIndex.length !== 1) return unavailable;
+      if (matchesIndex.length !== 1) return unavailable("not-found");
       const entry = matchesIndex[0];
       const raceId = string(entry.race_id);
-      if (raceId !== `${integer(entry.season)}-${integer(entry.round)}`) return unavailable;
+      if (raceId !== `${integer(entry.season)}-${integer(entry.round)}`) return unavailable("invalid-publication");
       const path = string(entry.artifact_url);
       const artifact = await reader.readArchiveArtifact(path);
       if (path.endsWith("/feed.json")) {
         const feed = artifact as ConfirmedFeed;
-        if (feed.current_event_id !== raceId) return unavailable;
+        if (feed.current_event_id !== raceId) return unavailable("invalid-publication");
         return fromConfirmed(feed, false);
       }
       return fromLegacy(artifact, raceId);
     } catch {
-      return unavailable;
+      return unavailable("invalid-publication");
     }
   };
 }

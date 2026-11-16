@@ -47,7 +47,7 @@ export default function F1Buddy() {
       const response = await fetch("/api/f1-buddy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, context: state.predictionContext }),
       });
       if (!response.ok) throw new Error("request failed");
       const reply = (await response.json()) as ChatReply;

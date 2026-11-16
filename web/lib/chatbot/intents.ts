@@ -1,5 +1,5 @@
 import { drivers, teams } from "../data";
-import type { ParsedQuestion, ResultKind } from "./types";
+import type { ParsedQuestion, PredictionAspect, PredictionContext, ResultKind } from "./types";
 
 export function normalizeQuestion(value: string): string {
   return value
@@ -134,12 +134,55 @@ function raceSearchTerm(normalized: string, season?: number): string | undefined
   return words.length ? words.join(" ") : undefined;
 }
 
-export function parseQuestion(message: string): ParsedQuestion {
+const PREDICTION_STOP_WORDS = new Set([
+  ...RACE_STOP_WORDS,
+  "can", "you", "give", "please", "who", "do", "does", "will", "be", "to", "for", "on", "in", "of",
+  "it", "its", "that", "which", "has", "have", "best", "most", "top", "first", "pole", "grid",
+  "chance", "chances", "updated", "published", "source", "driver", "drivers", "s",
+  "favored", "favoured", "favorite", "favourite", "likely",
+]);
+
+function predictionSearchTerm(normalized: string, season?: number, driverId?: string): string | undefined {
+  const driver = driverId ? drivers.find((candidate) => candidate.id === driverId) : undefined;
+  const driverWords = new Set(driver ? [
+    ...normalizeQuestion(driver.name).split(" "),
+    normalizeQuestion(driver.id),
+    driver.code.toLowerCase(),
+  ] : []);
+  const words = normalized.split(" ").filter((word) =>
+    word !== String(season ?? "") && !PREDICTION_STOP_WORDS.has(word) && !driverWords.has(word));
+  return words.length ? words.join(" ") : undefined;
+}
+
+function predictionAspect(normalized: string, driver?: string): PredictionAspect {
+  if (hasTerm(normalized, ["win", "winner", "victory"])) return "winner";
+  if (hasTerm(normalized, ["updated", "published", "source"])) return "updated";
+  if (driver) return "driver";
+  if (hasTerm(normalized, ["qualifying", "quali", "pole", "grid"])) return "qualifying";
+  if (hasTerm(normalized, ["podium", "chance", "chances", "probability", "probabilities", "favored", "favoured", "favorite", "favourite", "likely"])) return "podium";
+  return "summary";
+}
+
+export function parseQuestion(message: string, context?: PredictionContext): ParsedQuestion {
   const normalized = normalizeQuestion(message);
   const seasonMatch = normalized.match(/\b(20\d{2})\b/);
   const season = seasonMatch ? Number(seasonMatch[1]) : undefined;
   const driver = findDriver(normalized);
   const team = findTeam(normalized);
+
+  const shortFollowUp = /^(?:what about|how about|and)\b/.test(normalized) &&
+    (Boolean(driver) || hasTerm(normalized, ["qualifying", "quali", "pole", "grid", "podium", "updated", "published"]));
+  const sourceFollowUp = /^(?:when|what time)\b.*\b(?:it|that)\b.*\b(?:updated|published)\b/.test(normalized);
+  if (context && (shortFollowUp || sourceFollowUp)) {
+    return {
+      intent: "predictions",
+      normalized,
+      season: context.season,
+      searchTerm: context.raceName,
+      predictionAspect: driver ? "driver" : predictionAspect(normalized),
+      predictionDriverId: driver,
+    };
+  }
 
   if (
     hasTerm(normalized, [
@@ -153,13 +196,21 @@ export function parseQuestion(message: string): ParsedQuestion {
       "probabilities",
       "accuracy",
     ]) ||
-    (hasTerm(normalized, ["podium"]) && !driver)
+    (hasTerm(normalized, ["podium"]) && !driver) ||
+    (Boolean(driver) && hasTerm(normalized, ["podium", "chance", "chances"])) ||
+    (hasTerm(normalized, ["win", "favored", "favoured", "favorite", "favourite", "likely"]) &&
+      hasTerm(normalized, ["next", "upcoming"]) &&
+      hasTerm(normalized, ["race", "grand prix", "gp"]))
   ) {
     return {
       intent: "predictions",
       normalized,
       season,
-      searchTerm: raceSearchTerm(normalized, season),
+      searchTerm: hasTerm(normalized, ["next", "latest", "current", "upcoming"])
+        ? undefined
+        : predictionSearchTerm(normalized, season, driver),
+      predictionAspect: predictionAspect(normalized, driver),
+      predictionDriverId: driver,
     };
   }
 

@@ -1,4 +1,4 @@
-import type { ChatReply } from "@/lib/chatbot/types";
+import type { ChatReply, PredictionContext } from "@/lib/chatbot/types";
 
 export type WindowMode = "closed" | "open" | "minimized";
 
@@ -12,6 +12,7 @@ export interface ChatState {
   draft: string;
   pending: boolean;
   error: string | null;
+  predictionContext: PredictionContext | null;
 }
 
 export type ChatAction =
@@ -31,6 +32,7 @@ export const initialChatState: ChatState = {
   draft: "",
   pending: false,
   error: null,
+  predictionContext: null,
 };
 
 export function chatReducer(state: ChatState, action: ChatAction): ChatState {
@@ -63,6 +65,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ...state,
         pending: false,
         error: null,
+        predictionContext: action.reply.intent === "predictions" ? action.reply.context ?? null : null,
         messages: [
           ...state.messages,
           { id: action.id, role: "assistant", reply: action.reply },

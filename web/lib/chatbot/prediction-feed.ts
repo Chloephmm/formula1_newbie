@@ -19,7 +19,9 @@ export type ConfirmedFeed = {
   initial: ConfirmedSelection | null;
   revision: string;
 };
-export type FeedRead = { available: true; feed: ConfirmedFeed; cached: boolean } | { available: false };
+export type FeedRead =
+  | { available: true; feed: ConfirmedFeed; cached: boolean }
+  | { available: false; reason: "invalid-publication" | "source-unavailable" };
 export type FeedTransport = (url: string, init: RequestInit) => Promise<Response>;
 
 function object(value: unknown): JsonObject {
@@ -215,13 +217,21 @@ export function createFeedReader(options: { transport?: FeedTransport; nowMs?: (
     async readCurrent(): Promise<FeedRead> {
       const now = nowMs();
       if (cached && now - cached.checkedAt < ttlMs) return { available: true, feed: cached.feed, cached: false };
+      let failureReason: "invalid-publication" | "source-unavailable" = "source-unavailable";
       try {
         const response = await fetchPath("prediction_feed.json", cached?.etag);
         if (response.status === 304 && cached) {
           cached.checkedAt = now;
           return { available: true, feed: cached.feed, cached: false };
         }
-        const feed = validateConfirmedFeed(await readText(response));
+        const raw = await readText(response);
+        let feed: ConfirmedFeed;
+        try {
+          feed = validateConfirmedFeed(raw);
+        } catch {
+          failureReason = "invalid-publication";
+          throw new Error("Invalid confirmed prediction publication");
+        }
         if (cached && cached.feed.current_event_id === feed.current_event_id &&
             time(feed.feed_updated_at) < time(cached.feed.feed_updated_at)) {
           cached.checkedAt = now;
@@ -230,7 +240,7 @@ export function createFeedReader(options: { transport?: FeedTransport; nowMs?: (
         cached = { feed, checkedAt: now, etag: response.headers.get("ETag") };
         return { available: true, feed, cached: false };
       } catch {
-        return cached ? { available: true, feed: cached.feed, cached: true } : { available: false };
+        return cached ? { available: true, feed: cached.feed, cached: true } : { available: false, reason: failureReason };
       }
     },
     async readArchiveIndex(): Promise<unknown> {

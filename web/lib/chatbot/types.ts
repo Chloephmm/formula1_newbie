@@ -7,6 +7,11 @@ export type ChatIntent =
   | "unsupported";
 
 export type ResultKind = "schedule" | "race" | "qualifying";
+export type PredictionAspect = "summary" | "qualifying" | "podium" | "driver" | "updated" | "winner";
+export interface PredictionContext {
+  raceName: string;
+  season: number;
+}
 
 export type ChatSection =
   | { kind: "facts"; items: Array<{ label: string; value: string }> }
@@ -36,10 +41,12 @@ export interface ChatReply {
   quickReplies: QuickReply[];
   sourceUpdatedAt?: string;
   image?: { src: string; alt: string };
+  context?: PredictionContext;
 }
 
 export interface ChatRequest {
   message: string;
+  context?: PredictionContext;
 }
 
 export interface ParsedQuestion {
@@ -49,4 +56,6 @@ export interface ParsedQuestion {
   searchTerm?: string;
   resultKind?: ResultKind;
   standingKind?: "drivers" | "constructors";
+  predictionAspect?: PredictionAspect;
+  predictionDriverId?: string;
 }

@@ -23,7 +23,7 @@ const publishedPrediction = {
 const fixedDependencies = {
   ...defaultResponderDependencies,
   now: () => new Date("2026-04-01T12:00:00Z"),
-  getPublishedPrediction: async () => ({ available: false as const }),
+  getPublishedPrediction: async () => ({ available: false as const, reason: "not-found" as const }),
 };
 
 function textOf(reply: ChatReply): string {
@@ -217,6 +217,92 @@ test("latest prediction exposes only published values and a disclaimer", async (
   assertReplyContract(reply);
 });
 
+test("next-race prediction variants read the current published forecast", async () => {
+  const calls: Array<[string | undefined, number | undefined]> = [];
+  for (const message of [
+    "Can you give me the next race prediction?",
+    "Tell me anything about the latest prediction",
+  ]) {
+    const reply = await answerF1Question(message, {
+      ...fixedDependencies,
+      getPublishedPrediction: async (search, season) => {
+        calls.push([search, season]);
+        return publishedPrediction;
+      },
+    });
+    assert.equal(reply.heading, "Las Vegas Grand Prix prediction");
+  }
+  assert.deepEqual(calls, [[undefined, undefined], [undefined, undefined]]);
+});
+
+test("specific prediction questions show only the published field requested", async () => {
+  const dependencies = {
+    ...fixedDependencies,
+    getPublishedPrediction: async () => publishedPrediction,
+  };
+  const qualifying = await answerF1Question("Who is predicted for pole at the next race?", dependencies);
+  assert.match(JSON.stringify(qualifying.sections), /Charles Leclerc/);
+  assert.doesNotMatch(JSON.stringify(qualifying.sections), /76\.6%/);
+
+  const podium = await answerF1Question("Who has the best podium chance in the next race?", dependencies);
+  assert.match(JSON.stringify(podium.sections), /76\.6%/);
+  assert.doesNotMatch(JSON.stringify(podium.sections), /Charles Leclerc/);
+
+  const updated = await answerF1Question("When was the next prediction updated?", dependencies);
+  assert.match(JSON.stringify(updated.sections), /2026-11-09T15:43:03Z/);
+  assert.equal(updated.sections.some((section) => section.kind === "ranking"), false);
+
+  const winner = await answerF1Question("Who will win the next race prediction?", dependencies);
+  assert.match(winner.body, /winner probability is not published/i);
+  assert.doesNotMatch(winner.body, /76\.6%/);
+});
+
+test("driver prediction question uses that driver's published podium probability", async () => {
+  const reply = await answerF1Question("What is Leclerc's podium chance in the next prediction?", {
+    ...fixedDependencies,
+    getPublishedPrediction: async () => ({
+      ...publishedPrediction,
+      podium: [...publishedPrediction.podium, { driverName: "Charles Leclerc", podiumProbability: 0.42 }],
+    }),
+  });
+  assert.match(JSON.stringify(reply.sections), /42\.0%/);
+  assert.doesNotMatch(JSON.stringify(reply.sections), /76\.6%/);
+});
+
+test("a selected prediction answers a driver follow-up for the same race", async () => {
+  const context = { raceName: "Las Vegas Grand Prix", season: 2026 };
+  const calls: Array<[string | undefined, number | undefined]> = [];
+  const dependencies = {
+    ...fixedDependencies,
+    getPublishedPrediction: async (search?: string, season?: number) => {
+      calls.push([search, season]);
+      return {
+        ...publishedPrediction,
+        podium: [...publishedPrediction.podium, { driverName: "Charles Leclerc", podiumProbability: 0.42 }],
+      };
+    },
+  };
+  const initial = await answerF1Question("Show the latest prediction", dependencies);
+  assert.deepEqual(initial.context, context);
+  const followUp = await answerF1Question("What about Leclerc?", dependencies, initial.context);
+  assert.equal(followUp.intent, "predictions");
+  assert.match(JSON.stringify(followUp.sections), /42\.0%/);
+  assert.deepEqual(calls, [[undefined, undefined], ["Las Vegas Grand Prix", 2026]]);
+});
+
+test("a historical forecast's qualifying follow-up stays on that race", async () => {
+  const reply = await answerF1Question("Show the Mexico 2026 prediction", {
+    ...fixedDependencies,
+    getPublishedPrediction: async () => ({
+      ...publishedPrediction,
+      source: "dashboard-archive" as const,
+      race: { ...publishedPrediction.race, name: "Mexico City Grand Prix", round: 19 },
+    }),
+  });
+  const qualifying = reply.quickReplies.find((item) => item.label === "Qualifying Predictions");
+  assert.match(qualifying?.prompt ?? "", /Mexico City Grand Prix 2026/);
+});
+
 test("cached confirmed prediction remains clearly labelled", async () => {
   const reply = await answerF1Question("Show the latest F1 Buddy prediction", {
     ...fixedDependencies,
@@ -237,6 +323,23 @@ test("historical prediction without a Streamlit publication is unavailable", asy
 
   assert.equal(reply.heading, "Prediction unavailable");
   assert.doesNotMatch(textOf(reply), /75\.7%/);
+});
+
+test("next prediction explains why the published forecast is unavailable", async () => {
+  const cases = [
+    ["not-published", /not been published/i],
+    ["invalid-publication", /failed validation/i],
+    ["source-unavailable", /temporarily unavailable/i],
+    ["past-event", /already started/i],
+  ] as const;
+  for (const [reason, expected] of cases) {
+    const reply = await answerF1Question("Show the next race prediction", {
+      ...fixedDependencies,
+      getPublishedPrediction: async () => ({ available: false, reason }),
+    });
+    assert.equal(reply.heading, "Prediction unavailable");
+    assert.match(reply.body, expected, reason);
+  }
 });
 
 test("explicit historical qualifying prediction does not use an unqualified estimate", async () => {

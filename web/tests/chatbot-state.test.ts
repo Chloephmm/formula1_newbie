@@ -22,6 +22,7 @@ test("initial state is closed and empty", () => {
     draft: "",
     pending: false,
     error: null,
+    predictionContext: null,
   });
 });
 
@@ -104,6 +105,7 @@ test("close resets the complete conversation", () => {
     draft: "unfinished",
     pending: true,
     error: "error",
+    predictionContext: null,
     messages: [{ id: "user-1", role: "user", text: "question" }],
   };
 
@@ -122,4 +124,19 @@ test("a second submit is ignored while pending", () => {
     chatReducer(pending, { type: "SUBMIT", id: "user-2", text: "second" }),
     pending,
   );
+});
+
+test("prediction context survives minimize and clears on a different answer or reset", () => {
+  const context = { raceName: "Las Vegas Grand Prix", season: 2026 };
+  const predicted: ChatReply = { ...reply, intent: "predictions", context };
+  const active = chatReducer(
+    { ...initialChatState, mode: "open" },
+    { type: "SUCCEED", id: "prediction", reply: predicted },
+  );
+  assert.deepEqual(active.predictionContext, context);
+  const restored = chatReducer(chatReducer(active, { type: "MINIMIZE" }), { type: "RESTORE" });
+  assert.deepEqual(restored.predictionContext, context);
+  assert.equal(chatReducer(restored, { type: "SUCCEED", id: "race", reply }).predictionContext, null);
+  assert.equal(chatReducer(restored, { type: "RETURN_HOME" }).predictionContext, null);
+  assert.equal(chatReducer(restored, { type: "CLOSE" }).predictionContext, null);
 });

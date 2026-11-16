@@ -38,13 +38,30 @@ test("generic next race uses the last confirmed Streamlit forecast across calend
 
 test("a completed current event is unavailable as the next race", async () => {
   const { lookup } = provider();
-  assert.deepEqual(await lookup(undefined, undefined, new Date("2026-11-23T12:00:00Z")), { available: false });
+  assert.deepEqual(await lookup(undefined, undefined, new Date("2026-11-23T12:00:00Z")), { available: false, reason: "past-event" });
+});
+
+test("an explicit different season never receives the current race forecast", async () => {
+  const { lookup } = provider();
+  assert.deepEqual(await lookup(undefined, 2027, new Date("2026-11-13T12:00:00Z")), {
+    available: false,
+    reason: "not-found",
+  });
 });
 
 test("a feed without a confirmed current selection has no forecast", async () => {
   const missing = structuredClone(feed);
   missing.current = null;
-  assert.deepEqual(await provider(missing).lookup(undefined, undefined, new Date("2026-11-13T12:00:00Z")), { available: false });
+  assert.deepEqual(await provider(missing).lookup(undefined, undefined, new Date("2026-11-13T12:00:00Z")), { available: false, reason: "not-published" });
+});
+
+test("a malformed race start is reported as an invalid publication", async () => {
+  const malformed = structuredClone(feed);
+  malformed.event.race_start_at = null;
+  assert.deepEqual(await provider(malformed).lookup(undefined, undefined, new Date("2026-11-13T12:00:00Z")), {
+    available: false,
+    reason: "invalid-publication",
+  });
 });
 
 test("a named Streamlit archive can provide Mexico but an unrelated estimate cannot", async () => {
@@ -59,7 +76,7 @@ test("a named Streamlit archive can provide Mexico but an unrelated estimate can
   const brazilResult = await lookup("brazil", 2026, new Date("2026-11-13T12:00:00Z"));
   assert.equal(brazilResult.available, true);
   if (brazilResult.available) assert.equal(brazilResult.race.name, "Brazilian Grand Prix");
-  assert.deepEqual(await lookup("monaco", 2025, new Date("2026-11-13T12:00:00Z")), { available: false });
+  assert.deepEqual(await lookup("monaco", 2025, new Date("2026-11-13T12:00:00Z")), { available: false, reason: "not-found" });
 });
 
 test("post-qualifying selection uses actual rows and restores rank order", async () => {
@@ -86,9 +103,9 @@ test("post-qualifying selection uses actual rows and restores rank order", async
 
 test("a malformed dashboard archive is never substituted as a forecast", async () => {
   const lookup = createPublishedPredictionProvider({
-    readCurrent: async () => ({ available: false as const }),
+    readCurrent: async () => ({ available: false as const, reason: "source-unavailable" as const }),
     readArchiveIndex: async () => index,
     readArchiveArtifact: async () => ({ ...archive, race_id: "2026-18" }),
   });
-  assert.deepEqual(await lookup("mexico", 2026), { available: false });
+  assert.deepEqual(await lookup("mexico", 2026), { available: false, reason: "invalid-publication" });
 });

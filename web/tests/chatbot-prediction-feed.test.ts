@@ -56,7 +56,14 @@ test("a failed refresh uses only a validated last-good feed", async () => {
   const second = await reader.readCurrent();
   assert.deepEqual(second.available ? second.cached : false, true);
   const empty = createFeedReader({ transport: async () => new Response("unavailable", { status: 503 }) });
-  assert.deepEqual(await empty.readCurrent(), { available: false });
+  assert.deepEqual(await empty.readCurrent(), { available: false, reason: "source-unavailable" });
+});
+
+test("invalid publication is distinguished from an unreachable source", async () => {
+  const changed = JSON.parse(source);
+  changed.revision = "0".repeat(64);
+  const reader = createFeedReader({ transport: async () => new Response(JSON.stringify(changed)) });
+  assert.deepEqual(await reader.readCurrent(), { available: false, reason: "invalid-publication" });
 });
 
 test("archive paths cannot escape the Streamlit publication root", async () => {

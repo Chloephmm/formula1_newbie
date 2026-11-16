@@ -20,6 +20,7 @@ test("return home clears the session and keeps the panel open", () => {
     draft: "another question",
     pending: true,
     error: "temporary failure",
+    predictionContext: null,
   };
 
   const next = chatReducer(activeState, { type: "RETURN_HOME" });

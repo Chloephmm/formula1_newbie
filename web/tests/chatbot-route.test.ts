@@ -74,3 +74,24 @@ test("route reads a named forecast from the Streamlit archive", async () => {
   assert.match(body.body, /Streamlit dashboard archive/);
   assert.match(JSON.stringify(body), /Max Verstappen/);
 });
+
+test("route accepts a bounded prediction context for a follow-up", async (context) => {
+  context.mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-13T12:00:00Z") });
+  const originalFetch = globalThis.fetch;
+  const feed = readFileSync(new URL("../public/data/prediction_feed.json", import.meta.url), "utf8");
+  globalThis.fetch = async () => new Response(feed, { status: 200 });
+  let response: Response;
+  try {
+    response = await POST(request(JSON.stringify({
+      message: "What about Leclerc?",
+      context: { raceName: "Las Vegas Grand Prix", season: 2026 },
+    })));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(body.intent, "predictions");
+  assert.deepEqual(body.context, { raceName: "Las Vegas Grand Prix", season: 2026 });
+  assert.match(JSON.stringify(body), /Leclerc/);
+});

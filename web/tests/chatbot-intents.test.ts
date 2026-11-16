@@ -73,3 +73,48 @@ test("next-race question words are not treated as a race identity", () => {
   assert.equal(parsed.resultKind, "schedule");
   assert.equal(parsed.searchTerm, undefined);
 });
+
+test("conversational next prediction requests select the current publication", () => {
+  for (const message of [
+    "Can you give me the next race prediction?",
+    "Tell me anything about the latest prediction",
+    "Please show the current F1 forecast",
+  ]) {
+    const parsed = parseQuestion(message);
+    assert.equal(parsed.intent, "predictions", message);
+    assert.equal(parsed.searchTerm, undefined, message);
+  }
+  assert.equal(parseQuestion("Show the Mexico 2026 prediction").searchTerm, "mexico");
+});
+
+test("prediction questions identify the requested published field", () => {
+  assert.equal(parseQuestion("Who is predicted for pole at the next race?").predictionAspect, "qualifying");
+  assert.equal(parseQuestion("Who has the best podium chance in the next race?").predictionAspect, "podium");
+  assert.equal(parseQuestion("When was the next prediction updated?").predictionAspect, "updated");
+  const driver = parseQuestion("What is Leclerc's podium chance in the next prediction?");
+  assert.equal(driver.predictionAspect, "driver");
+  assert.equal(driver.predictionDriverId, "leclerc");
+  assert.equal(parseQuestion("Who will win the next race prediction?").predictionAspect, "winner");
+  assert.equal(parseQuestion("Who is predicted for pole?").searchTerm, undefined);
+  assert.equal(parseQuestion("When was the Mexico 2026 prediction updated?").searchTerm, "mexico");
+  assert.equal(parseQuestion("What is Leclerc's podium chance for Mexico 2026?").searchTerm, "mexico");
+  assert.equal(parseQuestion("What is Leclerc's prediction for the next race?").predictionAspect, "driver");
+  assert.equal(parseQuestion("Who will win the next race?").predictionAspect, "winner");
+  assert.equal(parseQuestion("Who is favored for the next race?").predictionAspect, "podium");
+  assert.notEqual(parseQuestion("What is the chance of rain at the next race?").intent, "predictions");
+});
+
+test("a prediction follow-up uses only the selected race context", () => {
+  const context = { raceName: "Las Vegas Grand Prix", season: 2026 };
+  const driver = parseQuestion("What about Leclerc?", context);
+  assert.equal(driver.intent, "predictions");
+  assert.equal(driver.searchTerm, "Las Vegas Grand Prix");
+  assert.equal(driver.season, 2026);
+  assert.equal(driver.predictionAspect, "driver");
+  assert.equal(driver.predictionDriverId, "leclerc");
+  assert.equal(parseQuestion("When was it updated?", context).predictionAspect, "updated");
+  assert.equal(parseQuestion("What about qualifying?", context).predictionAspect, "qualifying");
+  assert.equal(parseQuestion("What about Leclerc?").intent, "drivers");
+  assert.equal(parseQuestion("Tell me about Leclerc", context).intent, "drivers");
+  assert.equal(parseQuestion("Show Mexico 2026 prediction", context).searchTerm, "mexico");
+});
