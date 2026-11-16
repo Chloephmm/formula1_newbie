@@ -217,7 +217,7 @@
     {
       "position": 20,
       "driver_id": "rafael_camara",
-      "code": null,
+      "code": "CAM",
       "driver_name": "Rafael Camara",
       "constructor_id": "haas",
       "constructor_name": "Haas F1 Team",
