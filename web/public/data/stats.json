@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-09T14:32:41.004Z",
+  "updatedAt": "2026-11-16T14:09:53.939Z",
   "season": "2026",
   "constructors": [
     {
@@ -372,9 +372,10 @@
     {
       "position": 25,
       "driverId": "rafael_camara",
-      "code": "",
+      "code": "CAM",
       "givenName": "Rafael",
       "familyName": "Camara",
+      "nationality": "Brazilian",
       "points": 0,
       "wins": 0,
       "constructorId": "haas",
@@ -544,6 +545,13 @@
       "fastestLaps": 0
     },
     "HIR": {
+      "races": 1,
+      "wins": 0,
+      "podiums": 0,
+      "poles": 0,
+      "fastestLaps": 0
+    },
+    "CAM": {
       "races": 1,
       "wins": 0,
       "podiums": 0,
@@ -719,6 +727,13 @@
       "podiums": 39,
       "poles": 4,
       "fastestLaps": 12
+    },
+    "CAM": {
+      "races": 1,
+      "wins": 0,
+      "podiums": 0,
+      "poles": 0,
+      "fastestLaps": 0
     }
   }
 }
