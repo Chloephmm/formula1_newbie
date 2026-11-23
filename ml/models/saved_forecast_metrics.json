@@ -2,28 +2,40 @@
   "kind": "confirmed_saved_forecast_evaluation",
   "excluded": [],
   "initial": {
-    "races": 1,
+    "races": 2,
     "podium_hit_rate": 0.3333333333333333,
-    "winner_accuracy": 0.0,
+    "winner_accuracy": 0.5,
     "samples": [
       {
         "race_id": "2026-20",
         "prediction_id": "d59ab85a46c25b9ebe11dea6aaa08791ff38d5d65ad4aacf21940999f0a394f2",
         "podium_hits": 1,
         "winner_hit": 0
+      },
+      {
+        "race_id": "2026-21",
+        "prediction_id": "88604f955c8dc5bd2ba2fd0490508517e1f3208979603fbd04c10c392e9bc8a1",
+        "podium_hits": 1,
+        "winner_hit": 1
       }
     ]
   },
   "final": {
-    "races": 1,
+    "races": 2,
     "podium_hit_rate": 0.3333333333333333,
-    "winner_accuracy": 0.0,
+    "winner_accuracy": 0.5,
     "samples": [
       {
         "race_id": "2026-20",
         "prediction_id": "d59ab85a46c25b9ebe11dea6aaa08791ff38d5d65ad4aacf21940999f0a394f2",
         "podium_hits": 1,
         "winner_hit": 0
+      },
+      {
+        "race_id": "2026-21",
+        "prediction_id": "7db8eb879fe64b88f98f0a6f7e60933f503fc71298ae0b407d6af483a2b2cc13",
+        "podium_hits": 1,
+        "winner_hit": 1
       }
     ]
   }
