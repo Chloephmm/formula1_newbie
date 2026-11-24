@@ -18,7 +18,7 @@ test("reads the same confirmed current feed as Streamlit", async () => {
   const first = await reader.readCurrent();
   assert.equal(first.available, true);
   if (!first.available) return;
-  assert.equal(first.feed.current_event_id, "2026-21");
+  assert.equal(first.feed.current_event_id, `${first.feed.event.season}-${first.feed.event.round}`);
   assert.equal(first.feed.current?.publication.confirmed, true);
   now = 30_000;
   const second = await reader.readCurrent();
@@ -33,7 +33,7 @@ test("rejects changed revision, prediction, receipt, and event identity", () => 
     (feed) => { (feed.current as typeof valid.current).prediction.prediction_id = "0".repeat(64); },
     (feed) => { (feed.current as typeof valid.current).publication.checksum = "0".repeat(64); },
     (feed) => { (feed.current as typeof valid.current).publication.publication_id = "0".repeat(64); },
-    (feed) => { feed.current_event_id = "2026-22"; },
+    (feed) => { feed.current_event_id = "9999-99"; },
   ];
   for (const mutate of mutations) {
     const feed = structuredClone(valid);

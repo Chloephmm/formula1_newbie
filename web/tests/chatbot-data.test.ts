@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { getSessionResults } from "../lib/jolpica";
+import prediction from "../public/data/next_race_prediction.json";
 import {
   findDriverSnapshot,
   findRaceSnapshot,
@@ -87,12 +88,12 @@ test("named race lookup falls back to the selected season's Jolpica schedule", a
 
 test("next-race lookup uses a compatible prediction snapshot before Jolpica", async () => {
   let fallbackCalls = 0;
-  const race = await getNextRaceSnapshot(new Date("2026-11-09T12:00:00Z"), async () => {
+  const race = await getNextRaceSnapshot(new Date(`${prediction.asof}T12:00:00Z`), async () => {
     fallbackCalls += 1;
     return { data: [], live: false };
   });
 
-  assert.equal(race?.name, "Las Vegas Grand Prix");
+  assert.equal(race?.name, prediction.race.name);
   assert.equal(fallbackCalls, 0);
 });
 

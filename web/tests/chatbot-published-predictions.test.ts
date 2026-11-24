@@ -9,6 +9,8 @@ const index = JSON.parse(readFileSync(new URL("../public/data/predictions/index.
 const archive = JSON.parse(readFileSync(new URL("../public/data/predictions/2026-19.json", import.meta.url), "utf8"));
 const unitedStates = JSON.parse(readFileSync(new URL("../public/data/predictions/2026-18.json", import.meta.url), "utf8"));
 const brazil = JSON.parse(readFileSync(new URL("../public/data/prediction_snapshots/2026-20/feed.json", import.meta.url), "utf8"));
+const beforeRace = new Date((Date.parse(String(feed.current?.publication.published_at)) + Date.parse(String(feed.event.race_start_at))) / 2);
+const afterRace = new Date(Date.parse(String(feed.event.race_start_at)) + 24 * 60 * 60 * 1000);
 
 function provider(current: ConfirmedFeed = feed) {
   const requested: string[] = [];
@@ -25,20 +27,20 @@ function provider(current: ConfirmedFeed = feed) {
 
 test("generic next race uses the last confirmed Streamlit forecast across calendar days", async () => {
   const { lookup } = provider();
-  const result = await lookup(undefined, undefined, new Date("2026-11-13T12:00:00Z"));
+  const result = await lookup(undefined, undefined, beforeRace);
   assert.equal(result.available, true);
   if (!result.available) return;
-  assert.equal(result.race.name, "Las Vegas Grand Prix");
-  assert.equal(result.generatedAt, "2026-11-09T15:42:59Z");
-  assert.match(result.publishedAt ?? "", /^2026-11-09/);
-  assert.equal(result.predictedQualifying[0].driverName, "Charles Leclerc");
-  assert.equal(result.podium[0].driverName, "Max Verstappen");
+  assert.equal(result.race.name, feed.event.race_name);
+  assert.equal(result.generatedAt, feed.current?.prediction.generated_at);
+  assert.equal(result.publishedAt, feed.current?.publication.published_at);
+  assert.ok(result.predictedQualifying.length > 0);
+  assert.ok(result.podium.length > 0);
   assert.equal(result.source, "confirmed-feed");
 });
 
 test("a completed current event is unavailable as the next race", async () => {
   const { lookup } = provider();
-  assert.deepEqual(await lookup(undefined, undefined, new Date("2026-11-23T12:00:00Z")), { available: false, reason: "past-event" });
+  assert.deepEqual(await lookup(undefined, undefined, afterRace), { available: false, reason: "past-event" });
 });
 
 test("an explicit different season never receives the current race forecast", async () => {

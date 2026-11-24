@@ -31,6 +31,7 @@ test("route returns a typed prediction response without caching", async (context
   context.mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-13T12:00:00Z") });
   const originalFetch = globalThis.fetch;
   const feed = readFileSync(new URL("../public/data/prediction_feed.json", import.meta.url), "utf8");
+  const currentRace = JSON.parse(feed).event.race_name;
   globalThis.fetch = async () => new Response(feed, { status: 200 });
   let response: Response;
   try {
@@ -46,7 +47,7 @@ test("route returns a typed prediction response without caching", async (context
   assert.match(response.headers.get("content-type") ?? "", /application\/json/);
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.equal(body.intent, "predictions");
-  assert.equal(body.heading, "Las Vegas Grand Prix prediction");
+  assert.equal(body.heading, `${currentRace} prediction`);
   assert.match(JSON.stringify(body), /Charles Leclerc/);
   assert.match(JSON.stringify(body), /Max Verstappen/);
   assert.ok(Array.isArray(body.sections));
@@ -79,12 +80,13 @@ test("route accepts a bounded prediction context for a follow-up", async (contex
   context.mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-13T12:00:00Z") });
   const originalFetch = globalThis.fetch;
   const feed = readFileSync(new URL("../public/data/prediction_feed.json", import.meta.url), "utf8");
+  const currentRace = JSON.parse(feed).event.race_name;
   globalThis.fetch = async () => new Response(feed, { status: 200 });
   let response: Response;
   try {
     response = await POST(request(JSON.stringify({
       message: "What about Leclerc?",
-      context: { raceName: "Las Vegas Grand Prix", season: 2026 },
+      context: { raceName: currentRace, season: 2026 },
     })));
   } finally {
     globalThis.fetch = originalFetch;
@@ -92,6 +94,6 @@ test("route accepts a bounded prediction context for a follow-up", async (contex
   const body = await response.json();
   assert.equal(response.status, 200);
   assert.equal(body.intent, "predictions");
-  assert.deepEqual(body.context, { raceName: "Las Vegas Grand Prix", season: 2026 });
+  assert.deepEqual(body.context, { raceName: currentRace, season: 2026 });
   assert.match(JSON.stringify(body), /Leclerc/);
 });
