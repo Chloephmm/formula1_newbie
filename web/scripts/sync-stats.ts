@@ -27,7 +27,12 @@ async function main() {
   const { data: seasonStats, live: sLive } = await getSeasonStats(SEASON);
 
   if (!cLive || !dLive || !sLive || !constructors.length || !drivers.length) {
-    throw new Error("standings/season fetch failed or empty — aborting without write");
+    throw new Error(
+      `standings/season fetch failed or empty — aborting without write ` +
+      `(constructors: live=${cLive}, count=${constructors.length}; ` +
+      `drivers: live=${dLive}, count=${drivers.length}; ` +
+      `season: live=${sLive}, count=${Object.keys(seasonStats).length})`
+    );
   }
 
   console.log(`[sync-stats] career totals for ${drivers.length} drivers…`);

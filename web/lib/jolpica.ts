@@ -32,7 +32,10 @@ async function jget(
 ): Promise<ErgastResponse> {
   for (let attempt = 0; ; attempt++) {
     await throttle();
-    const res = await fetch(`${BASE}/${path}`, { next: { revalidate } });
+    const res = await fetch(`${BASE}/${path}`, {
+      headers: { "User-Agent": "F1BuddyStats/1.0" },
+      next: { revalidate },
+    });
     if (res.ok) return (await res.json()) as ErgastResponse;
     // Retry transient rate-limit (429) / server errors with backoff.
     if ((res.status === 429 || res.status >= 500) && attempt < tries - 1) {
